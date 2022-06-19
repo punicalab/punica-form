@@ -1,0 +1,45 @@
+name: Node.js Package
+
+on:
+ pull_request:
+    branches:
+      - main
+    types: [closed]
+
+jobs:
+
+  release:
+    strategy:
+      matrix:
+        node-version: [14.x]
+    runs-on: ubuntu-latest
+
+    env:
+      NPM_TOKEN: ${{secrets.NPM_TOKEN}}
+
+    steps:
+      - name: Cancel Previous Runs
+        uses: styfle/cancel-workflow-action@0.9.0
+
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: "0"
+
+      - name: Use Node Matrix Versions
+        uses: actions/setup-node@v1
+        with:
+          scope: '@punica'
+          node-version: ${{ matrix.node-version }}
+          registry-url: https://registry.npmjs.org
+
+      - name: Install Dependencies
+        run: yarn --frozen-lockfile
+
+      - name: Build
+        run: yarn build
+
+      - name: Publish Packages
+        run: |
+          npm config set '//registry.npmjs.org/:_authToken' "${NPM_TOKEN}"
+          yarn lerna-publish
