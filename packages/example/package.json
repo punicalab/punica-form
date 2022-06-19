@@ -1,0 +1,27 @@
+{
+  "name": "@punica/form-example",
+  "version": "1.0.0",
+  "description": "Form Examples",
+  "author": {
+    "name": "Uryan Sezgin TEKE",
+    "email": "uryan.sezgin.teke@gmail.com",
+    "url": "https://github.com/uryansezginteke"
+  },
+  "private": true,
+  "license": "MIT",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "scripty",
+    "clean": "scripty",
+    "lint": "scripty",
+    "compile": "scripty"
+  },
+  "scripty": {
+    "path": "../../scripts/packages"
+  },
+  "dependencies": {
+    "@punica/form-model": "^1.0.0",
+    "@punica/form-register": "^1.0.0"
+  }
+}
