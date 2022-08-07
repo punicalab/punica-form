@@ -14,7 +14,7 @@ class Reader<E extends IEntity, F extends IFormItem> extends BaseReader<E, F> {
    * @returns
    */
   private readItem(entity: E): Promise<IFormChapterMap> {
-    return new Promise(async (resolve) => {
+    return new Promise((resolve) => {
       const chapters = Reflect.getMetadata(DECORATOR_CHAPTER, entity);
 
       resolve(chapters);

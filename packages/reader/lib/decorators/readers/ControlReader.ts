@@ -8,7 +8,7 @@ class Reader<E extends IEntity, F extends IFormItem> extends BaseReader<E, F> {
    * @param items
    */
   private async readItemsData(items: Array<F>, entity: E) {
-    await items.forEach(async (formItem: F) => {
+    for await (const formItem of items) {
       const { control } = formItem;
 
       if (control) {
@@ -20,7 +20,7 @@ class Reader<E extends IEntity, F extends IFormItem> extends BaseReader<E, F> {
 
         super.writeItems(items);
       }
-    });
+    }
   }
 
   /**

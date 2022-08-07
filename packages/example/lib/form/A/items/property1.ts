@@ -1,4 +1,4 @@
-import { IFormItem } from '@punica/form-model';
+import { ErrorDetail, IFormItem } from '@punica/form-model';
 
 const formItem: IFormItem = {
   label: 'Property 1',
@@ -9,6 +9,16 @@ const formItem: IFormItem = {
   disabledChecking: (): Promise<boolean> => {
     return new Promise((resolve) => {
       resolve(true);
+    });
+  },
+  errorChecking: (): Promise<ErrorDetail> => {
+    return new Promise((resolve) => {
+      const errorDetail: ErrorDetail = { error: false, errorMessage: '' };
+
+      errorDetail.error = true;
+      errorDetail.errorMessage = 'is required';
+
+      resolve(errorDetail);
     });
   }
 };

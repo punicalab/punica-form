@@ -23,12 +23,12 @@ class Reader<E extends IEntity, F extends IFormItem> extends BaseReader<E, F> {
    * @param items
    */
   private async readItemsData(entity: E, items: Array<F>) {
-    await items.forEach((item: F) => {
+    for await (const item of items) {
       const data = this.getPropertyData(entity, item);
 
       item.value = data;
       item.defaultValue = data;
-    });
+    }
   }
 
   /**
