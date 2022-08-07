@@ -15,15 +15,13 @@ describe('form', () => {
   });
 
   test('disable check', () => {
-    const index = formData?.itemsMap?.['property1'];
-    const formItem = formData?.items?.[index];
+    const formItem = formData?.items?.[0];
 
     expect(formItem.disabled).toEqual(true);
   });
 
   test('hidden check', () => {
-    const index = formData?.itemsMap?.['property2'];
-    const formItem = formData?.items?.[index];
+    const formItem = formData?.items?.[1];
 
     expect(formItem.hidden).toEqual(true);
   });

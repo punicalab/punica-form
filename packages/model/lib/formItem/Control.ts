@@ -1,10 +1,10 @@
 import { IEntity } from '@punica/common';
-import { ReadItems, IFormItem } from '.';
+import { GetItem, IFormItem } from '.';
 
 export type Control = {
   <F extends IFormItem, E extends IEntity>(config: {
     formItem: F;
     entity?: E;
-    readItems?: ReadItems;
+    getItem?: GetItem;
   }): Promise<Array<IFormItem>>;
 };

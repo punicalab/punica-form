@@ -5,7 +5,6 @@ import {
   ConverterReader,
   DataReader,
   ItemsReader,
-  ControlReader,
   DisabledReader,
   HiddenReader,
   ItemLayout
@@ -20,8 +19,7 @@ const createReader = (): IReader<any, any> => {
   const converterReader = new ConverterReader(dataReader);
   const disabledReader = new DisabledReader(converterReader);
   const hiddenReader = new HiddenReader(disabledReader);
-  const controlReader = new ControlReader(hiddenReader);
-  const itemLayoutReader = new ItemLayout(controlReader);
+  const itemLayoutReader = new ItemLayout(hiddenReader);
 
   return itemLayoutReader;
 };

@@ -20,8 +20,7 @@ class FormController<
    * @param value
    */
   public updateValue(formItemKey: string, value: any): void {
-    const map = this.readItems([formItemKey]);
-    const formItem = map.get(formItemKey);
+    const formItem = this.getItem(formItemKey);
     const { control } = formItem;
 
     formItem.value = value;
@@ -31,8 +30,8 @@ class FormController<
     if (control) {
       control({
         formItem,
-        readItems: this.readItems,
-        entity: this._entity
+        entity: this._entity,
+        getItem: this.getItem
       }).then((formItems: Array<IFormItem>) => {
         this.writeItems(formItems);
         this.fireEvent(FormEvents.UPDATE, this._formData);
