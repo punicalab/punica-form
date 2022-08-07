@@ -59,7 +59,7 @@ export abstract class BaseFormController<
    * @param writes
    */
   protected writeItems: WriteItems = (writes: Array<IFormItem>): void => {
-    writes?.forEach((item: IFormItem) => {
+    writes.forEach((item: IFormItem) => {
       const { itemsMap, items } = this._formData;
       const { property } = item;
       const index = itemsMap[property];
@@ -131,7 +131,7 @@ export abstract class BaseFormController<
       const { items } = this._formData;
       const entity = { ...this._entity };
 
-      await items.forEach((item: F) => {
+      for await (const item of items) {
         const { property, value, propertyPath } = item;
         let writePath = property;
 
@@ -140,7 +140,7 @@ export abstract class BaseFormController<
         }
 
         WriteToPropertyPath(entity, writePath, value);
-      });
+      }
 
       resolve(entity);
     });
@@ -155,29 +155,24 @@ export abstract class BaseFormController<
       const { items } = this._formData;
       this._hasError = false;
 
-      await items.forEach(async (item: F) => {
+      for await (const item of items) {
         const { errorChecking, hidden } = item;
 
-        if (errorChecking == null) {
-          return;
-        }
+        if (errorChecking && !hidden) {
+          const { error, errorMessage } = await errorChecking({
+            formItem: item,
+            entity: this._entity,
+            readItems: this.readItems
+          });
 
-        if (!hidden) {
-          return;
-        }
-        const { error, errorMessage } = await errorChecking({
-          formItem: item,
-          readItems: this.readItems,
-          entity: this._entity
-        });
+          if (error) {
+            this._hasError = true;
+          }
 
-        if (error) {
-          this._hasError = true;
+          item.error = error;
+          item.errorMessage = errorMessage;
         }
-
-        item.error = error;
-        item.errorMessage = errorMessage;
-      });
+      }
 
       this.fireEvent(FormEvents.UPDATE, this._formData);
 
@@ -223,7 +218,7 @@ export abstract class BaseFormController<
     return new Promise(async (resolve) => {
       const { items } = this._formData;
 
-      await items.forEach(async (item: F) => {
+      for await (const item of items) {
         const { submit } = item;
 
         if (submit) {
@@ -233,7 +228,7 @@ export abstract class BaseFormController<
             entity: this._entity
           });
         }
-      });
+      }
 
       resolve(true);
     });

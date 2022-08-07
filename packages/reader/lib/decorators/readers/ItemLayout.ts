@@ -8,13 +8,13 @@ class Reader<E extends IEntity, F extends IFormItem> extends BaseReader<E, F> {
    * @param items
    */
   private async readItemsData(items: Array<F>) {
-    await items.forEach(async (item: F) => {
+    for await (const item of items) {
       const { layout } = item;
 
       if (!layout) {
         item.layout = { xs: 12 };
       }
-    });
+    }
   }
 
   /**

@@ -8,7 +8,7 @@ class Reader<E extends IEntity, F extends IFormItem> extends BaseReader<E, F> {
    * @param items
    */
   private async readItemsData(items: Array<F>) {
-    await items.forEach((item: F) => {
+    for await (const item of items) {
       const { converter } = item;
 
       if (converter) {
@@ -17,7 +17,7 @@ class Reader<E extends IEntity, F extends IFormItem> extends BaseReader<E, F> {
 
         item.value = inputConverter(value);
       }
-    });
+    }
   }
 
   /**

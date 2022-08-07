@@ -8,7 +8,7 @@ class Reader<E extends IEntity, F extends IFormItem> extends BaseReader<E, F> {
    * @param items
    */
   private async readItemsData(items: Array<F>, entity: E) {
-    await items.forEach(async (item: F) => {
+    for await (const item of items) {
       const { disabledChecking } = item;
 
       if (disabledChecking) {
@@ -20,7 +20,7 @@ class Reader<E extends IEntity, F extends IFormItem> extends BaseReader<E, F> {
 
         item.disabled = disabled;
       }
-    });
+    }
   }
 
   /**
