@@ -7,7 +7,8 @@ import {
   Control,
   FormItemLayout,
   GetData,
-  Submit
+  Submit,
+  Startup
 } from '.';
 
 export interface IFormItem extends IBaseFormItem {
@@ -24,4 +25,5 @@ export interface IFormItem extends IBaseFormItem {
   hiddenChecking?: HiddenChecking;
   control?: Control;
   submit?: Submit;
+  startup?: Startup;
 }
