@@ -14,8 +14,8 @@ class Reader<E extends IEntity, F extends IFormItem> extends BaseReader<E, F> {
       if (hiddenChecking) {
         const hidden = await hiddenChecking({
           formItem: item,
-          readItems: this.readItems,
-          entity
+          entity,
+          getItem: this.getItem
         });
 
         item.hidden = hidden;

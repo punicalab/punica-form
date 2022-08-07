@@ -14,8 +14,8 @@ class Reader<E extends IEntity, F extends IFormItem> extends BaseReader<E, F> {
       if (disabledChecking) {
         const disabled = await disabledChecking({
           formItem: item,
-          readItems: this.readItems,
-          entity
+          entity,
+          getItem: this.getItem
         });
 
         item.disabled = disabled;

@@ -3,7 +3,7 @@ import {
   IForm,
   IFormItem,
   IReader,
-  ReadItems,
+  GetItem,
   WriteItems
 } from '@punica/form-model';
 
@@ -36,20 +36,13 @@ abstract class BaseReader<E extends IEntity, F extends IFormItem>
    * @param properties
    * @returns
    */
-  protected readItems: ReadItems = <F>(
-    properties: Array<string>
-  ): Map<string, F> => {
-    const map = new Map();
+  protected getItem: GetItem = <F>(property: string): F => {
     const { items, itemsMap } = this._form;
 
-    properties.forEach((property: string) => {
-      const index = itemsMap[property];
-      const item = items[index];
+    const index = itemsMap[property];
+    const item = items[index];
 
-      map.set(property, { ...item });
-    });
-
-    return map;
+    return item as unknown as F;
   };
 
   /**

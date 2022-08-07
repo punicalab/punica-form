@@ -2,7 +2,7 @@ export * from './base';
 export * from './Submit';
 export * from './Error';
 export * from './Control';
-export * from './ReadItems';
+export * from './GetItem';
 export * from './WriteItems';
 export * from './DisabledChecking';
 export * from './HiddenChecking';

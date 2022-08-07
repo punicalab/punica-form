@@ -1,5 +1,5 @@
 import { IEntity } from '@punica/common';
-import { ReadItems, IFormItem } from '.';
+import { GetItem, IFormItem } from '.';
 
 export type ErrorDetail = {
   error: boolean;
@@ -10,6 +10,6 @@ export type ErrorChecking = {
   <F extends IFormItem, E extends IEntity>(config: {
     formItem: F;
     entity: E;
-    readItems: ReadItems;
+    getItem: GetItem;
   }): Promise<ErrorDetail>;
 };

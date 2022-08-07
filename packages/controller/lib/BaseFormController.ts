@@ -5,7 +5,7 @@ import {
   IForm,
   IFormItem,
   IReader,
-  ReadItems,
+  GetItem,
   WriteItems,
   FormEvents,
   IFormController
@@ -38,23 +38,18 @@ abstract class BaseFormController<E extends IEntity, F extends IFormItem>
 
   /**
    *
-   * @param properties
+   * @param property
    * @returns
    */
-  protected readItems: ReadItems = <F>(
-    properties: Array<string>
-  ): Map<string, F> => {
-    const map = new Map();
+  protected getItem: GetItem = <F>(property: string): F => {
     const { items, itemsMap } = this._formData;
+    const itemIndex = itemsMap[property];
 
-    properties.forEach((property: string) => {
-      const index = itemsMap[property];
-      const item = items[index];
+    if (!Number.isInteger(itemIndex)) {
+      return null;
+    }
 
-      map.set(property, { ...item });
-    });
-
-    return map;
+    return items[itemIndex] as unknown as F;
   };
 
   /**
@@ -165,7 +160,7 @@ abstract class BaseFormController<E extends IEntity, F extends IFormItem>
           const { error, errorMessage } = await errorChecking({
             formItem: item,
             entity: this._entity,
-            readItems: this.readItems
+            getItem: this.getItem
           });
 
           if (error) {
@@ -205,12 +200,11 @@ abstract class BaseFormController<E extends IEntity, F extends IFormItem>
     property: string,
     data: any
   ): void {
-    const map = this.readItems([formItemKey]);
-    const formItem = map.get(formItemKey);
+    const item = this.getItem(formItemKey);
 
-    formItem[property] = data;
+    item[property] = data;
 
-    this.writeItems([formItem]);
+    this.writeItems([item]);
     this.fireEvent(FormEvents.UPDATE, this._formData);
   }
 
@@ -227,8 +221,8 @@ abstract class BaseFormController<E extends IEntity, F extends IFormItem>
         if (submit) {
           await submit({
             formItem: item,
-            readItems: this.readItems,
-            entity: this._entity
+            entity: this._entity,
+            getItem: this.getItem
           });
         }
       }
