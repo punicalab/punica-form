@@ -1,5 +1,6 @@
 import { IEntity } from '@punica/common';
-import { BaseFormController, FormEvents, IFormItem } from '@punica/form-model';
+import { FormEvents, IFormItem } from '@punica/form-model';
+import { BaseFormController } from '.';
 
 class FormController<
   E extends IEntity,
