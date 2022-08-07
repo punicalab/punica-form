@@ -10,5 +10,6 @@ export * from './base/IBaseFormItem';
 export * from './FormItemConverter';
 export * from './FormItemLayout';
 export * from './GetData';
+export * from './Startup';
 export * from './IFormItem';
 export * from './IFormItemOptions';

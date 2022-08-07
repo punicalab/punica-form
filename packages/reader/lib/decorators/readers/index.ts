@@ -4,4 +4,5 @@ export { default as DataReader } from './DataReader';
 export { default as ItemsReader } from './ItemsReader';
 export { default as DisabledReader } from './DisabledReader';
 export { default as HiddenReader } from './HiddenReader';
-export { default as ItemLayout } from './ItemLayout';
+export { default as ItemLayoutReader } from './ItemLayoutReader';
+export { default as StartupReader } from './StartupReader';

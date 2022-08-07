@@ -7,7 +7,8 @@ import {
   ItemsReader,
   DisabledReader,
   HiddenReader,
-  ItemLayout
+  ItemLayoutReader,
+  StartupReader
 } from './decorators/readers';
 
 const createReader = (): IReader<any, any> => {
@@ -19,9 +20,10 @@ const createReader = (): IReader<any, any> => {
   const converterReader = new ConverterReader(dataReader);
   const disabledReader = new DisabledReader(converterReader);
   const hiddenReader = new HiddenReader(disabledReader);
-  const itemLayoutReader = new ItemLayout(hiddenReader);
+  const itemLayoutReader = new ItemLayoutReader(hiddenReader);
+  const startupReader = new StartupReader(itemLayoutReader);
 
-  return itemLayoutReader;
+  return startupReader;
 };
 
 export default createReader;
