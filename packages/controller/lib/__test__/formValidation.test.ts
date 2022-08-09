@@ -15,7 +15,7 @@ beforeAll(async () => {
     formData = d;
   });
 
-  formData = await form.render(reader);
+  formData = await form.start(reader);
 });
 
 test('validate form', async () => {

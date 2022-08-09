@@ -79,12 +79,14 @@ abstract class BaseFormController<E extends IEntity, F extends IFormItem>
    *
    * @param reader
    */
-  public render(
+  public start(
     reader: IReader<E, F>,
     formData: IForm<F> = null
   ): Promise<IForm<F>> {
     return new Promise(async (resolve) => {
       let updateMaps = false;
+
+      this.fireEvent(FormEvents.DATA_READING_STARTED, null);
 
       if (formData) {
         this._formData = formData;
@@ -115,13 +117,14 @@ abstract class BaseFormController<E extends IEntity, F extends IFormItem>
         }
       });
 
+      this.fireEvent(FormEvents.DATA_READING_ENDED, null);
+
       resolve(this._formData);
     });
   }
 
   /**
    *
-   * @param reader
    * @returns
    */
   public getEntity(): Promise<E> {

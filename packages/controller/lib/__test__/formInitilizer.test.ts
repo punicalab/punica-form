@@ -10,7 +10,7 @@ beforeAll(async () => {
   const form = new FormController(entity);
   const reader = createReader();
 
-  formData = await form.render(reader);
+  formData = await form.start(reader);
 });
 
 test('read entity formData', () => {
