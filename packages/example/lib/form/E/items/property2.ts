@@ -3,9 +3,11 @@ import { IFormItem } from '@punica/form-model';
 const formItem: IFormItem = {
   label: 'Property 2',
   required: true,
-  hiddenChecking: (): Promise<boolean> => {
+  initializer: ({ formItem }): Promise<Array<IFormItem>> => {
     return new Promise((resolve) => {
-      resolve(true);
+      formItem.hidden = true;
+
+      resolve([formItem]);
     });
   }
 };

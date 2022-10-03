@@ -1,10 +1,10 @@
 import { IEntity } from '@punica/common';
 import { GetItem, IFormItem } from '.';
 
-export type Submit = {
+export type FormItemControl = {
   <F extends IFormItem, E extends IEntity>(config: {
     formItem: F;
     entity?: E;
     getItem?: GetItem;
-  }): Promise<boolean>;
+  }): Promise<Array<IFormItem>>;
 };

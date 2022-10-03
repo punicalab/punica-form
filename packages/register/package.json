@@ -30,10 +30,11 @@
     "lint": "scripty",
     "compile": "scripty"
   },
-  "dependencies": {
-    "@punica/form-model": "^1.1.0"
-  },
   "scripty": {
     "path": "../../scripts/packages"
+  },
+  "dependencies": {
+    "@punica/form-model": "^1.1.0",
+    "@punica/common": "^1.0.0"
   }
 }

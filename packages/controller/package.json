@@ -34,6 +34,8 @@
   },
   "dependencies": {
     "@punica/form-model": "^1.1.0",
-    "@punica/form-register": "^1.1.0"
+    "@punica/form-register": "^1.1.0",
+    "@punica/util": "^1.0.0",
+    "@punica/common": "^1.0.0"
   }
 }

@@ -1,10 +1,10 @@
 import { IEntity } from '@punica/common';
-import { GetItem, IFormItem } from '..';
+import { GetItem, IFormItem } from '.';
 
-export type HiddenChecking = {
+export type FormItemInitializer = {
   <F extends IFormItem, E extends IEntity>(config: {
     formItem: F;
-    entity: E;
+    entity?: E;
     getItem?: GetItem;
-  }): Promise<boolean>;
+  }): Promise<Array<IFormItem>>;
 };

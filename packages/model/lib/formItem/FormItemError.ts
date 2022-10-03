@@ -6,7 +6,7 @@ export type ErrorDetail = {
   errorMessage: string;
 };
 
-export type ErrorChecking = {
+export type FormItemError = {
   <F extends IFormItem, E extends IEntity>(config: {
     formItem: F;
     entity: E;

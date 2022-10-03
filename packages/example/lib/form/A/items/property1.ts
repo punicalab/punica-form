@@ -6,9 +6,11 @@ const formItem: IFormItem = {
   getData: (): Promise<any> => {
     return new Promise(() => {});
   },
-  disabledChecking: (): Promise<boolean> => {
+  initializer: ({ formItem }): Promise<Array<IFormItem>> => {
     return new Promise((resolve) => {
-      resolve(true);
+      formItem.disabled = true;
+
+      resolve([formItem]);
     });
   },
   errorChecking: (): Promise<ErrorDetail> => {

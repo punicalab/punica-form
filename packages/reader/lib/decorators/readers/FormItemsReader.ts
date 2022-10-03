@@ -49,6 +49,7 @@ class Reader<E extends IEntity, F extends IFormItem> extends BaseReader<E, F> {
    */
   public async read(entity: E): Promise<IForm<F>> {
     const form: IForm<F> = await super.read(entity);
+
     form.items = await this.readItem(entity);
     form.itemsMap = {};
 

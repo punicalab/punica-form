@@ -13,7 +13,7 @@ beforeAll(async () => {
   formData = await form.start(reader);
 });
 
-test('startup control', () => {
+test('initializer control', () => {
   const property2Index: number = formData?.itemsMap?.['property2'] || 0;
   const property2 = formData?.items?.[property2Index];
 
