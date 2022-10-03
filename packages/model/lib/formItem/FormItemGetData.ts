@@ -1,3 +1,3 @@
-export type GetData = {
+export type FormItemGetData = {
   (params?: any): Promise<any>;
 };

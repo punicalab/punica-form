@@ -1,10 +1,10 @@
 import { IEntity } from '@punica/common';
-import { IFormItem, GetItem } from '..';
+import { GetItem, IFormItem } from '.';
 
-export type DisabledChecking = {
+export type FormItemSubmit = {
   <F extends IFormItem, E extends IEntity>(config: {
     formItem: F;
-    entity: E;
+    entity?: E;
     getItem?: GetItem;
   }): Promise<boolean>;
 };

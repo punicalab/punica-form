@@ -54,10 +54,10 @@ abstract class BaseFormController<E extends IEntity, F extends IFormItem>
 
   /**
    *
-   * @param writes
+   * @param items
    */
-  protected writeItems: WriteItems = (writes: Array<IFormItem>): void => {
-    writes.forEach((item: IFormItem) => {
+  protected writeItems: WriteItems = (items: Array<IFormItem>): void => {
+    items.forEach((item: IFormItem) => {
       const { itemsMap, items } = this._formData;
       const { property } = item;
       const index = itemsMap[property];
@@ -189,6 +189,7 @@ abstract class BaseFormController<E extends IEntity, F extends IFormItem>
       formItem.value = formItem.defaultValue;
     });
 
+    this.fireEvent(FormEvents.RESET, null);
     this.fireEvent(FormEvents.UPDATE, this._formData);
   }
 
@@ -208,6 +209,11 @@ abstract class BaseFormController<E extends IEntity, F extends IFormItem>
     item[property] = data;
 
     this.writeItems([item]);
+    this.fireEvent(FormEvents.UPDATE_PROPERTY_VALUE, {
+      formItemKey,
+      property,
+      data
+    });
     this.fireEvent(FormEvents.UPDATE, this._formData);
   }
 

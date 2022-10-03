@@ -23,6 +23,7 @@ abstract class BaseReader<E extends IEntity, F extends IFormItem>
 
   /**
    *
+   * @param entity
    * @returns
    */
   public async read(entity: E): Promise<IForm<F>> {
@@ -33,7 +34,7 @@ abstract class BaseReader<E extends IEntity, F extends IFormItem>
 
   /**
    *
-   * @param properties
+   * @param property
    * @returns
    */
   protected getItem: GetItem = <F>(property: string): F => {

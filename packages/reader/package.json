@@ -38,6 +38,8 @@
     "@punica/form-register": "^1.1.0"
   },
   "devDependencies": {
-    "@punica/form-example": "^1.1.0"
+    "@punica/form-example": "^1.1.0",
+    "@punica/util": "^1.0.0",
+    "@punica/common": "^1.0.0"
   }
 }

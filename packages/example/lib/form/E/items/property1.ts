@@ -6,18 +6,14 @@ const formItem: IFormItem = {
   getData: (): Promise<any> => {
     return new Promise(() => {});
   },
-  startup: ({ getItem }): Promise<any> => {
+  initializer: ({ formItem, getItem }): Promise<Array<IFormItem>> => {
     return new Promise((resolve) => {
       const property2 = getItem('property2');
 
       property2.required = false;
+      formItem.disabled = true;
 
-      resolve([property2]);
-    });
-  },
-  disabledChecking: (): Promise<boolean> => {
-    return new Promise((resolve) => {
-      resolve(true);
+      resolve([formItem, property2]);
     });
   }
 };

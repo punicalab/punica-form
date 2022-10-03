@@ -1,13 +1,16 @@
-import { Renderer } from '.';
+import { BaseListener } from '@punica/common';
+import { FormEvents, Renderer } from '@punica/form-model';
 
-export class FormItemRegister {
+export class FormItemRegister extends BaseListener {
   private static _instance: FormItemRegister;
   private _itemMap: Map<string, Renderer> = new Map<string, Renderer>();
 
   /**
    *
    */
-  private constructor() {}
+  private constructor() {
+    super();
+  }
 
   /**
    *
@@ -32,6 +35,8 @@ export class FormItemRegister {
     }
 
     this._itemMap.set(formItemKey, renderer);
+
+    this.trigger(FormEvents.UPDATE_REGISTER_ITEMS, this._itemMap.keys());
 
     return true;
   }

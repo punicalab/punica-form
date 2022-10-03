@@ -1,14 +1,12 @@
 import { IBaseFormItem } from './base';
 import {
   FormItemConverter,
-  DisabledChecking,
-  ErrorChecking,
-  HiddenChecking,
-  Control,
+  FormItemError,
+  FormItemControl,
   FormItemLayout,
-  GetData,
-  Submit,
-  Startup
+  FormItemGetData,
+  FormItemSubmit,
+  FormItemInitializer
 } from '.';
 
 export interface IFormItem extends IBaseFormItem {
@@ -19,11 +17,9 @@ export interface IFormItem extends IBaseFormItem {
   description?: string;
   converter?: FormItemConverter;
   layout?: FormItemLayout;
-  getData?: GetData;
-  errorChecking?: ErrorChecking;
-  disabledChecking?: DisabledChecking;
-  hiddenChecking?: HiddenChecking;
-  control?: Control;
-  submit?: Submit;
-  startup?: Startup;
+  getData?: FormItemGetData;
+  errorChecking?: FormItemError;
+  control?: FormItemControl;
+  submit?: FormItemSubmit;
+  initializer?: FormItemInitializer;
 }

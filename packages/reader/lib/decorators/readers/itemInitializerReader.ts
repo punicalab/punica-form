@@ -8,17 +8,17 @@ class Reader<E extends IEntity, F extends IFormItem> extends BaseReader<E, F> {
    * @param items
    */
   private async readItemsData(items: Array<F>, entity: E) {
-    for await (const item of items) {
-      const { hiddenChecking } = item;
+    for await (const formItem of items) {
+      const { initializer } = formItem;
 
-      if (hiddenChecking) {
-        const hidden = await hiddenChecking({
-          formItem: item,
+      if (initializer) {
+        const items = await initializer({
+          formItem,
           entity,
           getItem: this.getItem
         });
 
-        item.hidden = hidden;
+        this.writeItems(items);
       }
     }
   }

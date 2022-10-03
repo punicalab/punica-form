@@ -31,5 +31,11 @@
   },
   "scripty": {
     "path": "../../scripts/packages"
+  },
+  "dependencies": {
+    "@punica/util": "^1.0.0",
+    "@punica/common": "^1.0.0",
+    "@punica/converter":"^1.0.0"
+
   }
 }
