@@ -1,6 +1,7 @@
 import { IEntity } from '@punica/common';
 import { WriteToPropertyPath } from '@punica/util';
 import { BaseListener } from '@punica/common';
+import { FormItemRegister } from '@punica/form-register';
 import {
   IForm,
   IFormItem,
@@ -86,7 +87,10 @@ abstract class BaseFormController<E extends IEntity, F extends IFormItem>
     return new Promise(async (resolve) => {
       let updateMaps = false;
 
-      this.fireEvent(FormEvents.DATA_READING_STARTED, null);
+      this.fireEvent(
+        FormEvents.REGISTER_ITEMS,
+        FormItemRegister.getInstance().getKeys()
+      );
 
       if (formData) {
         this._formData = formData;
@@ -117,7 +121,7 @@ abstract class BaseFormController<E extends IEntity, F extends IFormItem>
         }
       });
 
-      this.fireEvent(FormEvents.DATA_READING_ENDED, null);
+      this.fireEvent(FormEvents.START, this._formData);
 
       resolve(this._formData);
     });
