@@ -1,6 +1,6 @@
 {
   "name": "@punica/form-controller",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "Form",
   "author": {
     "name": "Uryan Sezgin TEKE",
@@ -34,8 +34,8 @@
   },
   "dependencies": {
     "@punica/common": "^1.0.0",
-    "@punica/form-model": "^1.2.1",
-    "@punica/form-register": "^1.2.1",
+    "@punica/form-model": "^1.2.2",
+    "@punica/form-register": "^1.2.2",
     "@punica/util": "^1.0.0"
   }
 }

@@ -1,6 +1,6 @@
 {
   "name": "@punica/form-register",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "Form Reader",
   "author": {
     "name": "Uryan Sezgin TEKE",
@@ -35,6 +35,6 @@
   },
   "dependencies": {
     "@punica/common": "^1.0.0",
-    "@punica/form-model": "^1.2.1"
+    "@punica/form-model": "^1.2.2"
   }
 }
