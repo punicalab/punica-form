@@ -39,7 +39,6 @@ abstract class BaseReader<E extends IEntity, F extends IFormItem>
    */
   protected getItem: GetItem = <F>(property: string): F => {
     const { items, itemsMap } = this._form;
-
     const index = itemsMap[property];
     const item = items[index];
 
@@ -50,14 +49,14 @@ abstract class BaseReader<E extends IEntity, F extends IFormItem>
    *
    * @param writes
    */
-  protected writeItems: WriteItems = (writes: Array<IFormItem>): void => {
-    writes.forEach((item: IFormItem) => {
+  protected writeItems: WriteItems = async (items: Array<IFormItem>) => {
+    for await (const item of items) {
       const { itemsMap, items } = this._form;
       const { property } = item;
       const index = itemsMap[property];
 
       items[index] = item as F;
-    });
+    }
   };
 }
 

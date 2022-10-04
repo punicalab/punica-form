@@ -57,14 +57,14 @@ abstract class BaseFormController<E extends IEntity, F extends IFormItem>
    *
    * @param items
    */
-  protected writeItems: WriteItems = (items: Array<IFormItem>): void => {
-    items.forEach((item: IFormItem) => {
+  protected writeItems: WriteItems = async (items: Array<IFormItem>) => {
+    for await (const item of items) {
       const { itemsMap, items } = this._formData;
       const { property } = item;
       const index = itemsMap[property];
 
       items[index] = item as F;
-    });
+    }
   };
 
   /**
@@ -111,15 +111,16 @@ abstract class BaseFormController<E extends IEntity, F extends IFormItem>
       }
 
       //set update values
-      this._formData.items.forEach((item: F, index: number) => {
+      let index = 0;
+      for await (const item of this._formData.items) {
         item.updateValue = this.updateValue;
         item.updatePropertyValue = this.updatePropertyValue;
         item.getInitialEntity = this.getInitialEntity;
 
         if (updateMaps) {
-          this._formData.itemsMap[item.property] = index;
+          this._formData.itemsMap[item.property] = index++;
         }
-      });
+      }
 
       this.fireEvent(FormEvents.START, this._formData);
 
