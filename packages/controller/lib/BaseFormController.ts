@@ -122,8 +122,6 @@ abstract class BaseFormController<E extends IEntity, F extends IFormItem>
         }
       }
 
-      this.fireEvent(FormEvents.START, this._formData);
-
       resolve(this._formData);
     });
   }

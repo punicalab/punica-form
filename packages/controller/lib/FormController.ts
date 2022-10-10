@@ -26,7 +26,6 @@ class FormController<
     formItem.value = value;
 
     this.writeItems([formItem]);
-    this.fireEvent(FormEvents.UPDATE_ITEM, { formItemKey, value });
 
     if (control) {
       control({
@@ -35,14 +34,17 @@ class FormController<
         getItem: this.getItem
       }).then((formItems: Array<IFormItem>) => {
         this.writeItems(formItems);
-        this.fireEvent(FormEvents.UPDATE_CONTROL_ITEMS, formItems);
+        this.fireEvent(FormEvents.UPDATE_ITEM, {
+          formItemKey,
+          value,
+          formItems
+        });
         this.fireEvent(FormEvents.UPDATE, this._formData);
       });
-
-      return;
+    } else {
+      this.fireEvent(FormEvents.UPDATE_ITEM, { formItemKey, value });
+      this.fireEvent(FormEvents.UPDATE, this._formData);
     }
-
-    this.fireEvent(FormEvents.UPDATE, this._formData);
   }
 }
 

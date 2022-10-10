@@ -1,6 +1,6 @@
 {
   "name": "@punica/form-example",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "description": "Form Examples",
   "author": {
     "name": "Uryan Sezgin TEKE",
@@ -22,7 +22,7 @@
   },
   "dependencies": {
     "@punica/common": "^1.0.0",
-    "@punica/form-model": "^1.2.2",
-    "@punica/form-register": "^1.2.2"
+    "@punica/form-model": "^1.2.3",
+    "@punica/form-register": "^1.2.3"
   }
 }

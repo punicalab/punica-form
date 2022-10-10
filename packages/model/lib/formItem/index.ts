@@ -1,4 +1,5 @@
 export * from './base';
+export * from './define';
 export * from './FormItemSubmit';
 export * from './FormItemError';
 export * from './FormItemControl';
