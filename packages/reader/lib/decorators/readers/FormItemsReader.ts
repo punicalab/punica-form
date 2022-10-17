@@ -1,6 +1,5 @@
 import { IEntity } from '@punica/common';
-import { IForm, IFormItem } from '@punica/form-model';
-import { FormItemRegister } from '@punica/form-register';
+import { IForm, IFormItem, FormItemRegister } from '@punica/form';
 import BaseReader from '../base';
 
 class Reader<E extends IEntity, F extends IFormItem> extends BaseReader<E, F> {

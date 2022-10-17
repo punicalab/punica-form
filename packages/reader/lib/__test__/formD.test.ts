@@ -1,4 +1,4 @@
-import { IForm } from '@punica/form-model';
+import { IForm } from '@punica/form';
 import { FormD } from '@punica/form-example';
 import createReader from '..';
 

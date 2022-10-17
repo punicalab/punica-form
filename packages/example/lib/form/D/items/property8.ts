@@ -1,4 +1,4 @@
-import { IFormItem } from '@punica/form-model';
+import { IFormItem } from '@punica/form';
 
 const formItem: IFormItem = {
   label: 'Property 8',

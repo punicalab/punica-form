@@ -1,5 +1,5 @@
 import { Reader } from './reader';
-import { IReader } from '@punica/form-model';
+import { IReader } from '@punica/form';
 import {
   FormChapterReader,
   FormItemsReader,

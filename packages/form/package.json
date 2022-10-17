@@ -1,15 +1,14 @@
 {
-  "name": "@punica/form-register",
-  "version": "1.2.3",
-  "description": "Form Reader",
+  "name": "@punica/form",
+  "version": "1.0.0",
+  "description": "Form",
   "author": {
     "name": "Uryan Sezgin TEKE",
     "email": "uryan.sezgin.teke@gmail.com",
     "url": "https://github.com/uryansezginteke"
   },
   "keywords": [
-    "form",
-    "register"
+    "form"
   ],
   "private": false,
   "license": "MIT",
@@ -35,6 +34,7 @@
   },
   "dependencies": {
     "@punica/common": "^1.0.0",
-    "@punica/form-model": "^1.2.3"
+    "@punica/converter": "^1.0.0",
+    "@punica/util": "^1.0.0"
   }
 }

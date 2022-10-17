@@ -1,5 +1,5 @@
 import { IEntity } from '@punica/common';
-import { IForm, IFormItem } from '@punica/form-model';
+import { IForm, IFormItem } from '@punica/form';
 import { ReadPropertyPath } from '@punica/util';
 import BaseReader from '../base';
 
