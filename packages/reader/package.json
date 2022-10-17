@@ -38,7 +38,7 @@
   },
   "devDependencies": {
     "@punica/common": "^1.0.0",
-    "@punica/form-example": "^1.2.3",
+    "@punica/form-example": "^1.0.0",
     "@punica/util": "^1.0.0"
   }
 }
