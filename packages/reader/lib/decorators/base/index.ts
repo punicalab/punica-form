@@ -1,11 +1,5 @@
 import { IEntity } from '@punica/common';
-import {
-  IForm,
-  IFormItem,
-  IReader,
-  GetItem,
-  WriteItems
-} from '@punica/form-model';
+import { IForm, IFormItem, IReader, GetItem, WriteItems } from '@punica/form';
 
 abstract class BaseReader<E extends IEntity, F extends IFormItem>
   implements IReader<E, F>
@@ -47,7 +41,7 @@ abstract class BaseReader<E extends IEntity, F extends IFormItem>
 
   /**
    *
-   * @param writes
+   * @param items
    */
   protected writeItems: WriteItems = async (items: Array<IFormItem>) => {
     for await (const item of items) {

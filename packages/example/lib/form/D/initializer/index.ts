@@ -1,4 +1,4 @@
-import { IForm, IFormItem, Initializer } from '@punica/form-model';
+import { IForm, IFormItem, Initializer } from '@punica/form';
 
 const initializer: Initializer = <F extends IFormItem>(
   formData: IForm<F>

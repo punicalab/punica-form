@@ -1,9 +1,14 @@
+import { FormItemRegister, Renderer } from '../../..';
+
 /**
  *
  * @param type
+ * @param renderer
  * @returns
  */
-export const defineFormItem = <T>(type: string) => {
+export const defineFormItem = <T>(type: string, renderer: Renderer) => {
+  FormItemRegister.getInstance().register(type, renderer);
+
   return (data: T) => {
     return (target: any, propertyKey: string) => {
       const allMetadata = Reflect.getMetadata(type, target) || {};

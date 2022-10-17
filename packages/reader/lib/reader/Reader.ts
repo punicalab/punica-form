@@ -8,7 +8,7 @@ import {
   DECORATOR_ACTIONS,
   DECORATOR_INITIALIZER,
   DECORATOR_DESCRIPTION
-} from '@punica/form-model';
+} from '@punica/form';
 
 /**
  *

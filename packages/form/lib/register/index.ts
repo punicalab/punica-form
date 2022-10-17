@@ -1,5 +1,5 @@
 import { BaseListener } from '@punica/common';
-import { Renderer } from '@punica/form-model';
+import { Renderer } from '..';
 
 export class FormItemRegister extends BaseListener {
   private static _instance: FormItemRegister;

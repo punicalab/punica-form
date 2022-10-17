@@ -1,7 +1,6 @@
 import { IEntity } from '@punica/common';
 import { WriteToPropertyPath } from '@punica/util';
 import { BaseListener } from '@punica/common';
-import { FormItemRegister } from '@punica/form-register';
 import {
   IForm,
   IFormItem,
@@ -9,13 +8,14 @@ import {
   GetItem,
   WriteItems,
   FormEvents,
-  IFormController
-} from '@punica/form-model';
+  IFormController,
+  FormItemRegister
+} from '..';
 
 /**
  *
  */
-abstract class BaseFormController<E extends IEntity, F extends IFormItem>
+export abstract class BaseFormController<E extends IEntity, F extends IFormItem>
   extends BaseListener
   implements IFormController<E, F>
 {
@@ -258,5 +258,3 @@ abstract class BaseFormController<E extends IEntity, F extends IFormItem>
    */
   abstract updateValue(formItemKey: string, value: any): void;
 }
-
-export default BaseFormController;

@@ -7,5 +7,6 @@ module.exports = {
   testRegex: '(/__test__/.*|(\\.|/)(test|spec))\\.ts?$',
   moduleFileExtensions: ['ts', 'js', 'json', 'node'],
   clearMocks: true,
-  setupFiles: ['<rootDir>jest/jest-setup-file.ts']
+  setupFiles: ['<rootDir>jest/jest-setup-file.ts'],
+  coverageReporters: ['clover', 'json', 'lcov', ['text', { skipFull: true }]]
 };

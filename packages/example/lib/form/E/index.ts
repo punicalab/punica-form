@@ -1,4 +1,4 @@
-import { Title, Chapter } from '@punica/form-model';
+import { Title, Chapter } from '@punica/form';
 import { FormItemA, FormItemB, FormItemC } from '../../formItems';
 import chapter1 from './chapter/chapter1';
 import chapter2 from './chapter/chapter2';

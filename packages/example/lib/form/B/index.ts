@@ -1,5 +1,5 @@
 import { IEntity } from '@punica/common';
-import { Title } from '@punica/form-model';
+import { Title } from '@punica/form';
 import { FormItemA, FormItemB } from '../../formItems';
 import property4 from './items/property4';
 import property5 from './items/property5';

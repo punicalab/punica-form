@@ -1,15 +1,8 @@
 import { IPropertyDecorator } from '@punica/common';
-import { FormItemRegister } from '@punica/form-register';
-import { defineFormItem, IFormItem } from '@punica/form-model';
-
-const DECORATOR_FORM_ITEM_C = 'property:form-item-c';
+import { defineFormItem, IFormItem } from '@punica/form';
 
 const FormItemC: IPropertyDecorator<IFormItem> = defineFormItem<IFormItem>(
-  DECORATOR_FORM_ITEM_C
-);
-
-FormItemRegister.getInstance().register(
-  DECORATOR_FORM_ITEM_C,
+  'form-item-c',
   (data: IFormItem): any => {
     return data;
   }

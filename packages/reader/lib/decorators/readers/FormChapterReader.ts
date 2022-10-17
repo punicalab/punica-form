@@ -5,7 +5,7 @@ import {
   IFormItem,
   IFormChapterMap,
   DECORATOR_CHAPTER
-} from '@punica/form-model';
+} from '@punica/form';
 
 class Reader<E extends IEntity, F extends IFormItem> extends BaseReader<E, F> {
   /**

@@ -1,4 +1,4 @@
-import { IFormChapter } from '@punica/form-model';
+import { IFormChapter } from '@punica/form';
 
 const chapter: IFormChapter = {
   title: 'Chapter Property 1',
