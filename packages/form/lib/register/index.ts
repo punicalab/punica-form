@@ -25,27 +25,27 @@ export class FormItemRegister extends BaseListener {
 
   /**
    *
-   * @param formItemKey
+   * @param property
    * @param renderer
    * @returns
    */
-  public register(formItemKey: string, renderer: Renderer): boolean {
-    if (this._itemMap.has(formItemKey)) {
+  public register(property: string, renderer: Renderer): boolean {
+    if (this._itemMap.has(property)) {
       return false;
     }
 
-    this._itemMap.set(formItemKey, renderer);
+    this._itemMap.set(property, renderer);
 
     return true;
   }
 
   /**
    *
-   * @param formItemKey
+   * @param property
    * @returns
    */
-  public getItem(formItemKey: string): Renderer {
-    return this._itemMap.get(formItemKey);
+  public getItem(property: string): Renderer {
+    return this._itemMap.get(property);
   }
 
   /**

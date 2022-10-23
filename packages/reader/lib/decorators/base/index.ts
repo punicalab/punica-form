@@ -52,6 +52,24 @@ abstract class BaseReader<E extends IEntity, F extends IFormItem>
       items[index] = item as F;
     }
   };
+
+  /**
+   *
+   * @param key
+   * @returns
+   */
+  public getStoreItem(key: string): any {
+    return this._form.store.get(key);
+  }
+
+  /**
+   *
+   * @param key
+   * @param value
+   */
+  public setStoreItem(key: string, value: any): void {
+    this._form.store.set(key, value);
+  }
 }
 
 export default BaseReader;

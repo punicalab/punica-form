@@ -1,5 +1,5 @@
 import { IEntity } from '@punica/common';
-import { GetItem, IFormItem } from '.';
+import { GetItem, IFormItem, GetStoreItem, SetStoreItem } from '.';
 
 export type ErrorDetail = {
   error: boolean;
@@ -11,5 +11,6 @@ export type FormItemError = {
     formItem: F;
     entity: E;
     getItem: GetItem;
+    store?: { get: GetStoreItem; set: SetStoreItem };
   }): Promise<ErrorDetail>;
 };

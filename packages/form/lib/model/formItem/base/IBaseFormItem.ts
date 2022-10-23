@@ -1,5 +1,10 @@
 import { IEntity } from '@punica/common';
-import { UpdateValue, UpdatePropertyValue } from '.';
+import {
+  UpdateValue,
+  UpdatePropertyValue,
+  GetStoreItem,
+  SetStoreItem
+} from '.';
 
 export type IBaseFormItem = {
   type?: string;
@@ -13,6 +18,8 @@ export type IBaseFormItem = {
   getInitialEntity?: () => IEntity;
   updateValue?: UpdateValue;
   updatePropertyValue?: UpdatePropertyValue;
+  getStoreItem?: GetStoreItem;
+  setStoreItem?: SetStoreItem;
 
   [key: string]: any;
 };
