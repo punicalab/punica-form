@@ -35,6 +35,8 @@ export abstract class BaseFormController<E extends IEntity, F extends IFormItem>
     this.updateValue = this.updateValue.bind(this);
     this.getInitialEntity = this.getInitialEntity.bind(this);
     this.updatePropertyValue = this.updatePropertyValue.bind(this);
+    this.getStoreItem = this.getStoreItem.bind(this);
+    this.setStoreItem = this.setStoreItem.bind(this);
   }
 
   /**
@@ -116,6 +118,8 @@ export abstract class BaseFormController<E extends IEntity, F extends IFormItem>
         item.updateValue = this.updateValue;
         item.updatePropertyValue = this.updatePropertyValue;
         item.getInitialEntity = this.getInitialEntity;
+        item.getStoreItem = this.getStoreItem;
+        item.setStoreItem = this.setStoreItem;
 
         if (updateMaps) {
           this._formData.itemsMap[item.property] = index++;
@@ -166,7 +170,8 @@ export abstract class BaseFormController<E extends IEntity, F extends IFormItem>
           const { error, errorMessage } = await errorChecking({
             formItem: item,
             entity: this._entity,
-            getItem: this.getItem
+            getItem: this.getItem,
+            store: { get: this.getStoreItem, set: this.setStoreItem }
           });
 
           if (error) {
@@ -198,24 +203,20 @@ export abstract class BaseFormController<E extends IEntity, F extends IFormItem>
 
   /**
    *
-   * @param formItemKey
    * @param property
-   * @param data
+   * @param key
+   * @param value
    */
-  public updatePropertyValue(
-    formItemKey: string,
-    property: string,
-    data: any
-  ): void {
-    const item = this.getItem(formItemKey);
+  public updatePropertyValue(property: string, key: string, value: any): void {
+    const item = this.getItem(property);
 
-    item[property] = data;
+    item[key] = value;
 
     this.writeItems([item]);
     this.fireEvent(FormEvents.UPDATE_PROPERTY_VALUE, {
-      formItemKey,
       property,
-      data
+      key,
+      value
     });
     this.fireEvent(FormEvents.UPDATE, this._formData);
   }
@@ -234,7 +235,8 @@ export abstract class BaseFormController<E extends IEntity, F extends IFormItem>
           await submit({
             formItem: item,
             entity: this._entity,
-            getItem: this.getItem
+            getItem: this.getItem,
+            store: { get: this.getStoreItem, set: this.setStoreItem }
           });
         }
       }
@@ -253,8 +255,26 @@ export abstract class BaseFormController<E extends IEntity, F extends IFormItem>
 
   /**
    *
-   * @param formItemKey
+   * @param key
+   * @returns
+   */
+  public getStoreItem(key: string): any {
+    return this._formData.store.get(key);
+  }
+
+  /**
+   *
+   * @param key
    * @param value
    */
-  abstract updateValue(formItemKey: string, value: any): void;
+  public setStoreItem(key: string, value: any): void {
+    this._formData.store.set(key, value);
+  }
+
+  /**
+   *
+   * @param property
+   * @param value
+   */
+  abstract updateValue(property: string, value: any): void;
 }

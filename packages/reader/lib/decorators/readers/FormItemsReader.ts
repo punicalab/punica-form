@@ -16,8 +16,8 @@ class Reader<E extends IEntity, F extends IFormItem> extends BaseReader<E, F> {
       const registeredItems = FormItemRegister.getInstance().getKeys();
 
       //read form item
-      for (const formItemKey of registeredItems) {
-        const formItems = Reflect.getMetadata(formItemKey, entity);
+      for (const property of registeredItems) {
+        const formItems = Reflect.getMetadata(property, entity);
 
         for (const key in formItems) {
           formItemPool[key] = { ...formItems[key] };

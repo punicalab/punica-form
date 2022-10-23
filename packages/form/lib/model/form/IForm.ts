@@ -15,4 +15,5 @@ export interface IForm<F extends IFormItem> {
   itemsMap?: IItemMap;
   chapterMap?: IFormChapterMap;
   initializer?: Initializer;
+  store?: Map<string, any>;
 }

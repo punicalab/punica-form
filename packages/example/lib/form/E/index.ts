@@ -1,4 +1,4 @@
-import { Title, Chapter } from '@punica/form';
+import { Title, Chapter, Store } from '@punica/form';
 import { FormItemA, FormItemB, FormItemC } from '../../formItems';
 import chapter1 from './chapter/chapter1';
 import chapter2 from './chapter/chapter2';
@@ -7,6 +7,12 @@ import property2 from './items/property2';
 import property3 from './items/property3';
 
 @Title('E Form')
+@Store(
+  new Map([
+    ['country', 'Chile'],
+    ['name', 'Tom']
+  ])
+)
 class FormE {
   public id = '';
   @Chapter(chapter1)

@@ -15,11 +15,11 @@ class FormController<
 
   /**
    *
-   * @param formItemKey
+   * @param property
    * @param value
    */
-  public updateValue(formItemKey: string, value: any): void {
-    const formItem = this.getItem(formItemKey);
+  public updateValue(property: string, value: any): void {
+    const formItem = this.getItem(property);
     const { control } = formItem;
 
     formItem.value = value;
@@ -30,18 +30,15 @@ class FormController<
       control({
         formItem,
         entity: this._entity,
-        getItem: this.getItem
+        getItem: this.getItem,
+        store: { get: this.getStoreItem, set: this.setStoreItem }
       }).then((formItems: Array<IFormItem>) => {
         this.writeItems(formItems);
-        this.fireEvent(FormEvents.UPDATE_ITEM, {
-          formItemKey,
-          value,
-          formItems
-        });
+        this.fireEvent(FormEvents.UPDATE_ITEM, [formItem, ...formItems]);
         this.fireEvent(FormEvents.UPDATE, this._formData);
       });
     } else {
-      this.fireEvent(FormEvents.UPDATE_ITEM, { formItemKey, value });
+      this.fireEvent(FormEvents.UPDATE_ITEM, [formItem]);
       this.fireEvent(FormEvents.UPDATE, this._formData);
     }
   }

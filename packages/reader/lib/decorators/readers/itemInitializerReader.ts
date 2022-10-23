@@ -15,7 +15,8 @@ class Reader<E extends IEntity, F extends IFormItem> extends BaseReader<E, F> {
         const items = await initializer({
           formItem,
           entity,
-          getItem: this.getItem
+          getItem: this.getItem,
+          store: { get: this.getStoreItem, set: this.setStoreItem }
         });
 
         this.writeItems(items);
