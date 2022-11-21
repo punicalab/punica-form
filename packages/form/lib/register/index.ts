@@ -1,16 +1,13 @@
-import { BaseListener } from '@punica/common';
 import { Renderer } from '..';
 
-export class FormItemRegister extends BaseListener {
+export class FormItemRegister {
   private static _instance: FormItemRegister;
   private _itemMap: Map<string, Renderer> = new Map<string, Renderer>();
 
   /**
    *
    */
-  private constructor() {
-    super();
-  }
+  private constructor() {}
 
   /**
    *
