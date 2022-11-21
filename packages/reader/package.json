@@ -1,6 +1,6 @@
 {
   "name": "@punica/form-reader",
-  "version": "1.2.5",
+  "version": "1.2.6",
   "description": "Form Schema Reader",
   "author": {
     "name": "Uryan Sezgin TEKE",
@@ -34,11 +34,11 @@
     "path": "../../scripts/packages"
   },
   "dependencies": {
-    "@punica/form": "^1.0.1"
+    "@punica/form": "^1.0.2"
   },
   "devDependencies": {
-    "@punica/common": "^1.0.0",
-    "@punica/form-example": "^1.0.1",
+    "@punica/common": "^1.0.1",
+    "@punica/form-example": "^1.0.2",
     "@punica/util": "^1.0.0"
   }
 }

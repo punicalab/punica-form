@@ -16,7 +16,7 @@ import {
  *
  */
 export abstract class BaseFormController<E extends IEntity, F extends IFormItem>
-  extends BaseListener
+  extends BaseListener<FormEvents>
   implements IFormController<E, F>
 {
   protected _formData: IForm<F>;
