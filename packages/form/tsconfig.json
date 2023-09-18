@@ -3,7 +3,8 @@
   "compilerOptions": {
     "composite": false,
     "rootDir": "lib",
-    "outDir": "dist"
+    "outDir": "dist",
+    "allowJs": true
   },
   "include": ["lib"]
 }

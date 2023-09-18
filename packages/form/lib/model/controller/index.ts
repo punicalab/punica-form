@@ -1,23 +1,20 @@
 import { IEntity } from '@punica/common';
 import {
-  IForm,
+  Form,
   IFormItem,
-  IReader,
-  UpdatePropertyValue,
-  UpdateValue,
+  FormItemUpdateValue,
   GetStoreItem,
   SetStoreItem
 } from '..';
 
-export interface IFormController<E extends IEntity, F extends IFormItem> {
-  start(reader: IReader<E, F>, formData: IForm<F>): Promise<IForm<F>>;
+export interface IFormController<F extends IFormItem, E extends IEntity> {
+  start(): Promise<Form<F>>;
   getEntity(): Promise<E>;
   validate(): Promise<boolean>;
-  reset(): void;
-  submitControl(): Promise<boolean>;
+  reset(): Promise<void>;
+  controlForAfterSubmit(): Promise<void>;
   getInitialEntity(): IEntity;
-  updatePropertyValue: UpdatePropertyValue;
-  updateValue: UpdateValue;
+  updateValue: FormItemUpdateValue;
   getStoreItem: GetStoreItem;
   setStoreItem: SetStoreItem;
 }

@@ -2,8 +2,9 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "composite": false,
-    "rootDir": "lib",
-    "outDir": "dist"
+    "rootDir": "src",
+    "outDir": "dist",
+    "allowJs": true
   },
-  "include": ["lib"]
+  "include": ["src"]
 }

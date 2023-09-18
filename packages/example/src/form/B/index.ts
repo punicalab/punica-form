@@ -1,0 +1,18 @@
+import { IEntity } from '@punica/common';
+import { FormItemA, FormItemB } from '../../formItems';
+import property4 from './items/property4';
+import property5 from './items/property5';
+import property6 from './items/property6';
+
+class FormB implements IEntity {
+  @FormItemA(property4)
+  public property4 = '';
+  @FormItemA(property5)
+  public property5 = '';
+  @FormItemB(property6)
+  public property6: Date = new Date();
+
+  public id = '';
+}
+
+export default FormB;
