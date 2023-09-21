@@ -1,11 +1,11 @@
 {
   "name": "@punica/form-example",
-  "version": "1.0.2",
+  "version": "1.0.0",
   "description": "Form Examples",
   "author": {
     "name": "Uryan Sezgin TEKE",
     "email": "uryan.sezgin.teke@gmail.com",
-    "url": "https://github.com/uryansezginteke"
+    "url": "https://github.com/punicalab"
   },
   "private": true,
   "license": "MIT",

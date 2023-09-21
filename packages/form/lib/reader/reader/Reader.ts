@@ -1,11 +1,11 @@
 import { IEntity } from '@punica/common';
-import { IReader } from '../..';
 import {
+  IReader,
   IFormItem,
   Form,
   DECORATOR_INITIALIZER,
   DECORATOR_STORE
-} from '../../..';
+} from '../..';
 
 /**
  *
@@ -18,13 +18,13 @@ class Reader<F extends IFormItem, E extends IEntity> implements IReader<F, E> {
    * @param entity
    * @returns
    */
-  public read(entity: E): Promise<Form<F>> {
+  public read(entity: E, initialForm: Form<F>): Promise<Form<F>> {
     return new Promise((resolve, reject) => {
       if (!entity) {
         reject();
       }
 
-      this._form = {
+      this._form = initialForm || {
         items: null,
         initializer: null,
         store: null

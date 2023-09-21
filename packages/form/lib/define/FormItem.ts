@@ -1,4 +1,5 @@
-import { FormItemRegister, Renderer } from '..';
+import { IPropertyDecorator } from '@punica/common';
+import { FormItemRegister, IRender } from '..';
 
 /**
  *
@@ -6,7 +7,10 @@ import { FormItemRegister, Renderer } from '..';
  * @param renderer
  * @returns
  */
-const defineFormItem = <T>(type: string, renderer: Renderer) => {
+const defineFormItem = <T>(
+  type: string,
+  renderer: IRender<any>
+): IPropertyDecorator<T> => {
   FormItemRegister.getInstance().register(type, renderer);
 
   return (data: T) => {

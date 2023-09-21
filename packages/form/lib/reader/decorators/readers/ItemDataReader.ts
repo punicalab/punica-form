@@ -1,6 +1,6 @@
 import { IEntity } from '@punica/common';
-import { Form, IFormItem } from '../../..';
 import { ReadPropertyPath } from '@punica/util';
+import { Form, IFormItem } from '../../..';
 import BaseReader from '../base';
 
 class Reader<F extends IFormItem, E extends IEntity> extends BaseReader<F, E> {
@@ -13,7 +13,8 @@ class Reader<F extends IFormItem, E extends IEntity> extends BaseReader<F, E> {
   private getPropertyData(entity: E, item: F) {
     const { property } = item;
 
-    if (property.includes('/')) return ReadPropertyPath(entity, property);
+    if ((property as string).includes('/'))
+      return ReadPropertyPath(entity, property);
 
     return entity[property];
   }

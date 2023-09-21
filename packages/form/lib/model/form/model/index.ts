@@ -5,7 +5,8 @@ export type Form<F extends IFormItem> = {
   items?: Array<F>;
   store?: Record<string, any>;
   initializer?: Initializer;
-  services?: IService;
+  services?: Array<IService>;
+  itemsMap?: Record<string, number>;
 
   [key: string]: any;
 };

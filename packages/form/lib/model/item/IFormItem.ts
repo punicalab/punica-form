@@ -10,12 +10,12 @@ import {
 } from './model';
 
 export interface IFormItem {
+  property?: string;
   label: string;
   required?: boolean;
   converter?: FormItemConverter;
   layout?: FormItemLayout;
   type?: string;
-  property?: string;
   value?: any;
   initialValue?: any;
   error?: boolean;

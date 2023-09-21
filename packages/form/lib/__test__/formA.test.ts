@@ -1,10 +1,12 @@
-import { Form } from '../..';
+import { Form, createInitialReader } from '../..';
 import { FormA } from '@punica/form-example';
-import { createInitialReader } from '..';
 
 describe('formA', () => {
   let formData: Form<any>;
 
+  /**
+   *
+   */
   beforeAll(async () => {
     const entity = new FormA();
     const reader = createInitialReader();
@@ -12,7 +14,10 @@ describe('formA', () => {
     formData = await reader.read(entity);
   });
 
+  /**
+   *
+   */
   test('read entity schema', () => {
-    expect(formData.title).toEqual('A Form');
+    expect(formData.items?.length).toEqual(3);
   });
 });

@@ -1,10 +1,18 @@
 import { IEntity } from '@punica/common';
-import { Form, IFormItem, IReader, GetItem, WriteItems } from '../../../';
+import {
+  Form,
+  IFormItem,
+  IReader,
+  GetItem,
+  WriteItems,
+  Command
+} from '../../../';
 
 abstract class BaseReader<F extends IFormItem, E extends IEntity>
   implements IReader<F, E>
 {
   private _form: Form<F>;
+  private _entity: E;
   protected reader: IReader<F, E>;
 
   /**
@@ -13,6 +21,24 @@ abstract class BaseReader<F extends IFormItem, E extends IEntity>
    */
   constructor(reader: IReader<F, E>) {
     this.reader = reader;
+
+    this.readStore = this.readStore.bind(this);
+    this.writeStore = this.writeStore.bind(this);
+  }
+
+  /**
+   *
+   * @param item
+   * @returns
+   */
+  protected getCommand(item: F): Command<F, E> {
+    return {
+      formItem: item,
+      entity: this._entity,
+      getItem: this.getItem,
+      readStore: this.readStore,
+      writeStore: this.writeStore
+    };
   }
 
   /**
@@ -58,18 +84,18 @@ abstract class BaseReader<F extends IFormItem, E extends IEntity>
    * @param key
    * @returns
    */
-  public getStoreItem(key: string): any {
-    return this._form.store.get(key);
-  }
+  protected readStore = (key: string): any => {
+    return this._form.store[key];
+  };
 
   /**
    *
    * @param key
    * @param value
    */
-  public setStoreItem(key: string, value: any): void {
-    this._form.store.set(key, value);
-  }
+  protected writeStore = (key: string, value: any) => {
+    this._form.store[key] = value;
+  };
 }
 
 export default BaseReader;

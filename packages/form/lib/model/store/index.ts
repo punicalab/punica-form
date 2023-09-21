@@ -1,3 +1,3 @@
 export * from './IStoreManager';
-export * from './GetStoreItem';
-export * from './SetStoreItem';
+export * from './ReadStore';
+export * from './WriteStore';

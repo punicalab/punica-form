@@ -1,0 +1,18 @@
+@startuml FormItemRegister
+
+!include ./model.puml!IRender
+
+class FormItemRegister<F extends IFormItem> {
+    - {static} instance: FormItemRegister
+    - FormItemRegister()
+    
+    + {static} getInstance(): FormItemRegister
+    + getItem(identifier: string): IRender<F>
+    + getItems(): Map<string, IRender<F>>
+    + getItemsKeys(): Array<string>
+}
+
+FormItemRegister "1" *-- FormItemRegister : contains
+FormItemRegister o-- IRender : aggregation
+
+@enduml

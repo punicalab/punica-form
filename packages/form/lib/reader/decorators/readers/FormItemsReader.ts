@@ -13,7 +13,7 @@ class Reader<F extends IFormItem, E extends IEntity> extends BaseReader<F, E> {
       const items = new Array<F>();
       const keys = Object.keys(entity);
       const formItemPool: any = {};
-      const registeredItems = FormItemRegister.getInstance().getKeys();
+      const registeredItems = FormItemRegister.getInstance().getItemKeys();
 
       //read form item
       for (const property of registeredItems) {

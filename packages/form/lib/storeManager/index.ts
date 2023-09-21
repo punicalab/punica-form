@@ -1,4 +1,4 @@
-import { IStoreManager } from '../model';
+import { IStoreManager } from '..';
 
 /**
  *
@@ -16,7 +16,7 @@ export class StoreManager implements IStoreManager {
    * @param store
    */
   setStore(store: Record<string, any>) {
-    this._store = store;
+    this._store = store || {};
   }
 
   /**

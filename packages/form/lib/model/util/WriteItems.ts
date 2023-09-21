@@ -1,3 +1,3 @@
 import { IFormItem } from '..';
 
-export type WriteItems = (items: Array<IFormItem>) => void;
+export type WriteItems = (items: Array<IFormItem>) => Promise<void>;

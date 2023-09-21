@@ -1,8 +1,8 @@
-import { Renderer } from '..';
+import { IFormItem, IRender } from '..';
 
-export class FormItemRegister {
-  private static _instance: FormItemRegister;
-  private _itemMap: Map<string, Renderer> = new Map<string, Renderer>();
+export class FormItemRegister<F extends IFormItem> {
+  private static _instance: FormItemRegister<any>;
+  private _itemMap: Map<string, IRender<F>> = new Map<string, IRender<F>>();
 
   /**
    *
@@ -12,7 +12,7 @@ export class FormItemRegister {
   /**
    *
    */
-  public static getInstance(): FormItemRegister {
+  public static getInstance(): FormItemRegister<any> {
     if (!FormItemRegister._instance) {
       FormItemRegister._instance = new FormItemRegister();
     }
@@ -26,7 +26,7 @@ export class FormItemRegister {
    * @param renderer
    * @returns
    */
-  public register(property: string, renderer: Renderer): boolean {
+  public register(property: string, renderer: IRender<F>): boolean {
     if (this._itemMap.has(property)) {
       return false;
     }
@@ -41,7 +41,7 @@ export class FormItemRegister {
    * @param property
    * @returns
    */
-  public getItem(property: string): Renderer {
+  public getItem(property: string): IRender<F> {
     return this._itemMap.get(property);
   }
 
@@ -49,7 +49,7 @@ export class FormItemRegister {
    *
    * @returns
    */
-  public getItems(): Map<string, Renderer> {
+  public getItems(): Map<string, IRender<F>> {
     return this._itemMap;
   }
 
@@ -57,7 +57,7 @@ export class FormItemRegister {
    *
    * @returns
    */
-  public getKeys(): IterableIterator<string> {
+  public getItemKeys(): IterableIterator<string> {
     return this._itemMap.keys();
   }
 }

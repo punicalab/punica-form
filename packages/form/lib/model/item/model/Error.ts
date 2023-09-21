@@ -4,7 +4,9 @@ import { IFormItem } from '..';
 
 export type ErrorDetail = {
   error: boolean;
-  errorMessages: Array<string>;
+  errorMessages?: Array<string>;
+
+  [key: string]: any;
 };
 
 export type FormItemError = {

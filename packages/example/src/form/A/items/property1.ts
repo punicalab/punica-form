@@ -6,10 +6,10 @@ const formItem: IFormItem = {
   getData: (): Promise<any> => {
     return new Promise(() => {});
   },
-  initializer: ({ formItem }): Promise<Array<IFormItem>> => {
+  initializer: ({ formItem, writeStore }): Promise<Array<IFormItem>> => {
     return new Promise((resolve) => {
       formItem.disabled = true;
-
+      writeStore('key', 'value');
       resolve([formItem]);
     });
   },

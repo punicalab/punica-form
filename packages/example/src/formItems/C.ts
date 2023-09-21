@@ -3,8 +3,10 @@ import { defineFormItem, IFormItem } from '@punica/form';
 
 const FormItemC: IPropertyDecorator<IFormItem> = defineFormItem<IFormItem>(
   'form-item-c',
-  (data: IFormItem): any => {
-    return data;
+  {
+    create: (data: IFormItem): any => {
+      return data;
+    }
   }
 );
 

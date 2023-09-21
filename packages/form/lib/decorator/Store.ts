@@ -1,5 +1,5 @@
 import { IClassDecorator } from '@punica/common';
-import { defineFormProperty } from '../define';
+import { defineFormProperty } from '..';
 
 export const DECORATOR_STORE = 'form-store';
 

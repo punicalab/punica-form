@@ -1,0 +1,13 @@
+@startuml Model
+
+    !include ./model.puml!IStoreMananger
+
+    class StoreManager{
+        - _store: Record<string, any>
+        + readStore: ReadStore
+        + writeStore: WriteStore
+    }
+
+    StoreManager ..|> IStoreMananger
+
+@enduml

@@ -4,22 +4,20 @@ import {
   Form,
   IFormItem,
   IReader,
-  GetItem,
-  WriteItems,
   FormEvents,
-  IFormController,
   FormItemRegister,
   Command,
-  IStoreManager
+  IStoreManager,
+  createInitialReader
 } from '..';
 
 /**
  *
  */
-export class FormController<F extends IFormItem, E extends IEntity>
-  extends BaseListener<FormEvents>
-  implements IFormController<F, E>
-{
+export class FormController<
+  F extends IFormItem,
+  E extends IEntity
+> extends BaseListener<FormEvents> {
   private _storeManager: IStoreManager;
   private _formData: Form<F>;
   private _entity: E;
@@ -57,9 +55,6 @@ export class FormController<F extends IFormItem, E extends IEntity>
 
       this._storeManager = storeManager;
       this._formData = formData;
-
-      //create initial entity
-      this.getEntity().then((d: E) => (this._entity = d));
     } else if (args.length === 3) {
       const [storeManager, entity, reader] = args;
 
@@ -69,6 +64,8 @@ export class FormController<F extends IFormItem, E extends IEntity>
     }
 
     this.updateValue = this.updateValue.bind(this);
+    this.readStore = this.readStore.bind(this);
+    this.writeStore = this.writeStore.bind(this);
   }
 
   /**
@@ -90,8 +87,8 @@ export class FormController<F extends IFormItem, E extends IEntity>
       formItem: item,
       entity: this._entity,
       getItem: this.getItem,
-      getStoreItem: this.getStoreItem,
-      setStoreItem: this.setStoreItem
+      readStore: this.readStore,
+      writeStore: this.writeStore
     };
   }
 
@@ -100,9 +97,9 @@ export class FormController<F extends IFormItem, E extends IEntity>
    * @param property
    * @returns
    */
-  public getItem: GetItem = <F>(property: string): F => {
+  public getItem = <F>(property: keyof E): F => {
     const { items, itemsMap } = this._formData;
-    const itemIndex = itemsMap[property];
+    const itemIndex = itemsMap[property as string];
 
     if (!Number.isInteger(itemIndex)) {
       return null;
@@ -115,7 +112,7 @@ export class FormController<F extends IFormItem, E extends IEntity>
    *
    * @param items
    */
-  public writeItems: WriteItems = async (items: Array<IFormItem>) => {
+  public writeItems = async (items: Array<IFormItem>) => {
     for await (const item of items) {
       const { itemsMap, items } = this._formData;
       const { property } = item;
@@ -131,15 +128,28 @@ export class FormController<F extends IFormItem, E extends IEntity>
    */
   public start(): Promise<Form<F>> {
     return new Promise(async (resolve) => {
-      this._storeManager.setStore(this._formData.store);
       this.fireEvent(
         FormEvents.REGISTER_ITEMS,
-        FormItemRegister.getInstance().getKeys()
+        FormItemRegister.getInstance().getItemKeys()
       );
 
-      if (this._reader) {
-        this._formData = await this._reader.read(this._entity);
+      if (this._formData == null) {
+        const initialReader: IReader<F, E> = createInitialReader();
+
+        this._formData = await initialReader.read(this._entity);
+
+        if (this._reader) {
+          this._formData = await this._reader.read(
+            this._entity,
+            this._formData
+          );
+        }
+      } else {
+        //create initial entity
+        this._entity = await this.getEntity();
       }
+
+      this._storeManager.setStore(this._formData.store);
 
       //initializer
       if (this._formData.initializer) {
@@ -162,6 +172,32 @@ export class FormController<F extends IFormItem, E extends IEntity>
 
       resolve(this._formData);
     });
+  }
+
+  /**
+   *
+   * @returns
+   */
+  public getInitialEntity(): IEntity {
+    return this._entity;
+  }
+
+  /**
+   *
+   * @param key
+   * @returns
+   */
+  public readStore(key: string): any {
+    return this._storeManager.read(key);
+  }
+
+  /**
+   *
+   * @param key
+   * @param value
+   */
+  public writeStore(key: string, value: any): void {
+    this._storeManager.write(key, value);
   }
 
   /**
@@ -229,54 +265,11 @@ export class FormController<F extends IFormItem, E extends IEntity>
   }
 
   /**
-   * @returns
-   */
-  public async controlForAfterSubmit(): Promise<void> {
-    const { items } = this._formData;
-
-    for await (const item of items) {
-      const { submit } = item;
-
-      if (submit) {
-        const command = this.getCommand(item);
-
-        await submit(command);
-      }
-    }
-  }
-
-  /**
-   *
-   * @returns
-   */
-  public getInitialEntity(): IEntity {
-    return this._entity;
-  }
-
-  /**
-   *
-   * @param key
-   * @returns
-   */
-  public getStoreItem(key: string): any {
-    return this._storeManager.read(key);
-  }
-
-  /**
-   *
-   * @param key
-   * @param value
-   */
-  public setStoreItem(key: string, value: any): void {
-    this._storeManager.write(key, value);
-  }
-
-  /**
    *
    * @param property
    * @param value
    */
-  public updateValue(property: string, value: any): Promise<void> {
+  public updateValue(property: keyof E, value: any): Promise<void> {
     return new Promise((resolve) => {
       const formItem = this.getItem(property) as F;
       const { control } = formItem;

@@ -8,7 +8,6 @@ const formItem: IFormItem = {
       const property3 = getItem('property3');
 
       property3.hidden = formItem.value != null;
-
       resolve([property3]);
     });
   },

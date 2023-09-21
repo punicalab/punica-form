@@ -1,6 +1,5 @@
 import { IClassDecorator } from '@punica/common';
-import { Initializer } from '..';
-import { defineFormProperty } from '../define';
+import { defineFormProperty, Initializer } from '..';
 
 export const DECORATOR_INITIALIZER = 'form-initializer';
 
