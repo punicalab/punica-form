@@ -1,8 +1,10 @@
-import { IFormItem, IRender } from '..';
+import { FormItem } from '..';
 
-export class FormItemRegister<F extends IFormItem> {
-  private static _instance: FormItemRegister<any>;
-  private _itemMap: Map<string, IRender<F>> = new Map<string, IRender<F>>();
+type Render<F> = (props: F) => any;
+
+export class FormItemRegister<E, F extends FormItem<E>> {
+  private static _instance: FormItemRegister<any, any>;
+  private _itemMap: Map<string, Render<F>> = new Map<string, Render<F>>();
 
   /**
    *
@@ -12,7 +14,7 @@ export class FormItemRegister<F extends IFormItem> {
   /**
    *
    */
-  public static getInstance(): FormItemRegister<any> {
+  public static getInstance(): FormItemRegister<any, any> {
     if (!FormItemRegister._instance) {
       FormItemRegister._instance = new FormItemRegister();
     }
@@ -26,14 +28,13 @@ export class FormItemRegister<F extends IFormItem> {
    * @param renderer
    * @returns
    */
-  public register(property: string, renderer: IRender<F>): boolean {
+  public register(property: string, renderer: (props: F) => any): void {
     if (this._itemMap.has(property)) {
-      return false;
+      return;
     }
 
+    console.log(property);
     this._itemMap.set(property, renderer);
-
-    return true;
   }
 
   /**
@@ -41,7 +42,20 @@ export class FormItemRegister<F extends IFormItem> {
    * @param property
    * @returns
    */
-  public getItem(property: string): IRender<F> {
+  public unRegister(property: string): void {
+    if (!this._itemMap.has(property)) {
+      return;
+    }
+
+    this._itemMap.delete(property);
+  }
+
+  /**
+   *
+   * @param property
+   * @returns
+   */
+  public getItem(property: string): Render<F> {
     return this._itemMap.get(property);
   }
 
@@ -49,7 +63,7 @@ export class FormItemRegister<F extends IFormItem> {
    *
    * @returns
    */
-  public getItems(): Map<string, IRender<F>> {
+  public getItems(): Map<string, Render<F>> {
     return this._itemMap;
   }
 

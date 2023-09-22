@@ -1,5 +1,5 @@
 import { IPropertyDecorator } from '@punica/common';
-import { FormItemRegister, IRender } from '..';
+import { FormItemRegister } from '..';
 
 /**
  *
@@ -9,7 +9,7 @@ import { FormItemRegister, IRender } from '..';
  */
 const defineFormItem = <T>(
   type: string,
-  renderer: IRender<any>
+  renderer: (props: T) => any
 ): IPropertyDecorator<T> => {
   FormItemRegister.getInstance().register(type, renderer);
 

@@ -1,9 +1,8 @@
-import { IEntity } from '@punica/common';
 import { ReadPropertyPath } from '@punica/util';
-import { Form, IFormItem } from '../../..';
+import { Form, FormItem } from '../../..';
 import BaseReader from '../base';
 
-class Reader<F extends IFormItem, E extends IEntity> extends BaseReader<F, E> {
+class Reader<E, F extends FormItem<E>> extends BaseReader<E, F> {
   /**
    *
    * @param entity
@@ -11,10 +10,9 @@ class Reader<F extends IFormItem, E extends IEntity> extends BaseReader<F, E> {
    * @returns
    */
   private getPropertyData(entity: E, item: F) {
-    const { property } = item;
+    const { property, path } = item;
 
-    if ((property as string).includes('/'))
-      return ReadPropertyPath(entity, property);
+    if (path) return ReadPropertyPath(entity, property as string);
 
     return entity[property];
   }
@@ -28,7 +26,6 @@ class Reader<F extends IFormItem, E extends IEntity> extends BaseReader<F, E> {
       const data = this.getPropertyData(entity, item);
 
       item.value = data;
-      item.initialValue = data;
     }
   }
 
@@ -37,8 +34,8 @@ class Reader<F extends IFormItem, E extends IEntity> extends BaseReader<F, E> {
    * @param entity
    * @returns
    */
-  public async read(entity: E): Promise<Form<F>> {
-    const form: Form<F> = await super.read(entity);
+  public async read(entity: E): Promise<Form<E, F>> {
+    const form: Form<E, F> = await super.read(entity);
 
     this.readItemsData(entity, form.items);
 

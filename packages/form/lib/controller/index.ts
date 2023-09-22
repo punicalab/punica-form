@@ -1,47 +1,43 @@
-import { BaseListener, IEntity } from '@punica/common';
+import { BaseListener } from '@punica/common';
 import { WriteToPropertyPath } from '@punica/util';
 import {
+  CommandItem,
   Form,
-  IFormItem,
-  IReader,
   FormEvents,
   FormItemRegister,
-  Command,
-  IStoreManager,
-  createInitialReader
+  FormItem,
+  IReader,
+  IService,
+  createInitialReader,
+  CommandService
 } from '..';
 
 /**
  *
  */
 export class FormController<
-  F extends IFormItem,
-  E extends IEntity
+  E,
+  F extends FormItem<E>
 > extends BaseListener<FormEvents> {
-  private _storeManager: IStoreManager;
-  private _formData: Form<F>;
+  private _formData: Form<E, F>;
+  private _initialFormData: Form<E, F>;
+  private _reader: IReader<E, F>;
   private _entity: E;
-  private _reader: IReader<F, E>;
-  private _hasError: boolean;
+
+  //#region constructor
 
   /**
    *
-   * @param storeManager
    * @param formData
    */
-  public constructor(storeManager: IStoreManager, formData: Form<F>);
+  public constructor(formData: Form<E, F>);
 
   /**
    *
-   * @param storeManager
    * @param entity
    * @param reader
    */
-  public constructor(
-    storeManager: IStoreManager,
-    entity: E,
-    reader: IReader<F, E>
-  );
+  public constructor(entity: E, reader: IReader<E, F>);
 
   /**
    *
@@ -50,23 +46,20 @@ export class FormController<
   public constructor(...args: any[]) {
     super();
 
-    if (args.length === 2) {
-      const [storeManager, formData] = args;
+    if (args.length === 1) {
+      const [formData] = args;
 
-      this._storeManager = storeManager;
       this._formData = formData;
     } else if (args.length === 3) {
-      const [storeManager, entity, reader] = args;
+      const [entity, reader] = args;
 
-      this._storeManager = storeManager;
       this._entity = entity;
       this._reader = reader;
     }
 
-    this.updateValue = this.updateValue.bind(this);
-    this.readStore = this.readStore.bind(this);
-    this.writeStore = this.writeStore.bind(this);
+    //this.updateValue = this.updateValue.bind(this);
   }
+  //#endregion
 
   /**
    *
@@ -82,13 +75,24 @@ export class FormController<
    * @param item
    * @returns
    */
-  protected getCommand(item: F): Command<F, E> {
+  protected getCommandItem(item: F): CommandItem<E, F> {
     return {
       formItem: item,
       entity: this._entity,
-      getItem: this.getItem,
-      readStore: this.readStore,
-      writeStore: this.writeStore
+      getItem: this.getItem
+    };
+  }
+
+  /**
+   *
+   * @returns
+   */
+  protected getCommandService(): CommandService<E, F> {
+    return {
+      initialFormData: this._initialFormData,
+      formData: this._formData,
+      entity: this._entity,
+      fireEvent: this.fireEvent
     };
   }
 
@@ -97,22 +101,22 @@ export class FormController<
    * @param property
    * @returns
    */
-  public getItem = <F>(property: keyof E): F => {
+  public getItem(property: keyof E) {
     const { items, itemsMap } = this._formData;
-    const itemIndex = itemsMap[property as string];
+    const itemIndex = itemsMap[property];
 
     if (!Number.isInteger(itemIndex)) {
       return null;
     }
 
     return items[itemIndex] as unknown as F;
-  };
+  }
 
   /**
    *
    * @param items
    */
-  public writeItems = async (items: Array<IFormItem>) => {
+  public async writeItems(items: Array<FormItem<E>>) {
     for await (const item of items) {
       const { itemsMap, items } = this._formData;
       const { property } = item;
@@ -120,84 +124,22 @@ export class FormController<
 
       items[index] = item as F;
     }
-  };
-
-  /**
-   *
-   * @param reader
-   */
-  public start(): Promise<Form<F>> {
-    return new Promise(async (resolve) => {
-      this.fireEvent(
-        FormEvents.REGISTER_ITEMS,
-        FormItemRegister.getInstance().getItemKeys()
-      );
-
-      if (this._formData == null) {
-        const initialReader: IReader<F, E> = createInitialReader();
-
-        this._formData = await initialReader.read(this._entity);
-
-        if (this._reader) {
-          this._formData = await this._reader.read(
-            this._entity,
-            this._formData
-          );
-        }
-      } else {
-        //create initial entity
-        this._entity = await this.getEntity();
-      }
-
-      this._storeManager.setStore(this._formData.store);
-
-      //initializer
-      if (this._formData.initializer) {
-        this._formData = await this._formData.initializer(
-          this._formData,
-          this._entity
-        );
-
-        //reset items map
-        this._formData.itemsMap = {};
-      }
-
-      //set update values
-      let index = 0;
-      for await (const item of this._formData.items) {
-        item.updateValue = this.updateValue;
-
-        this._formData.itemsMap[item.property] = index++;
-      }
-
-      resolve(this._formData);
-    });
   }
 
   /**
    *
    * @returns
    */
-  public getInitialEntity(): IEntity {
+  public getInitialEntity(): E {
     return this._entity;
   }
 
   /**
    *
-   * @param key
    * @returns
    */
-  public readStore(key: string): any {
-    return this._storeManager.read(key);
-  }
-
-  /**
-   *
-   * @param key
-   * @param value
-   */
-  public writeStore(key: string, value: any): void {
-    this._storeManager.write(key, value);
+  public getService(): IService<E, F> {
+    return this._formData.services[0];
   }
 
   /**
@@ -210,9 +152,13 @@ export class FormController<
       const entity = { ...this._entity };
 
       for await (const item of items) {
-        const { property, value } = item;
+        const { property, value, path } = item;
 
-        WriteToPropertyPath(entity, property, value);
+        if (path) {
+          WriteToPropertyPath(entity, path, value);
+        } else {
+          entity[property] = value;
+        }
       }
 
       resolve(entity);
@@ -221,79 +167,129 @@ export class FormController<
 
   /**
    *
-   * @returns
+   * @param reader
    */
-  public validate(): Promise<boolean> {
+  public start(): Promise<Form<E, F>> {
     return new Promise(async (resolve) => {
-      const { items } = this._formData;
-      this._hasError = false;
+      this.fireEvent(
+        FormEvents.REGISTER_ITEMS,
+        FormItemRegister.getInstance().getItemKeys()
+      );
 
-      for await (const item of items) {
-        const { errorChecking, hidden } = item;
+      if (this._formData == null) {
+        const initialReader: IReader<E, F> = createInitialReader();
 
-        if (errorChecking && !hidden) {
-          const command = this.getCommand(item);
-          const { error, errorMessages } = await errorChecking(command);
+        this._formData = await initialReader.read(this._entity);
 
-          if (error) {
-            this._hasError = true;
-          }
-
-          item.error = error;
-          item.errorMessages = errorMessages;
+        if (this._reader) {
+          this._formData = await this._reader.read(
+            this._entity,
+            this._formData
+          );
         }
-      }
-
-      this.fireEvent(FormEvents.UPDATE, this._formData);
-
-      resolve(this._hasError);
-    });
-  }
-
-  /**
-   *
-   */
-  public async reset(): Promise<void> {
-    const { items } = this._formData;
-
-    for await (const item of items) {
-      item.value = item.initialValue;
-    }
-
-    this.fireEvent(FormEvents.RESET, null);
-    this.fireEvent(FormEvents.UPDATE, this._formData);
-  }
-
-  /**
-   *
-   * @param property
-   * @param value
-   */
-  public updateValue(property: keyof E, value: any): Promise<void> {
-    return new Promise((resolve) => {
-      const formItem = this.getItem(property) as F;
-      const { control } = formItem;
-
-      formItem.value = value;
-
-      this.writeItems([formItem]);
-
-      if (control) {
-        const command = this.getCommand(formItem);
-
-        control(command).then((formItems: Array<IFormItem>) => {
-          this.writeItems(formItems);
-          this.fireEvent(FormEvents.UPDATE_ITEM, [formItem, ...formItems]);
-          this.fireEvent(FormEvents.UPDATE, this._formData);
-
-          resolve();
-        });
       } else {
-        this.fireEvent(FormEvents.UPDATE_ITEM, [formItem]);
-        this.fireEvent(FormEvents.UPDATE, this._formData);
-
-        resolve();
+        this._entity = await this.getEntity();
       }
+
+      //initializer
+      if (this._formData.initializer) {
+        this._formData = await this._formData.initializer(
+          this._formData,
+          this._entity
+        );
+
+        //reset items map
+        this._formData.itemsMap = {} as Record<keyof E, number>;
+      }
+
+      //set update values
+      let index = 0;
+      for await (const item of this._formData.items) {
+        //TODO item.updateValue = this.updateValue;
+
+        this._formData.itemsMap[item.property] = index++;
+      }
+
+      //form data deep clone
+      this._initialFormData = JSON.parse(JSON.stringify(this._formData));
+
+      for await (const service of this._formData.services) {
+        const command = this.getCommandService();
+
+        service.initialize(command);
+      }
+
+      resolve(this._formData);
     });
   }
 }
+
+/*
+
+public validate(): Promise<boolean> {
+  return new Promise(async (resolve) => {
+    const { items } = this._formData;
+    this._hasError = false;
+
+    for await (const item of items) {
+      const { errorChecking, hidden } = item;
+
+      if (errorChecking && !hidden) {
+        const command = this.getCommandItem(item);
+        const { error, errorMessages } = await errorChecking(command);
+
+        if (error) {
+          this._hasError = true;
+        }
+
+        item.error = error;
+        item.errorMessages = errorMessages;
+      }
+    }
+
+    this.fireEvent(FormEvents.UPDATE, this._formData);
+
+    resolve(this._hasError);
+  });
+}
+
+public async reset(): Promise<void> {
+  const { items } = this._formData;
+
+  for await (const item of items) {
+    item.value = item.initialValue;
+  }
+
+  this.fireEvent(FormEvents.RESET, null);
+  this.fireEvent(FormEvents.UPDATE, this._formData);
+}
+
+public updateValue(property: keyof E, value: any): Promise<void> {
+  return new Promise((resolve) => {
+    const formItem = this.getItem(property) as F;
+    const { control } = formItem;
+
+    formItem.value = value;
+
+    this.writeItems([formItem]);
+
+    if (control) {
+      const command = this.getCommandItem(formItem);
+
+      control(command).then((formItems: Array<FormItem>) => {
+        this.writeItems(formItems);
+        this.fireEvent(FormEvents.UPDATE_ITEM, [formItem, ...formItems]);
+        this.fireEvent(FormEvents.UPDATE, this._formData);
+
+        resolve();
+      });
+    } else {
+      this.fireEvent(FormEvents.UPDATE_ITEM, [formItem]);
+      this.fireEvent(FormEvents.UPDATE, this._formData);
+
+      resolve();
+    }
+  });
+}
+
+*/

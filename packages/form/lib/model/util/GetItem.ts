@@ -1,3 +1,3 @@
-import { IFormItem } from '..';
+import { FormItem } from '..';
 
-export type GetItem = <F extends IFormItem>(property: string) => F;
+export type GetItem<E, F extends FormItem<E>> = (property: keyof E) => F;

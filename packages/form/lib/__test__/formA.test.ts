@@ -1,8 +1,8 @@
-import { Form, createInitialReader } from '../..';
-import { FormA } from '@punica/form-example';
+import { FormA } from '../example/form';
+import { Form, createInitialReader } from '..';
 
 describe('formA', () => {
-  let formData: Form<any>;
+  let formData: Form<any, any>;
 
   /**
    *
@@ -18,6 +18,7 @@ describe('formA', () => {
    *
    */
   test('read entity schema', () => {
+    console.log(formData);
     expect(formData.items?.length).toEqual(3);
   });
 });

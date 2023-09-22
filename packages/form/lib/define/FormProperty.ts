@@ -3,7 +3,7 @@ import { IClassDecorator } from '@punica/common';
 /**
  *
  * @param type
- * @returns
+ * @returns TODO isime bakılacak
  */
 const defineFormProperty = <T>(type: string): IClassDecorator<T> => {
   return (data: T) => {

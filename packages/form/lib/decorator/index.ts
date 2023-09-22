@@ -1,2 +1,1 @@
-export * from './Initialize';
-export * from './Store';
+export * from './Services';

@@ -1,6 +1,6 @@
 @startuml (id=IRender)
 
-    interface IRender<F extends IFormItem> {
+    interface IRender<F extends FormItem> {
         + create(props: F): any
     }
 

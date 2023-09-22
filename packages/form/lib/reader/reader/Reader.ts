@@ -1,24 +1,17 @@
-import { IEntity } from '@punica/common';
-import {
-  IReader,
-  IFormItem,
-  Form,
-  DECORATOR_INITIALIZER,
-  DECORATOR_STORE
-} from '../..';
+import { IReader, FormItem, Form, DECORATOR_SERVICES } from '../..';
 
 /**
  *
  */
-class Reader<F extends IFormItem, E extends IEntity> implements IReader<F, E> {
-  private _form: Form<F>;
+class Reader<E, F extends FormItem<E>> implements IReader<E, F> {
+  private _form: Form<E, F>;
 
   /**
    *
    * @param entity
    * @returns
    */
-  public read(entity: E, initialForm: Form<F>): Promise<Form<F>> {
+  public read(entity: E, initialForm: Form<E, F>): Promise<Form<E, F>> {
     return new Promise((resolve, reject) => {
       if (!entity) {
         reject();
@@ -26,19 +19,10 @@ class Reader<F extends IFormItem, E extends IEntity> implements IReader<F, E> {
 
       this._form = initialForm || {
         items: null,
-        initializer: null,
-        store: null
+        initializer: null
       };
 
-      this._form.store = Reflect.getMetadata(DECORATOR_STORE, entity);
-      this._form.initializer = Reflect.getMetadata(
-        DECORATOR_INITIALIZER,
-        entity
-      );
-
-      if (!this._form.store) {
-        this._form.store = {};
-      }
+      this._form.services = Reflect.getMetadata(DECORATOR_SERVICES, entity);
 
       resolve(this._form);
     });

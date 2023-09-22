@@ -2,7 +2,7 @@
 
 !include ./model.puml!IRender
 
-class FormItemRegister<F extends IFormItem> {
+class FormItemRegister<F extends FormItem> {
     - {static} instance: FormItemRegister
     - FormItemRegister()
     

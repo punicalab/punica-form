@@ -1,29 +1,16 @@
-import { IEntity } from '@punica/common';
-import {
-  Form,
-  IFormItem,
-  IReader,
-  GetItem,
-  WriteItems,
-  Command
-} from '../../../';
+import { Form, FormItem, IReader, CommandItem } from '../../../';
 
-abstract class BaseReader<F extends IFormItem, E extends IEntity>
-  implements IReader<F, E>
-{
-  private _form: Form<F>;
+abstract class BaseReader<E, F extends FormItem<E>> implements IReader<E, F> {
+  private _form: Form<E, F>;
   private _entity: E;
-  protected reader: IReader<F, E>;
+  protected reader: IReader<E, F>;
 
   /**
    *
    * @param reader
    */
-  constructor(reader: IReader<F, E>) {
+  constructor(reader: IReader<E, F>) {
     this.reader = reader;
-
-    this.readStore = this.readStore.bind(this);
-    this.writeStore = this.writeStore.bind(this);
   }
 
   /**
@@ -31,13 +18,11 @@ abstract class BaseReader<F extends IFormItem, E extends IEntity>
    * @param item
    * @returns
    */
-  protected getCommand(item: F): Command<F, E> {
+  protected getCommand(item: F): CommandItem<E, F> {
     return {
       formItem: item,
       entity: this._entity,
-      getItem: this.getItem,
-      readStore: this.readStore,
-      writeStore: this.writeStore
+      getItem: this.getItem
     };
   }
 
@@ -46,7 +31,7 @@ abstract class BaseReader<F extends IFormItem, E extends IEntity>
    * @param entity
    * @returns
    */
-  public async read(entity: E): Promise<Form<F>> {
+  public async read(entity: E): Promise<Form<E, F>> {
     this._form = await this.reader.read(entity);
 
     return this._form;
@@ -57,19 +42,19 @@ abstract class BaseReader<F extends IFormItem, E extends IEntity>
    * @param property
    * @returns
    */
-  protected getItem: GetItem = <F>(property: string): F => {
+  protected getItem(property: keyof E) {
     const { items, itemsMap } = this._form;
     const index = itemsMap[property];
     const item = items[index];
 
     return item as unknown as F;
-  };
+  }
 
   /**
    *
    * @param items
    */
-  protected writeItems: WriteItems = async (items: Array<IFormItem>) => {
+  protected async writeItems(items: Array<FormItem<E>>) {
     for await (const item of items) {
       const { itemsMap, items } = this._form;
       const { property } = item;
@@ -77,25 +62,7 @@ abstract class BaseReader<F extends IFormItem, E extends IEntity>
 
       items[index] = item as F;
     }
-  };
-
-  /**
-   *
-   * @param key
-   * @returns
-   */
-  protected readStore = (key: string): any => {
-    return this._form.store[key];
-  };
-
-  /**
-   *
-   * @param key
-   * @param value
-   */
-  protected writeStore = (key: string, value: any) => {
-    this._form.store[key] = value;
-  };
+  }
 }
 
 export default BaseReader;

@@ -1,6 +1,5 @@
-import { IEntity } from '@punica/common';
-import { Form, IFormItem } from '..';
+import { Form, FormItem } from '..';
 
-export interface IReader<F extends IFormItem, E extends IEntity> {
-  read(entity: E, initialFormData?: Form<F>): Promise<Form<F>>;
+export interface IReader<E, F extends FormItem<E>> {
+  read(entity: E, initialFormData?: Form<E, F>): Promise<Form<E, F>>;
 }

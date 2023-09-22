@@ -1,8 +1,7 @@
-import { IEntity } from '@punica/common';
-import { Form, IFormItem, FormItemRegister } from '../../..';
+import { Form, FormItem, FormItemRegister } from '../../..';
 import BaseReader from '../base';
 
-class Reader<F extends IFormItem, E extends IEntity> extends BaseReader<F, E> {
+class Reader<E, F extends FormItem<E>> extends BaseReader<E, F> {
   /**
    *
    * @param entity
@@ -15,6 +14,7 @@ class Reader<F extends IFormItem, E extends IEntity> extends BaseReader<F, E> {
       const formItemPool: any = {};
       const registeredItems = FormItemRegister.getInstance().getItemKeys();
 
+      console.log('registeredItems', registeredItems);
       //read form item
       for (const property of registeredItems) {
         const formItems = Reflect.getMetadata(property, entity);
@@ -46,11 +46,11 @@ class Reader<F extends IFormItem, E extends IEntity> extends BaseReader<F, E> {
    * @param entity
    * @returns
    */
-  public async read(entity: E): Promise<Form<F>> {
-    const form: Form<F> = await super.read(entity);
+  public async read(entity: E): Promise<Form<E, F>> {
+    const form: Form<E, F> = await super.read(entity);
 
     form.items = await this.readItem(entity);
-    form.itemsMap = {};
+    form.itemsMap = {} as Record<keyof E, number>;
 
     form.items.forEach((item: F, index: number) => {
       form.itemsMap[item.property] = index;
