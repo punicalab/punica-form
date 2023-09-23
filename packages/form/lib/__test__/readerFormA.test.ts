@@ -18,7 +18,6 @@ describe('formA', () => {
    *
    */
   test('read entity schema', () => {
-    console.log(formData);
     expect(formData.items?.length).toEqual(3);
   });
 });

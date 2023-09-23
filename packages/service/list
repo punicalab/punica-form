@@ -1,14 +1,84 @@
-watch
-reset
-resetField
-setError
-clearErrors
-setValue
-getValues
-trigger
+watch;
+reset;
+resetField;
+setError;
+clearErrors;
+setValue;
+getValues;
+trigger;
 
-setFocus
-setBlur
+setFocus;
+setBlur;
 
-context,state,store
-initialize
+context, state, store;
+initialize;
+
+/*
+
+public validate(): Promise<boolean> {
+  return new Promise(async (resolve) => {
+    const { items } = this._formData;
+    this._hasError = false;
+
+    for await (const item of items) {
+      const { errorChecking, hidden } = item;
+
+      if (errorChecking && !hidden) {
+        const command = this.getCommandItem(item);
+        const { error, errorMessages } = await errorChecking(command);
+
+        if (error) {
+          this._hasError = true;
+        }
+
+        item.error = error;
+        item.errorMessages = errorMessages;
+      }
+    }
+
+    this.fireEvent(FormEvents.UPDATE, this._formData);
+
+    resolve(this._hasError);
+  });
+}
+
+public async reset(): Promise<void> {
+  const { items } = this._formData;
+
+  for await (const item of items) {
+    item.value = item.initialValue;
+  }
+
+  this.fireEvent(FormEvents.RESET, null);
+  this.fireEvent(FormEvents.UPDATE, this._formData);
+}
+
+public updateValue(property: keyof E, value: any): Promise<void> {
+  return new Promise((resolve) => {
+    const formItem = this.getItem(property) as F;
+    const { control } = formItem;
+
+    formItem.value = value;
+
+    this.writeItems([formItem]);
+
+    if (control) {
+      const command = this.getCommandItem(formItem);
+
+      control(command).then((formItems: Array<FormItem>) => {
+        this.writeItems(formItems);
+        this.fireEvent(FormEvents.UPDATE_ITEM, [formItem, ...formItems]);
+        this.fireEvent(FormEvents.UPDATE, this._formData);
+
+        resolve();
+      });
+    } else {
+      this.fireEvent(FormEvents.UPDATE_ITEM, [formItem]);
+      this.fireEvent(FormEvents.UPDATE, this._formData);
+
+      resolve();
+    }
+  });
+}
+
+*/

@@ -33,7 +33,6 @@ export class FormItemRegister<E, F extends FormItem<E>> {
       return;
     }
 
-    console.log(property);
     this._itemMap.set(property, renderer);
   }
 

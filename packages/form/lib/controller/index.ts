@@ -1,5 +1,4 @@
-import { BaseListener } from '@punica/common';
-import { WriteToPropertyPath } from '@punica/util';
+import { BaseListener, IEntity } from '@punica/common';
 import {
   CommandItem,
   Form,
@@ -16,7 +15,7 @@ import {
  *
  */
 export class FormController<
-  E,
+  E extends IEntity,
   F extends FormItem<E>
 > extends BaseListener<FormEvents> {
   private _formData: Form<E, F>;
@@ -26,39 +25,23 @@ export class FormController<
 
   //#region constructor
 
-  /**
-   *
-   * @param formData
-   */
   public constructor(formData: Form<E, F>);
-
-  /**
-   *
-   * @param entity
-   * @param reader
-   */
   public constructor(entity: E, reader: IReader<E, F>);
-
-  /**
-   *
-   * @param arrgs
-   */
   public constructor(...args: any[]) {
     super();
 
-    if (args.length === 1) {
+    if (args.length == 1) {
       const [formData] = args;
 
       this._formData = formData;
-    } else if (args.length === 3) {
+    } else if (args.length == 2) {
       const [entity, reader] = args;
 
       this._entity = entity;
       this._reader = reader;
     }
-
-    //this.updateValue = this.updateValue.bind(this);
   }
+
   //#endregion
 
   /**
@@ -152,13 +135,9 @@ export class FormController<
       const entity = { ...this._entity };
 
       for await (const item of items) {
-        const { property, value, path } = item;
+        const { property, value } = item;
 
-        if (path) {
-          WriteToPropertyPath(entity, path, value);
-        } else {
-          entity[property] = value;
-        }
+        entity[property] = value;
       }
 
       resolve(entity);
@@ -188,108 +167,29 @@ export class FormController<
           );
         }
       } else {
+        this._entity = {} as E;
         this._entity = await this.getEntity();
       }
 
-      //initializer
-      if (this._formData.initializer) {
-        this._formData = await this._formData.initializer(
-          this._formData,
-          this._entity
-        );
-
-        //reset items map
-        this._formData.itemsMap = {} as Record<keyof E, number>;
-      }
-
-      //set update values
+      //update items map
       let index = 0;
+      this._formData.itemsMap = {};
       for await (const item of this._formData.items) {
-        //TODO item.updateValue = this.updateValue;
-
-        this._formData.itemsMap[item.property] = index++;
+        this._formData.itemsMap[item.property as keyof E] = index++;
       }
 
       //form data deep clone
       this._initialFormData = JSON.parse(JSON.stringify(this._formData));
 
-      for await (const service of this._formData.services) {
-        const command = this.getCommandService();
+      if (this._formData.services) {
+        for await (const service of this._formData?.services) {
+          const command = this.getCommandService();
 
-        service.initialize(command);
+          service.initialize(command);
+        }
       }
 
       resolve(this._formData);
     });
   }
 }
-
-/*
-
-public validate(): Promise<boolean> {
-  return new Promise(async (resolve) => {
-    const { items } = this._formData;
-    this._hasError = false;
-
-    for await (const item of items) {
-      const { errorChecking, hidden } = item;
-
-      if (errorChecking && !hidden) {
-        const command = this.getCommandItem(item);
-        const { error, errorMessages } = await errorChecking(command);
-
-        if (error) {
-          this._hasError = true;
-        }
-
-        item.error = error;
-        item.errorMessages = errorMessages;
-      }
-    }
-
-    this.fireEvent(FormEvents.UPDATE, this._formData);
-
-    resolve(this._hasError);
-  });
-}
-
-public async reset(): Promise<void> {
-  const { items } = this._formData;
-
-  for await (const item of items) {
-    item.value = item.initialValue;
-  }
-
-  this.fireEvent(FormEvents.RESET, null);
-  this.fireEvent(FormEvents.UPDATE, this._formData);
-}
-
-public updateValue(property: keyof E, value: any): Promise<void> {
-  return new Promise((resolve) => {
-    const formItem = this.getItem(property) as F;
-    const { control } = formItem;
-
-    formItem.value = value;
-
-    this.writeItems([formItem]);
-
-    if (control) {
-      const command = this.getCommandItem(formItem);
-
-      control(command).then((formItems: Array<FormItem>) => {
-        this.writeItems(formItems);
-        this.fireEvent(FormEvents.UPDATE_ITEM, [formItem, ...formItems]);
-        this.fireEvent(FormEvents.UPDATE, this._formData);
-
-        resolve();
-      });
-    } else {
-      this.fireEvent(FormEvents.UPDATE_ITEM, [formItem]);
-      this.fireEvent(FormEvents.UPDATE, this._formData);
-
-      resolve();
-    }
-  });
-}
-
-*/
