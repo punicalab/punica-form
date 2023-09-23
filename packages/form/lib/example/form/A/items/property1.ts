@@ -8,14 +8,14 @@ const formItem: FormItem<FormA> = {
   getData: (): Promise<any> => {
     return new Promise(() => {});
   },
-  initializer: ({ formItem }): Promise<Array<FormItem<FormA>>> => {
+  initialize: ({ formItem }): Promise<Array<FormItem<FormA>>> => {
     return new Promise((resolve) => {
       formItem.disabled = true;
 
       resolve([formItem]);
     });
   },
-  errorChecking: (): Promise<ErrorDetail> => {
+  validation: (): Promise<ErrorDetail> => {
     return new Promise((resolve) => {
       const errorDetail: ErrorDetail = { error: false, errorMessages: [] };
 

@@ -8,10 +8,10 @@ class Reader<E, F extends FormItem<E>> extends BaseReader<E, F> {
    */
   private async readItemsData(items: Array<F>) {
     for await (const formItem of items) {
-      const { initializer } = formItem;
+      const { initialize } = formItem;
 
-      if (initializer) {
-        const items = await initializer(super.getCommand(formItem));
+      if (initialize) {
+        const items = await initialize(super.getCommand(formItem));
 
         this.writeItems(items);
       }

@@ -1,8 +1,8 @@
 import { Form, FormItem, IReader, CommandItem } from '../../../';
 
 abstract class BaseReader<E, F extends FormItem<E>> implements IReader<E, F> {
-  private _form: Form<E, F>;
-  private _entity: E;
+  #form: Form<E, F>;
+  #entity: E;
   protected reader: IReader<E, F>;
 
   /**
@@ -21,7 +21,7 @@ abstract class BaseReader<E, F extends FormItem<E>> implements IReader<E, F> {
   protected getCommand(item: F): CommandItem<E, F> {
     return {
       formItem: item,
-      entity: this._entity,
+      initialEntity: this.#entity,
       getItem: this.getItem
     };
   }
@@ -32,9 +32,9 @@ abstract class BaseReader<E, F extends FormItem<E>> implements IReader<E, F> {
    * @returns
    */
   public async read(entity: E): Promise<Form<E, F>> {
-    this._form = await this.reader.read(entity);
+    this.#form = await this.reader.read(entity);
 
-    return this._form;
+    return this.#form;
   }
 
   /**
@@ -43,7 +43,7 @@ abstract class BaseReader<E, F extends FormItem<E>> implements IReader<E, F> {
    * @returns
    */
   protected getItem(property: keyof E) {
-    const { items, itemsMap } = this._form;
+    const { items, itemsMap } = this.#form;
     const index = itemsMap[property];
     const item = items[index];
 
@@ -56,7 +56,7 @@ abstract class BaseReader<E, F extends FormItem<E>> implements IReader<E, F> {
    */
   protected async writeItems(items: Array<FormItem<E>>) {
     for await (const item of items) {
-      const { itemsMap, items } = this._form;
+      const { itemsMap, items } = this.#form;
       const { property } = item;
       const index = itemsMap[property];
 

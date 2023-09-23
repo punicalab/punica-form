@@ -1,6 +1,5 @@
-import { BaseListener, IEntity } from '@punica/common';
+import { BaseListener } from '@punica/common';
 import {
-  CommandItem,
   Form,
   FormEvents,
   FormItemRegister,
@@ -8,20 +7,23 @@ import {
   IReader,
   IService,
   createInitialReader,
-  CommandService
+  CommandService,
+  CommandItem
 } from '..';
 
 /**
  *
  */
 export class FormController<
-  E extends IEntity,
+  E,
   F extends FormItem<E>
 > extends BaseListener<FormEvents> {
-  private _formData: Form<E, F>;
-  private _initialFormData: Form<E, F>;
-  private _reader: IReader<E, F>;
-  private _entity: E;
+  #serviceMap: Record<string, IService<E, F>>;
+  #itemsMap: Record<keyof E, number>;
+  #formData: Form<E, F>;
+  #reader: IReader<E, F>;
+  #initialFormData: Form<E, F>;
+  #initialEntity: E;
 
   //#region constructor
 
@@ -33,13 +35,16 @@ export class FormController<
     if (args.length == 1) {
       const [formData] = args;
 
-      this._formData = formData;
+      this.#formData = formData;
     } else if (args.length == 2) {
       const [entity, reader] = args;
 
-      this._entity = entity;
-      this._reader = reader;
+      this.#initialEntity = entity;
+      this.#reader = reader;
     }
+
+    this.#serviceMap = {};
+    this.#itemsMap = {} as Record<keyof E, number>;
   }
 
   //#endregion
@@ -49,7 +54,7 @@ export class FormController<
    * @param eventType
    * @param data
    */
-  protected fireEvent(eventType: FormEvents, data: any): void {
+  private fireEvent(eventType: FormEvents, data: any): void {
     this.trigger(eventType, data);
   }
 
@@ -58,11 +63,25 @@ export class FormController<
    * @param item
    * @returns
    */
-  protected getCommandItem(item: F): CommandItem<E, F> {
+  private async createCommandItem(item: F): Promise<CommandItem<E, F>> {
+    let itemCustomCommand = {};
+
+    for await (const service of this.#formData?.services) {
+      const { getItemCommand } = service;
+
+      if (getItemCommand) {
+        const command = getItemCommand();
+
+        itemCustomCommand = { ...itemCustomCommand, ...command };
+      }
+    }
+
     return {
       formItem: item,
-      entity: this._entity,
-      getItem: this.getItem
+      initialEntity: this.#initialEntity,
+      getItem: this.getItem,
+      writeItems: this.writeItems,
+      ...itemCustomCommand
     };
   }
 
@@ -70,12 +89,15 @@ export class FormController<
    *
    * @returns
    */
-  protected getCommandService(): CommandService<E, F> {
+  private createCommandService(): CommandService<E, F> {
     return {
-      initialFormData: this._initialFormData,
-      formData: this._formData,
-      entity: this._entity,
-      fireEvent: this.fireEvent
+      initialFormData: this.#initialFormData,
+      formData: this.#formData,
+      initialEntity: this.#initialEntity,
+      fireEvent: this.fireEvent,
+      getItem: this.getItem,
+      writeItems: this.writeItems,
+      createCommandItem: this.createCommandItem
     };
   }
 
@@ -84,8 +106,8 @@ export class FormController<
    * @param property
    * @returns
    */
-  public getItem(property: keyof E) {
-    const { items, itemsMap } = this._formData;
+  private getItem(property: keyof E) {
+    const { items, itemsMap } = this.#formData;
     const itemIndex = itemsMap[property];
 
     if (!Number.isInteger(itemIndex)) {
@@ -99,9 +121,9 @@ export class FormController<
    *
    * @param items
    */
-  public async writeItems(items: Array<FormItem<E>>) {
+  private async writeItems(items: Array<FormItem<E>>) {
     for await (const item of items) {
-      const { itemsMap, items } = this._formData;
+      const { itemsMap, items } = this.#formData;
       const { property } = item;
       const index = itemsMap[property];
 
@@ -113,16 +135,8 @@ export class FormController<
    *
    * @returns
    */
-  public getInitialEntity(): E {
-    return this._entity;
-  }
-
-  /**
-   *
-   * @returns
-   */
-  public getService(): IService<E, F> {
-    return this._formData.services[0];
+  public getService(serviceName: string): IService<E, F> {
+    return this.#serviceMap[serviceName];
   }
 
   /**
@@ -131,8 +145,8 @@ export class FormController<
    */
   public getEntity(): Promise<E> {
     return new Promise(async (resolve) => {
-      const { items } = this._formData;
-      const entity = { ...this._entity };
+      const { items } = this.#formData;
+      const entity = { ...this.#initialEntity };
 
       for await (const item of items) {
         const { property, value } = item;
@@ -155,41 +169,44 @@ export class FormController<
         FormItemRegister.getInstance().getItemKeys()
       );
 
-      if (this._formData == null) {
+      if (this.#formData == null) {
         const initialReader: IReader<E, F> = createInitialReader();
 
-        this._formData = await initialReader.read(this._entity);
+        this.#formData = await initialReader.read(this.#initialEntity);
 
-        if (this._reader) {
-          this._formData = await this._reader.read(
-            this._entity,
-            this._formData
+        if (this.#reader) {
+          this.#formData = await this.#reader.read(
+            this.#initialEntity,
+            this.#formData
           );
         }
       } else {
-        this._entity = {} as E;
-        this._entity = await this.getEntity();
+        this.#initialEntity = {} as E;
+        this.#initialEntity = await this.getEntity();
       }
 
-      //update items map
+      //create item map
       let index = 0;
-      this._formData.itemsMap = {};
-      for await (const item of this._formData.items) {
-        this._formData.itemsMap[item.property as keyof E] = index++;
+      this.#itemsMap = {} as Record<keyof E, number>;
+      for await (const item of this.#formData.items) {
+        this.#itemsMap[item.property] = index++;
       }
 
       //form data deep clone
-      this._initialFormData = JSON.parse(JSON.stringify(this._formData));
+      this.#initialFormData = Object.assign({}, this.#formData);
 
-      if (this._formData.services) {
-        for await (const service of this._formData?.services) {
-          const command = this.getCommandService();
+      //initialize service
+      if (this.#formData.services) {
+        for await (const service of this.#formData?.services) {
+          const command = this.createCommandService();
+
+          this.#serviceMap[service.name] = service;
 
           service.initialize(command);
         }
       }
 
-      resolve(this._formData);
+      resolve(this.#formData);
     });
   }
 }

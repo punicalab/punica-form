@@ -13,7 +13,7 @@ const formItem: FormItem<FormA> = {
       resolve([property3]);
     });
   },
-  initializer: ({ formItem }): Promise<Array<FormItem<FormA>>> => {
+  initialize: ({ formItem }): Promise<Array<FormItem<FormA>>> => {
     return new Promise((resolve) => {
       formItem.hidden = true;
 

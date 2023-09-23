@@ -21,11 +21,11 @@ public validate(): Promise<boolean> {
     this._hasError = false;
 
     for await (const item of items) {
-      const { errorChecking, hidden } = item;
+      const { validation, hidden } = item;
 
-      if (errorChecking && !hidden) {
+      if (validation && !hidden) {
         const command = this.getCommandItem(item);
-        const { error, errorMessages } = await errorChecking(command);
+        const { error, errorMessages } = await validation(command);
 
         if (error) {
           this._hasError = true;

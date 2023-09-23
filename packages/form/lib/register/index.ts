@@ -4,7 +4,7 @@ type Render<F> = (props: F) => any;
 
 export class FormItemRegister<E, F extends FormItem<E>> {
   private static _instance: FormItemRegister<any, any>;
-  private _itemMap: Map<string, Render<F>> = new Map<string, Render<F>>();
+  #itemMap: Map<string, Render<F>> = new Map<string, Render<F>>();
 
   /**
    *
@@ -29,11 +29,11 @@ export class FormItemRegister<E, F extends FormItem<E>> {
    * @returns
    */
   public register(property: string, renderer: (props: F) => any): void {
-    if (this._itemMap.has(property)) {
+    if (this.#itemMap.has(property)) {
       return;
     }
 
-    this._itemMap.set(property, renderer);
+    this.#itemMap.set(property, renderer);
   }
 
   /**
@@ -42,11 +42,11 @@ export class FormItemRegister<E, F extends FormItem<E>> {
    * @returns
    */
   public unRegister(property: string): void {
-    if (!this._itemMap.has(property)) {
+    if (!this.#itemMap.has(property)) {
       return;
     }
 
-    this._itemMap.delete(property);
+    this.#itemMap.delete(property);
   }
 
   /**
@@ -55,7 +55,7 @@ export class FormItemRegister<E, F extends FormItem<E>> {
    * @returns
    */
   public getItem(property: string): Render<F> {
-    return this._itemMap.get(property);
+    return this.#itemMap.get(property);
   }
 
   /**
@@ -63,7 +63,7 @@ export class FormItemRegister<E, F extends FormItem<E>> {
    * @returns
    */
   public getItems(): Map<string, Render<F>> {
-    return this._itemMap;
+    return this.#itemMap;
   }
 
   /**
@@ -71,6 +71,6 @@ export class FormItemRegister<E, F extends FormItem<E>> {
    * @returns
    */
   public getItemKeys(): IterableIterator<string> {
-    return this._itemMap.keys();
+    return this.#itemMap.keys();
   }
 }
