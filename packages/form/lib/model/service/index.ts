@@ -4,15 +4,13 @@ type CustomCommandItem = { [key: string]: any };
 
 export interface IService {
   get name(): string;
-
-  [key: string]: any;
 }
 
-export interface IServiceControl<E, F extends FormItem<E>> {
+export interface IServiceControl<E, F extends FormItem<E>> extends IService {
   initialize: (command: CommandService<E, F>) => void;
   run: <T>(...args: any[]) => Promise<T>;
 }
 
-export interface IServiceAddCommand {
+export interface IServiceAddCommand extends IService {
   addCustomFeaturesForCommandItem: () => CustomCommandItem;
 }

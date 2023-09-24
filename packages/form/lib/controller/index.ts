@@ -8,7 +8,9 @@ import {
   IService,
   createInitialReader,
   CommandService,
-  CommandItem
+  CommandItem,
+  IServiceAddCommand,
+  IServiceControl
 } from '..';
 
 /**
@@ -68,7 +70,7 @@ export class FormController<
   private async createCommandItem(item: F): Promise<CommandItem<E, F>> {
     let itemCustomCommand = {};
     for await (const service of this.#formData?.services) {
-      const { addCustomFeaturesForCommandItem } = service;
+      const { addCustomFeaturesForCommandItem } = service as IServiceAddCommand;
 
       if (addCustomFeaturesForCommandItem) {
         const command = addCustomFeaturesForCommandItem();
@@ -211,11 +213,12 @@ export class FormController<
       if (this.#formData.services) {
         for await (const service of this.#formData?.services) {
           const command = this.createCommandService();
+          const serviceControl = service as IServiceControl<E, F>;
 
           this.#serviceMap[service.name] = service;
 
-          if (service.initialize) {
-            service.initialize(command);
+          if (serviceControl.initialize) {
+            serviceControl.initialize(command);
           }
         }
       }

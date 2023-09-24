@@ -1,16 +1,9 @@
-import {
-  CommandService,
-  FormItem,
-  IService,
-  IServiceControl
-} from '@punica/form';
+import { CommandService, FormItem, IServiceControl } from '@punica/form';
 
 /**
  *
  */
-export class Reset<E, F extends FormItem<E>>
-  implements IService, IServiceControl<E, F>
-{
+export class Reset<E, F extends FormItem<E>> implements IServiceControl<E, F> {
   #command: CommandService<E, F> = null;
   #name: string = 'reset';
 
