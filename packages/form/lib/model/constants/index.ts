@@ -1,7 +1,5 @@
-export enum FormEvents {
-  UPDATE = 'UPDATE',
-  RESET = 'RESET',
-  REGISTER_ITEMS = 'REGISTER_ITEMS',
-  UPDATE_ITEM = 'UPDATE_ITEM',
-  UPDATE_PROPERTY_VALUE = 'UPDATE_PROPERTY_VALUE'
-}
+export type FormEvents =
+  | 'UPDATE_FORM'
+  | 'RESET'
+  | 'REGISTER_ITEMS'
+  | 'UPDATE_ITEM';

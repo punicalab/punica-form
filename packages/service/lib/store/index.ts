@@ -1,11 +1,11 @@
-import { CommandService, FormItem, IService } from '@punica/form';
+import { FormItem, IService } from '@punica/form';
 
 /**
  *
  */
 export class Store<E, F extends FormItem<E>> implements IService<E, F> {
-  #command: CommandService<E, F> = null;
   #name: string = 'store';
+  #store: Record<string, any> = {};
 
   /**
    *
@@ -17,19 +17,19 @@ export class Store<E, F extends FormItem<E>> implements IService<E, F> {
 
   /**
    *
-   * @param command
-   */
-  public initialize(command: CommandService<E, F>) {
-    this.#command = command;
-
-    console.log(this.#command);
-  }
-
-  /**
-   *
    * @returns
    */
-  public run<T>() {
-    return new Promise<T>(() => {});
+  public getItemCommand() {
+    return {
+      readStoreItem: (key: string): any => {
+        return this.#store[key];
+      },
+      writeStoreItem: (key: string, value: any) => {
+        this.#store[key] = value;
+      },
+      deleteStoreItem: (key: string) => {
+        delete this.#store[key];
+      }
+    };
   }
 }

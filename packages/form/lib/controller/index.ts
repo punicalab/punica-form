@@ -92,8 +92,9 @@ export class FormController<
   private createCommandService(): CommandService<E, F> {
     return {
       initialFormData: this.#initialFormData,
-      formData: this.#formData,
       initialEntity: this.#initialEntity,
+      formData: this.#formData,
+      itemsMap: this.#itemsMap,
       fireEvent: this.fireEvent,
       getItem: this.getItem,
       writeItems: this.writeItems,
@@ -135,8 +136,18 @@ export class FormController<
    *
    * @returns
    */
-  public getService(serviceName: string): IService<E, F> {
-    return this.#serviceMap[serviceName];
+  public getService(
+    name: string,
+    ...names: Array<string>
+  ): Array<IService<E, F>> {
+    const services = [this.#serviceMap[name]];
+
+    if (names) {
+      names.forEach((name) => {
+        services.push(this.#serviceMap[name]);
+      });
+    }
+    return services;
   }
 
   /**
@@ -165,7 +176,7 @@ export class FormController<
   public start(): Promise<Form<E, F>> {
     return new Promise(async (resolve) => {
       this.fireEvent(
-        FormEvents.REGISTER_ITEMS,
+        'REGISTER_ITEMS',
         FormItemRegister.getInstance().getItemKeys()
       );
 
@@ -202,7 +213,9 @@ export class FormController<
 
           this.#serviceMap[service.name] = service;
 
-          service.initialize(command);
+          if (service.initialize) {
+            service.initialize(command);
+          }
         }
       }
 

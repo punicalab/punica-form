@@ -21,8 +21,6 @@ export class Reset<E, F extends FormItem<E>> implements IService<E, F> {
    */
   public initialize(command: CommandService<E, F>) {
     this.#command = command;
-
-    console.log(this.#command);
   }
 
   /**
@@ -30,6 +28,10 @@ export class Reset<E, F extends FormItem<E>> implements IService<E, F> {
    * @returns
    */
   public run<T>() {
-    return new Promise<T>(() => {});
+    return new Promise<T>(() => {
+      const { fireEvent, initialFormData } = this.#command;
+
+      fireEvent('UPDATE_FORM', initialFormData);
+    });
   }
 }
