@@ -28,7 +28,7 @@ export class FormController<
   //#region constructor
 
   public constructor(formData: Form<E, F>);
-  public constructor(entity: E, reader?: IReader<E, F>);
+  public constructor(entity: E, reader: IReader<E, F>);
   public constructor(...args: any[]) {
     super();
 
@@ -45,6 +45,8 @@ export class FormController<
 
     this.#serviceMap = {};
     this.#itemsMap = {} as Record<keyof E, number>;
+    this.createCommandItem = this.createCommandItem.bind(this);
+    this.fireEvent = this.fireEvent.bind(this);
   }
 
   //#endregion
@@ -65,7 +67,6 @@ export class FormController<
    */
   private async createCommandItem(item: F): Promise<CommandItem<E, F>> {
     let itemCustomCommand = {};
-
     for await (const service of this.#formData?.services) {
       const { addCustomFeaturesForCommandItem } = service;
 
@@ -204,7 +205,10 @@ export class FormController<
       }
 
       //form data deep clone
-      this.#initialFormData = Object.assign({}, this.#formData);
+      this.#initialFormData = {
+        ...this.#formData,
+        items: this.#formData.items.map((item) => ({ ...item }))
+      };
 
       //initialize service
       if (this.#formData.services) {

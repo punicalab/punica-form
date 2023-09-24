@@ -1,10 +1,9 @@
-import { Form, FormController } from '@punica/form';
+import { FormController, IService } from '@punica/form';
 import FormSample from '../__example__/form';
 import { Reader } from '../__example__/reader';
 
 describe('service store', () => {
-  let formData: Form<any, any>;
-  let formController: FormController<any, any>;
+  let serviceValidate: IService<any, any>;
 
   /**
    *
@@ -12,19 +11,19 @@ describe('service store', () => {
   beforeAll(async () => {
     const entity = new FormSample();
     const reader = new Reader();
+    const formController = new FormController(entity, reader);
 
-    formController = new FormController(entity, reader);
-    formData = await formController.start();
+    await formController.start();
+
+    serviceValidate = formController?.getService('validate')[0];
   });
 
   /**
    *
    */
-  test('read entity schema', () => {
-    const [serviceValidate] = formController?.getService('validate');
+  test('read entity schema', async () => {
+    const valid = await serviceValidate.run?.();
 
-    console.log(serviceValidate);
-
-    expect(formData.items?.length).toEqual(3);
+    expect(valid).toEqual(false);
   });
 });
