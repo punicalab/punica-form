@@ -22,5 +22,5 @@
     "noFallthroughCasesInSwitch": true,
     "esModuleInterop": true
   },
-  "exclude": ["node_modules", "dist", "**/*/__test__"]
+  "exclude": ["node_modules", "dist", "**/*/__test__", "**/*/__example__"]
 }

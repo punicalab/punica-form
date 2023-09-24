@@ -28,7 +28,7 @@ export class FormController<
   //#region constructor
 
   public constructor(formData: Form<E, F>);
-  public constructor(entity: E, reader: IReader<E, F>);
+  public constructor(entity: E, reader?: IReader<E, F>);
   public constructor(...args: any[]) {
     super();
 
@@ -67,10 +67,10 @@ export class FormController<
     let itemCustomCommand = {};
 
     for await (const service of this.#formData?.services) {
-      const { getItemCommand } = service;
+      const { addCustomFeaturesForCommandItem } = service;
 
-      if (getItemCommand) {
-        const command = getItemCommand();
+      if (addCustomFeaturesForCommandItem) {
+        const command = addCustomFeaturesForCommandItem();
 
         itemCustomCommand = { ...itemCustomCommand, ...command };
       }

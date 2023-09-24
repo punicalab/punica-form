@@ -1,14 +1,14 @@
-import { FormA } from '../__example__/form';
-import { Form, createInitialReader } from '..';
+import FormSample from '../__example__/form';
+import { Form, createInitialReader } from '@punica/form';
 
-describe('formA', () => {
+describe('service store', () => {
   let formData: Form<any, any>;
 
   /**
    *
    */
   beforeAll(async () => {
-    const entity = new FormA();
+    const entity = new FormSample();
     const reader = createInitialReader();
 
     formData = await reader.read(entity);

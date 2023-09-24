@@ -1,10 +1,12 @@
-import { IReader, FormItem, Form } from '../..';
+import { IReader, FormItem, Form } from '@punica/form';
 
 /**
  *
  */
-export class Reader<E, F extends FormItem<E>> implements IReader<E, F> {
-  private _form: Form<E, F>;
+export class Reader<E extends Object, F extends FormItem<E>>
+  implements IReader<E, F>
+{
+  #form: Form<E, F>;
 
   /**
    *
@@ -17,9 +19,9 @@ export class Reader<E, F extends FormItem<E>> implements IReader<E, F> {
         reject();
       }
 
-      this._form = initialForm;
+      this.#form = initialForm;
 
-      resolve(this._form);
+      resolve(this.#form);
     });
   }
 }

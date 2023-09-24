@@ -4,6 +4,7 @@ import { CommandService, FormItem, IService } from '../..';
  *
  */
 export class Service<E, F extends FormItem<E>> implements IService<E, F> {
+  //@ts-ignore
   #command: CommandService<E, F> = null;
   #name: string = 'service';
 
@@ -25,9 +26,8 @@ export class Service<E, F extends FormItem<E>> implements IService<E, F> {
    * @param command
    */
   public initialize(command: CommandService<E, F>) {
+    //@ts-ignore
     this.#command = command;
-
-    console.log(this.#command);
   }
 
   /**
@@ -36,7 +36,7 @@ export class Service<E, F extends FormItem<E>> implements IService<E, F> {
    */
   public getItemCommand() {
     return {
-      customComman: () => {
+      customCommand: () => {
         console.log('call custom');
       }
     };

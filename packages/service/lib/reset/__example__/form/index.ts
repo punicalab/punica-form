@@ -1,12 +1,13 @@
-import { Services } from '../../../decorator';
-import { FormItemA, FormItemB, FormItemC } from '../../formItems';
-import { Service } from '../../service';
+import { Services } from '@punica/form';
+import { FormItemA, FormItemB, FormItemC } from '../formItems';
+import { Reset } from '../..';
 import property1 from './items/property1';
 import property2 from './items/property2';
 import property3 from './items/property3';
 
-@Services([new Service()])
-class FormA {
+//@ts-ignore
+@Services([new Reset()])
+class FormSample {
   public id = '';
   @FormItemA(property1)
   public property1 = 'a|b|c';
@@ -16,4 +17,4 @@ class FormA {
   public property3: Date = new Date();
 }
 
-export default FormA;
+export default FormSample;

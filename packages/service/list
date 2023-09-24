@@ -39,16 +39,6 @@ public validate(): Promise<boolean> {
   });
 }
 
-public async reset(): Promise<void> {
-  const { items } = this._formData;
-
-  for await (const item of items) {
-    item.value = item.initialValue;
-  }
-
-  this.fireEvent(FormEvents.RESET, null);
-  this.fireEvent(FormEvents.UPDATE, this._formData);
-}
 
 public updateValue(property: keyof E, value: any): Promise<void> {
   return new Promise((resolve) => {

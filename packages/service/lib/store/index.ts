@@ -19,7 +19,7 @@ export class Store<E, F extends FormItem<E>> implements IService<E, F> {
    *
    * @returns
    */
-  public getItemCommand() {
+  public addCustomFeaturesForCommandItem() {
     return {
       readStoreItem: (key: string): any => {
         return this.#store[key];
