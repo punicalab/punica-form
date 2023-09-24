@@ -7,7 +7,6 @@ export type FormItem<E> = {
   required?: boolean;
   type?: string;
   value?: any;
-  statusMessage?: Array<string>;
   error?: boolean;
   errorMessages?: Array<string>;
   disabled?: boolean;

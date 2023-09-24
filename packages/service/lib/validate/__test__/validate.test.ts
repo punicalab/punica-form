@@ -1,4 +1,4 @@
-import { FormController } from '@punica/form';
+import { FormController, IServiceControl } from '@punica/form';
 import FormSample from '../__example__/form';
 import { Reader } from '../__example__/reader';
 
@@ -14,7 +14,8 @@ describe('service store', () => {
     await formController.start();
 
     const [serviceValidate] = formController?.getService('validate');
-    const valid = await serviceValidate.run?.();
+    const controlService = serviceValidate as IServiceControl<any, any>;
+    const valid = await controlService.run?.();
 
     expect(valid).toEqual(false);
   });

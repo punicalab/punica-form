@@ -12,32 +12,6 @@ initialize;
 
 /*
 
-public validate(): Promise<boolean> {
-  return new Promise(async (resolve) => {
-    const { items } = this._formData;
-    this._hasError = false;
-
-    for await (const item of items) {
-      const { validation, hidden } = item;
-
-      if (validation && !hidden) {
-        const command = this.getCommandItem(item);
-        const { error, errorMessages } = await validation(command);
-
-        if (error) {
-          this._hasError = true;
-        }
-
-        item.error = error;
-        item.errorMessages = errorMessages;
-      }
-    }
-
-    this.fireEvent(FormEvents.UPDATE, this._formData);
-
-    resolve(this._hasError);
-  });
-}
 
 
 public updateValue(property: keyof E, value: any): Promise<void> {

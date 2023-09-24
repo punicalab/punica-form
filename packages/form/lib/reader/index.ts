@@ -2,7 +2,6 @@ import { IReader } from '..';
 import { Reader } from './reader';
 import {
   FormItemsReader,
-  ItemConverterReader,
   ItemDataReader,
   ItemInitializerReader
 } from './decorators/readers';
@@ -16,8 +15,7 @@ export const createInitialReader = (): IReader<any, any> => {
 
   const formItemsReader = new FormItemsReader(reader);
   const itemDataReader = new ItemDataReader(formItemsReader);
-  const itemConverterReader = new ItemConverterReader(itemDataReader);
-  const itemInitializerReader = new ItemInitializerReader(itemConverterReader);
+  const itemInitializerReader = new ItemInitializerReader(itemDataReader);
 
   return itemInitializerReader;
 };
