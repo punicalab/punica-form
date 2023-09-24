@@ -1,9 +1,9 @@
-import { FormItem, IService } from '@punica/form';
+import { IService, IServiceAddCommand } from '@punica/form';
 
 /**
  *
  */
-export class Store<E, F extends FormItem<E>> implements IService<E, F> {
+export class Store implements IService, IServiceAddCommand {
   #name: string = 'store';
   #store: Record<string, any> = {};
 

@@ -18,7 +18,7 @@ export class FormController<
   E,
   F extends FormItem<E>
 > extends BaseListener<FormEvents> {
-  #serviceMap: Record<string, IService<E, F>>;
+  #serviceMap: Record<string, IService>;
   #itemsMap: Record<keyof E, number>;
   #formData: Form<E, F>;
   #reader: IReader<E, F>;
@@ -137,10 +137,7 @@ export class FormController<
    *
    * @returns
    */
-  public getService(
-    name: string,
-    ...names: Array<string>
-  ): Array<IService<E, F>> {
+  public getService(name: string, ...names: Array<string>): Array<IService> {
     const services = [this.#serviceMap[name]];
 
     if (names) {

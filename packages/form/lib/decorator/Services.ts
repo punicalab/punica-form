@@ -9,5 +9,5 @@ export const DECORATOR_SERVICES = 'form-services';
 /**
  *
  */
-export const Services: IClassDecorator<Array<IService<any, any>>> =
-  defineFormProperty<Array<IService<any, any>>>(DECORATOR_SERVICES);
+export const Services: IClassDecorator<Array<IService>> =
+  defineFormProperty<Array<IService>>(DECORATOR_SERVICES);

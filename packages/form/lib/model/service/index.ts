@@ -2,9 +2,17 @@ import { CommandService, FormItem } from '..';
 
 type CustomCommandItem = { [key: string]: any };
 
-export interface IService<E, F extends FormItem<E>> {
+export interface IService {
   get name(): string;
-  initialize?: (command: CommandService<E, F>) => void;
-  addCustomFeaturesForCommandItem?: () => CustomCommandItem;
-  run?: <T>(...args: any[]) => Promise<T>;
+
+  [key: string]: any;
+}
+
+export interface IServiceControl<E, F extends FormItem<E>> {
+  initialize: (command: CommandService<E, F>) => void;
+  run: <T>(...args: any[]) => Promise<T>;
+}
+
+export interface IServiceAddCommand {
+  addCustomFeaturesForCommandItem: () => CustomCommandItem;
 }
