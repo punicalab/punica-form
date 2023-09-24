@@ -30,7 +30,7 @@ export class Validate<E, F extends FormItem<E>> implements IService<E, F> {
    */
   public run<T = boolean>() {
     return new Promise<T>(async (resolve) => {
-      const { fireEvent, formData, initialFormData } = this.#command;
+      const { fireEvent, formData } = this.#command;
       const { items } = formData;
 
       this.#hasError = false;
@@ -50,7 +50,6 @@ export class Validate<E, F extends FormItem<E>> implements IService<E, F> {
           item.errorMessages = errorMessages;
         }
       }
-      console.log(formData, initialFormData);
 
       fireEvent('UPDATE_FORM', formData);
 
