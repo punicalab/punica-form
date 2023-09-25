@@ -3,8 +3,8 @@ import { CommandItem } from '.';
 
 export type CommandService<E, F extends FormItem<E>> = {
   initialFormData: Form<E, F>;
-  formData: Form<E, F>;
   initialEntity: E;
+  formData: Form<E, F>;
   itemsMap: Record<keyof E, number>;
   createCommandItem: (item: F) => Promise<CommandItem<E, F>>;
   fireEvent: (eventType: FormEvents, data: any) => void;

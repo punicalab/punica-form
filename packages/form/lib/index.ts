@@ -4,3 +4,4 @@ export * from './decorator';
 export * from './register';
 export * from './reader';
 export * from './controller';
+export * from './utils';

@@ -10,7 +10,8 @@ import {
   CommandService,
   CommandItem,
   IServiceAddCommand,
-  IServiceControl
+  IServiceControl,
+  deepCopy
 } from '..';
 
 /**
@@ -58,7 +59,7 @@ export class FormController<
    * @param eventType
    * @param data
    */
-  private fireEvent(eventType: FormEvents, data: any): void {
+  fireEvent(eventType: FormEvents, data: any): void {
     this.trigger(eventType, data);
   }
 
@@ -204,10 +205,7 @@ export class FormController<
       }
 
       //form data deep clone
-      this.#initialFormData = {
-        ...this.#formData,
-        items: this.#formData.items.map((item) => ({ ...item }))
-      };
+      this.#initialFormData = deepCopy(this.#formData);
 
       //initialize service
       if (this.#formData.services) {

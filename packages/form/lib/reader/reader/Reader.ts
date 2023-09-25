@@ -19,7 +19,7 @@ class Reader<E, F extends FormItem<E>> implements IReader<E, F> {
 
       this.#form = initialForm || {
         items: null,
-        initialize: null
+        services: null
       };
 
       this.#form.services = Reflect.getMetadata(DECORATOR_SERVICES, entity);

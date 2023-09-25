@@ -1,4 +1,9 @@
-import { CommandService, FormItem, IServiceControl } from '@punica/form';
+import {
+  CommandService,
+  FormItem,
+  IServiceControl,
+  deepCopy
+} from '@punica/form';
 
 /**
  *
@@ -31,7 +36,7 @@ export class Reset<E, F extends FormItem<E>> implements IServiceControl<E, F> {
     return new Promise<T>(() => {
       const { fireEvent, initialFormData } = this.#command;
 
-      fireEvent('UPDATE_FORM', initialFormData);
+      fireEvent('UPDATE_FORM', deepCopy(initialFormData));
     });
   }
 }
