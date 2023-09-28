@@ -1,45 +1,6 @@
 watch;
 setError;
-clearErrors;
-setValue;
-getValues;
-trigger;
-
 setFocus;
 setBlur;
-
 initialize;
 
-/*
-
-
-
-public updateValue(property: keyof E, value: any): Promise<void> {
-  return new Promise((resolve) => {
-    const formItem = this.getItem(property) as F;
-    const { control } = formItem;
-
-    formItem.value = value;
-
-    this.writeItems([formItem]);
-
-    if (control) {
-      const command = this.getCommandItem(formItem);
-
-      control(command).then((formItems: Array<FormItem>) => {
-        this.writeItems(formItems);
-        this.fireEvent(FormEvents.UPDATE_ITEM, [formItem, ...formItems]);
-        this.fireEvent(FormEvents.UPDATE, this._formData);
-
-        resolve();
-      });
-    } else {
-      this.fireEvent(FormEvents.UPDATE_ITEM, [formItem]);
-      this.fireEvent(FormEvents.UPDATE, this._formData);
-
-      resolve();
-    }
-  });
-}
-
-*/

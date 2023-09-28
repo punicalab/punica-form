@@ -1,10 +1,15 @@
-import { CommandService, FormItem, IServiceControl } from '@punica/form';
+import {
+  CommandService,
+  FormItem,
+  IServiceControl,
+  IServiceInitialize
+} from '@punica/form';
 
 /**
  *
  */
 export class Validate<E, F extends FormItem<E>>
-  implements IServiceControl<E, F>
+  implements IServiceInitialize<E, F>, IServiceControl<boolean>
 {
   #command: CommandService<E, F> = null;
   #name: string = 'validate';
@@ -30,8 +35,8 @@ export class Validate<E, F extends FormItem<E>>
    *
    * @returns
    */
-  public run<T = boolean>() {
-    return new Promise<T>(async (resolve) => {
+  public run() {
+    return new Promise<boolean>(async (resolve) => {
       const { fireEvent, formData } = this.#command;
       const { items } = formData;
 
@@ -55,7 +60,7 @@ export class Validate<E, F extends FormItem<E>>
 
       fireEvent('UPDATE_FORM', formData);
 
-      resolve(!this.#hasError as T);
+      resolve(!this.#hasError);
     });
   }
 }

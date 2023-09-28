@@ -12,7 +12,7 @@ export type FormItem<E> = {
   disabled?: boolean;
   hidden?: boolean;
   getData?: (params?: any) => Promise<any>;
-  updateValue?: (property: string, value: any) => void;
+  setValue?: (property: keyof E, value: any) => void;
   control?: (command: CommandItem<E, any>) => Promise<Array<FormItem<E>>>;
   submited?: (command: CommandItem<E, any>) => Promise<void>;
   initialize?: (command: CommandItem<E, any>) => Promise<Array<FormItem<E>>>;

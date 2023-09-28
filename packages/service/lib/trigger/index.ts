@@ -8,11 +8,11 @@ import {
 /**
  *
  */
-export class ResetItem<E, F extends FormItem<E>>
+export class Trigger<E, F extends FormItem<E>>
   implements IServiceInitialize<E, F>, IServiceControl
 {
   #command: CommandService<E, F> = null;
-  #name: string = 'resetItem';
+  #name: string = 'trigger';
 
   /**
    *
@@ -32,15 +32,22 @@ export class ResetItem<E, F extends FormItem<E>>
 
   /**
    *
+   * @param property
    * @returns
    */
   public run(property: keyof E) {
-    return new Promise(() => {
-      const { fireEvent, itemsMap, formData, initialFormData } = this.#command;
-      const itemIndex = itemsMap[property];
-      const oldFormItem = initialFormData.items[itemsMap[property]];
+    return new Promise(async () => {
+      const { fireEvent, getItem, formData } = this.#command;
+      const item = getItem(property);
+      const { validation, hidden } = item;
 
-      formData.items[itemIndex] = { ...oldFormItem };
+      if (validation && !hidden) {
+        const commandItem = await this.#command.createCommandItem(item);
+        const { error, errorMessages } = await validation(commandItem);
+
+        item.error = error;
+        item.errorMessages = errorMessages;
+      }
 
       fireEvent('UPDATE_FORM', formData);
     });

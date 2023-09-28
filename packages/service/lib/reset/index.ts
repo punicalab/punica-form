@@ -2,13 +2,16 @@ import {
   CommandService,
   FormItem,
   IServiceControl,
+  IServiceInitialize,
   deepCopy
 } from '@punica/form';
 
 /**
  *
  */
-export class Reset<E, F extends FormItem<E>> implements IServiceControl<E, F> {
+export class Reset<E, F extends FormItem<E>>
+  implements IServiceInitialize<E, F>, IServiceControl
+{
   #command: CommandService<E, F> = null;
   #name: string = 'reset';
 
@@ -32,8 +35,8 @@ export class Reset<E, F extends FormItem<E>> implements IServiceControl<E, F> {
    *
    * @returns
    */
-  public run<T>() {
-    return new Promise<T>(() => {
+  public run() {
+    return new Promise(() => {
       const { fireEvent, initialFormData } = this.#command;
 
       fireEvent('UPDATE_FORM', deepCopy(initialFormData));

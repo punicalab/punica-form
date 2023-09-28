@@ -8,11 +8,11 @@ import {
 /**
  *
  */
-export class ResetItem<E, F extends FormItem<E>>
-  implements IServiceInitialize<E, F>, IServiceControl
+export class ClearErrors<E, F extends FormItem<E>>
+  implements IServiceInitialize<E, F>, IServiceControl<boolean>
 {
   #command: CommandService<E, F> = null;
-  #name: string = 'resetItem';
+  #name: string = 'clearErrors';
 
   /**
    *
@@ -34,13 +34,15 @@ export class ResetItem<E, F extends FormItem<E>>
    *
    * @returns
    */
-  public run(property: keyof E) {
-    return new Promise(() => {
-      const { fireEvent, itemsMap, formData, initialFormData } = this.#command;
-      const itemIndex = itemsMap[property];
-      const oldFormItem = initialFormData.items[itemsMap[property]];
+  public run() {
+    return new Promise<boolean>(async () => {
+      const { fireEvent, formData } = this.#command;
+      const { items } = formData;
 
-      formData.items[itemIndex] = { ...oldFormItem };
+      for await (const item of items) {
+        item.error = false;
+        item.errorMessages = null;
+      }
 
       fireEvent('UPDATE_FORM', formData);
     });

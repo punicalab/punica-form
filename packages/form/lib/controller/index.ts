@@ -10,8 +10,9 @@ import {
   CommandService,
   CommandItem,
   IServiceAddCommand,
-  IServiceControl,
-  deepCopy
+  deepCopy,
+  IServiceInitialize,
+  IServiceControl
 } from '..';
 
 /**
@@ -138,36 +139,25 @@ export class FormController<
 
   /**
    *
+   * @param name
+   * @param names
    * @returns
    */
-  public getService(name: string, ...names: Array<string>): Array<IService> {
-    const services = [this.#serviceMap[name]];
+  public getServices<
+    T = IServiceInitialize<E, F> & IServiceControl & IServiceAddCommand,
+    R = T & Array<T>
+  >(name: string, ...names: Array<string>): R {
+    if (Array.isArray(names) && names.length > 1) {
+      const services = [this.#serviceMap[name]];
 
-    if (names) {
       names.forEach((name) => {
         services.push(this.#serviceMap[name]);
       });
+
+      return services as R;
     }
-    return services;
-  }
 
-  /**
-   *
-   * @returns
-   */
-  public getEntity(): Promise<E> {
-    return new Promise(async (resolve) => {
-      const { items } = this.#formData;
-      const entity = { ...this.#initialEntity };
-
-      for await (const item of items) {
-        const { property, value } = item;
-
-        entity[property] = value;
-      }
-
-      resolve(entity);
-    });
+    return this.#serviceMap[name] as R;
   }
 
   /**
@@ -194,7 +184,6 @@ export class FormController<
         }
       } else {
         this.#initialEntity = {} as E;
-        this.#initialEntity = await this.getEntity();
       }
 
       //create item map
@@ -211,7 +200,7 @@ export class FormController<
       if (this.#formData.services) {
         for await (const service of this.#formData?.services) {
           const command = this.createCommandService();
-          const serviceControl = service as IServiceControl<E, F>;
+          const serviceControl = service as IServiceInitialize<E, F>;
 
           this.#serviceMap[service.name] = service;
 

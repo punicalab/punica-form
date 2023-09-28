@@ -10,7 +10,7 @@ import {
  *
  */
 export class Service<E, F extends FormItem<E>>
-  implements IService, IServiceAddCommand, IServiceControl<E, F>
+  implements IService, IServiceAddCommand, IServiceControl
 {
   //@ts-ignore
   #command: CommandService<E, F> = null;
