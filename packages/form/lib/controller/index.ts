@@ -22,22 +22,11 @@ export class FormController<
   E,
   F extends FormItem<E>
 > extends BaseListener<FormEvents> {
-  // Map of registered services
   #serviceMap: Record<string, IService>;
-
-  // Map of form items with their property keys
   #itemsMap: Record<keyof E, number>;
-
-  // Form data
   #formData: Form<E, F>;
-
-  // Reader for initializing the form
   #reader: IReader<E, F>;
-
-  // Initial form data
   #initialFormData: Form<E, F>;
-
-  // Initial entity
   #initialEntity: E;
 
   //#region constructor
@@ -55,6 +44,10 @@ export class FormController<
    */
   public constructor(entity: E, reader: IReader<E, F>);
 
+  /**
+   *
+   * @param args
+   */
   public constructor(...args: any[]) {
     super();
 
@@ -230,6 +223,17 @@ export class FormController<
           if (serviceControl.initialize) {
             serviceControl.initialize(command);
           }
+        }
+      }
+
+      // Executed starter methods
+      if (this.#formData.starters) {
+        for await (const starter of this.#formData.starters) {
+          // Execute starter run methods
+          this.#formData = await starter.run(
+            this.#formData,
+            this.#initialEntity
+          );
         }
       }
 

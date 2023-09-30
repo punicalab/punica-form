@@ -29,7 +29,7 @@ describe('form', () => {
    *
    */
   test('custom title check', () => {
-    expect(formData.title).toEqual('Title');
+    expect(formData.title).toEqual('initializer modified');
   });
 
   /**

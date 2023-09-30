@@ -1,13 +1,16 @@
-import { Services } from '../../../decorator';
+import { Services, Starters } from '../../../decorator';
 import { CustomTitle, CustomDescription } from '../../decorator';
 import { FormItemA, FormItemB, FormItemC } from '../../formItems';
 import { Service } from '../../service';
+import { Starter } from '../../starter';
 import property1 from './items/property1';
 import property2 from './items/property2';
 import property3 from './items/property3';
 
 //@ts-ignore
 @Services([new Service()])
+//@ts-ignore
+@Starters([new Starter()])
 //@ts-ignore
 @CustomTitle('Title')
 //@ts-ignore

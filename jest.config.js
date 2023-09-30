@@ -8,5 +8,15 @@ module.exports = {
   moduleFileExtensions: ['ts', 'js', 'json', 'node'],
   clearMocks: true,
   setupFiles: ['<rootDir>jest/jest-setup-file.ts'],
-  coverageReporters: ['clover', 'json', 'lcov', ['text', { skipFull: true }]]
+  collectCoverage: true,
+  coverageReporters: ['lcov', 'text-summary', 'text', 'html'],
+  coverageThreshold: {
+    global: {
+      branches: 50,
+      functions: 50,
+      lines: 50,
+      statements: 50
+    }
+  },
+  coveragePathIgnorePatterns: ['/node_modules/']
 };
