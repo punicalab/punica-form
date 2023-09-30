@@ -1,23 +1,23 @@
 import { IServiceAddCommand } from '@punica/form';
 
 /**
- *
+ * Service for storing data.
  */
 export class Store implements IServiceAddCommand {
   #name: string = 'store';
   #store: Record<string, any> = {};
 
   /**
-   *
-   * @returns
+   * Returns the name of the service.
+   * @returns {string} - Service name
    */
   public get name() {
     return this.#name;
   }
 
   /**
-   *
-   * @returns
+   * Adds custom features for command items.
+   * @returns {Object} - Object containing custom features.
    */
   public addCustomFeaturesForCommandItem() {
     return {

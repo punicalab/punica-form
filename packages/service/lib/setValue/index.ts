@@ -1,7 +1,7 @@
 import { CommandService, FormItem, IServiceInitialize } from '@punica/form';
 
 /**
- *
+ * Service for setting values of form items.
  */
 export class SetValue<E, F extends FormItem<E>>
   implements IServiceInitialize<E, F>
@@ -10,17 +10,17 @@ export class SetValue<E, F extends FormItem<E>>
   #name: string = 'setValue';
 
   /**
-   *
-   * @returns
+   * Returns the name of the service.
+   * @returns {string} - Service name
    */
-  public get name() {
+  public get name(): string {
     return this.#name;
   }
 
   /**
-   *
-   * @param property
-   * @param value
+   * Sets the value of a form item.
+   * @param {keyof E} property  - Property of the form item
+   * @param value - Value to be set
    */
   private async setValue(property: keyof E, value: any) {
     const { formData, getItem, writeItems, fireEvent, createCommandItem } =
@@ -47,8 +47,8 @@ export class SetValue<E, F extends FormItem<E>>
   }
 
   /**
-   *
-   * @param command
+   * Initializes the service with a command.
+   * @param command - The command service to be used.
    */
   public async initialize(command: CommandService<E, F>) {
     this.#command = command;
@@ -56,7 +56,7 @@ export class SetValue<E, F extends FormItem<E>>
     const { formData } = command;
 
     for await (const item of formData.items) {
-      item.setValue = this.setValue;
+      item.setValue = this.setValue.bind(this); // Bind the context
     }
   }
 }

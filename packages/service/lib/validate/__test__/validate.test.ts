@@ -13,7 +13,7 @@ describe('service store', () => {
 
     await formController.start();
 
-    const validate = formController?.getServices('validate');
+    const validate = formController.getServices('validate');
     const valid = await validate.run();
 
     expect(valid).toEqual(false);

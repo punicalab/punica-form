@@ -7,8 +7,8 @@ import {
 } from './decorators/readers';
 
 /**
- *
- * @returns
+ * Creates an initial reader with a chain of decorators.
+ * @returns {IReader<any, any>} - Initial reader object
  */
 export const createInitialReader = (): IReader<any, any> => {
   const reader = new Reader();

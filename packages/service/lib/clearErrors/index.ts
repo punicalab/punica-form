@@ -6,7 +6,7 @@ import {
 } from '@punica/form';
 
 /**
- *
+ * Service for clearing errors on form items.
  */
 export class ClearErrors<E, F extends FormItem<E>>
   implements IServiceInitialize<E, F>, IServiceControl<boolean>
@@ -15,27 +15,27 @@ export class ClearErrors<E, F extends FormItem<E>>
   #name: string = 'clearErrors';
 
   /**
-   *
-   * @returns
+   * Returns the name of the service.
+   * @returns {string} - Service name
    */
-  public get name() {
+  public get name(): string {
     return this.#name;
   }
 
   /**
-   *
-   * @param command
+   * Initializes the service with a command.
+   * @param command - The command service to be used.
    */
   public initialize(command: CommandService<E, F>) {
     this.#command = command;
   }
 
   /**
-   *
-   * @returns
+   * Clears errors on form items.
+   * @returns {Promise<boolean>} - Resolves when the operation is complete.
    */
-  public run() {
-    return new Promise<boolean>(async () => {
+  public run(): Promise<boolean> {
+    return new Promise<boolean>(async (resolve) => {
       const { fireEvent, formData } = this.#command;
       const { items } = formData;
 
@@ -45,6 +45,7 @@ export class ClearErrors<E, F extends FormItem<E>>
       }
 
       fireEvent('UPDATE_FORM', formData);
+      resolve(true);
     });
   }
 }

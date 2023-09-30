@@ -7,12 +7,13 @@ export class FormItemRegister<E, F extends FormItem<E>> {
   #itemMap: Map<string, Render<F>> = new Map<string, Render<F>>();
 
   /**
-   *
+   * Private constructor to prevent external instantiation.
    */
   private constructor() {}
 
   /**
-   *
+   * Singleton pattern: Get the instance of FormItemRegister.
+   * @returns The instance of FormItemRegister.
    */
   public static getInstance(): FormItemRegister<any, any> {
     if (!FormItemRegister._instance) {
@@ -23,10 +24,9 @@ export class FormItemRegister<E, F extends FormItem<E>> {
   }
 
   /**
-   *
-   * @param property
-   * @param renderer
-   * @returns
+   * Register a form item property with its corresponding renderer.
+   * @param property - The form item property.
+   * @param renderer - The rendering function for the form item.
    */
   public register(property: string, renderer: (props: F) => any): void {
     if (this.#itemMap.has(property)) {
@@ -37,9 +37,8 @@ export class FormItemRegister<E, F extends FormItem<E>> {
   }
 
   /**
-   *
-   * @param property
-   * @returns
+   * Unregister a form item property.
+   * @param property - The form item property to unregister.
    */
   public unRegister(property: string): void {
     if (!this.#itemMap.has(property)) {
@@ -50,25 +49,25 @@ export class FormItemRegister<E, F extends FormItem<E>> {
   }
 
   /**
-   *
-   * @param property
-   * @returns
+   * Get the rendering function for a specific form item property.
+   * @param property - The form item property.
+   * @returns The rendering function for the specified property.
    */
   public getItem(property: string): Render<F> {
     return this.#itemMap.get(property);
   }
 
   /**
-   *
-   * @returns
+   * Get all registered form item properties and their corresponding renderers.
+   * @returns A map containing form item properties and their renderers.
    */
   public getItems(): Map<string, Render<F>> {
     return this.#itemMap;
   }
 
   /**
-   *
-   * @returns
+   * Get an iterable of all registered form item properties.
+   * @returns An iterable of form item properties.
    */
   public getItemKeys(): IterableIterator<string> {
     return this.#itemMap.keys();

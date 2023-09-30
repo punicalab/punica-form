@@ -6,7 +6,7 @@ import {
 } from '@punica/form';
 
 /**
- *
+ * Trigger service is triggered when the value of a form item is changed.
  */
 export class Trigger<E, F extends FormItem<E>>
   implements IServiceInitialize<E, F>, IServiceControl
@@ -15,30 +15,34 @@ export class Trigger<E, F extends FormItem<E>>
   #name: string = 'trigger';
 
   /**
-   *
-   * @returns
+   * Returns the name of the service.
+   * @returns {string} - Service name
    */
-  public get name() {
+  public get name(): string {
     return this.#name;
   }
 
   /**
-   *
-   * @param command
+   * Called when the service is initialized.
+   * @param command - Command service
    */
   public initialize(command: CommandService<E, F>) {
     this.#command = command;
   }
 
   /**
-   *
-   * @param property
-   * @returns
+   * Called when the value of a form item is changed.
+   * @param property - Property of the changed item
    */
-  public run(property: keyof E) {
-    return new Promise(async () => {
+  public async run(property: keyof E) {
+    try {
       const { fireEvent, getItem, formData } = this.#command;
       const item = getItem(property);
+
+      if (!item) {
+        throw new Error(`Item not found: ${property as string}`);
+      }
+
       const { validation, hidden } = item;
 
       if (validation && !hidden) {
@@ -50,6 +54,8 @@ export class Trigger<E, F extends FormItem<E>>
       }
 
       fireEvent('UPDATE_FORM', formData);
-    });
+    } catch (error) {
+      console.error(error);
+    }
   }
 }

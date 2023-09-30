@@ -16,23 +16,45 @@ import {
 } from '..';
 
 /**
- *
+ * Controller for managing a form and its associated services.
  */
 export class FormController<
   E,
   F extends FormItem<E>
 > extends BaseListener<FormEvents> {
+  // Map of registered services
   #serviceMap: Record<string, IService>;
+
+  // Map of form items with their property keys
   #itemsMap: Record<keyof E, number>;
+
+  // Form data
   #formData: Form<E, F>;
+
+  // Reader for initializing the form
   #reader: IReader<E, F>;
+
+  // Initial form data
   #initialFormData: Form<E, F>;
+
+  // Initial entity
   #initialEntity: E;
 
   //#region constructor
 
+  /**
+   * Constructor for initializing the FormController with form data.
+   * @param formData - The initial form data
+   */
   public constructor(formData: Form<E, F>);
+
+  /**
+   * Constructor for initializing the FormController with an entity and reader.
+   * @param entity - The entity for the form
+   * @param reader - The reader for initializing the form
+   */
   public constructor(entity: E, reader: IReader<E, F>);
+
   public constructor(...args: any[]) {
     super();
 
@@ -56,18 +78,18 @@ export class FormController<
   //#endregion
 
   /**
-   *
-   * @param eventType
-   * @param data
+   * Trigger a form event.
+   * @param eventType - The type of the event
+   * @param data - Data associated with the event
    */
   fireEvent(eventType: FormEvents, data: any): void {
     this.trigger(eventType, data);
   }
 
   /**
-   *
-   * @param item
-   * @returns
+   * Create a command item for a form item.
+   * @param item - The form item
+   * @returns A promise that resolves to a CommandItem
    */
   private async createCommandItem(item: F): Promise<CommandItem<E, F>> {
     let itemCustomCommand = {};
@@ -91,8 +113,8 @@ export class FormController<
   }
 
   /**
-   *
-   * @returns
+   * Create a command service for the form.
+   * @returns A CommandService for the form
    */
   private createCommandService(): CommandService<E, F> {
     return {
@@ -108,9 +130,9 @@ export class FormController<
   }
 
   /**
-   *
-   * @param property
-   * @returns
+   * Get a form item by its property key.
+   * @param property - The property key of the form item
+   * @returns The form item corresponding to the property key
    */
   private getItem(property: keyof E) {
     const { items, itemsMap } = this.#formData;
@@ -124,8 +146,8 @@ export class FormController<
   }
 
   /**
-   *
-   * @param items
+   * Write an array of form items to the form data.
+   * @param items - An array of form items
    */
   private async writeItems(items: Array<FormItem<E>>) {
     for await (const item of items) {
@@ -138,10 +160,10 @@ export class FormController<
   }
 
   /**
-   *
-   * @param name
-   * @param names
-   * @returns
+   * Get services by name(s).
+   * @param name - The name of the service
+   * @param names - Additional names of services
+   * @returns The requested services
    */
   public getServices<
     T = IServiceInitialize<E, F> & IServiceControl & IServiceAddCommand,
@@ -161,11 +183,12 @@ export class FormController<
   }
 
   /**
-   *
-   * @param reader
+   * Start the form controller.
+   * @returns A promise that resolves to the form data
    */
   public start(): Promise<Form<E, F>> {
     return new Promise(async (resolve) => {
+      // Trigger the REGISTER_ITEMS event with the registered item keys
       this.fireEvent(
         'REGISTER_ITEMS',
         FormItemRegister.getInstance().getItemKeys()
@@ -186,17 +209,17 @@ export class FormController<
         this.#initialEntity = {} as E;
       }
 
-      //create item map
+      // Create item map
       let index = 0;
       this.#itemsMap = {} as Record<keyof E, number>;
       for await (const item of this.#formData.items) {
         this.#itemsMap[item.property] = index++;
       }
 
-      //form data deep clone
+      // Deep clone form data
       this.#initialFormData = deepCopy(this.#formData);
 
-      //initialize service
+      // Initialize services
       if (this.#formData.services) {
         for await (const service of this.#formData?.services) {
           const command = this.createCommandService();

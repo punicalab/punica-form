@@ -1,7 +1,7 @@
 /**
- *
- * @param obj
- * @returns
+ * Performs a deep copy of special types (Date, RegExp, Map, Set).
+ * @param obj - The object to be copied.
+ * @returns The deep copy of the object.
  */
 export const deepCopySpecialTypes = (obj: any): any => {
   if (obj instanceof Date) {
@@ -25,6 +25,7 @@ export const deepCopySpecialTypes = (obj: any): any => {
 
     return mapCopy;
   }
+
   if (obj instanceof Set) {
     const setCopy = new Set();
 
@@ -37,9 +38,9 @@ export const deepCopySpecialTypes = (obj: any): any => {
 };
 
 /**
- *
- * @param func
- * @returns
+ * Performs a deep copy of a function.
+ * @param func - The function to be copied.
+ * @returns The deep copy of the function.
  */
 export const deepCopyFunction = (func: Function) => {
   const funcStr = func.toString();
@@ -58,9 +59,9 @@ export const deepCopyFunction = (func: Function) => {
 };
 
 /**
- *
- * @param obj
- * @returns
+ * Performs a deep copy of an object.
+ * @param obj - The object to be copied.
+ * @returns The deep copy of the object.
  */
 export const deepCopy = (obj: any): any => {
   if (obj instanceof Function) {

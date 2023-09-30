@@ -7,7 +7,7 @@ import {
 } from '@punica/form';
 
 /**
- *
+ * Service for resetting the form to its initial state.
  */
 export class Reset<E, F extends FormItem<E>>
   implements IServiceInitialize<E, F>, IServiceControl
@@ -16,30 +16,36 @@ export class Reset<E, F extends FormItem<E>>
   #name: string = 'reset';
 
   /**
-   *
-   * @returns
+   * Returns the name of the service.
+   * @returns {string} - Service name
    */
-  public get name() {
+  public get name(): string {
     return this.#name;
   }
 
   /**
-   *
-   * @param command
+   * Initializes the service with a command.
+   * @param command - The command service to be used.
    */
   public initialize(command: CommandService<E, F>) {
     this.#command = command;
   }
 
   /**
-   *
-   * @returns
+   * Resets the form to its initial state.
+   * @returns {Promise<void>} - Resolves when the operation is complete.
    */
-  public run() {
-    return new Promise(() => {
+  public run(): Promise<void> {
+    return new Promise<void>((resolve) => {
       const { fireEvent, initialFormData } = this.#command;
 
-      fireEvent('UPDATE_FORM', deepCopy(initialFormData));
+      // Create a deep copy of the initial form data
+      const formDataCopy = deepCopy(initialFormData);
+
+      // Trigger an update event to reset the form
+      fireEvent('UPDATE_FORM', formDataCopy);
+
+      resolve();
     });
   }
 }
