@@ -23,26 +23,32 @@ export class SetValue<E, F extends FormItem<E>>
    * @param value - Value to be set
    */
   private async setValue(property: keyof E, value: any) {
-    const { formData, getItem, writeItems, fireEvent, createCommandItem } =
-      this.#command;
-    const formItem = getItem(property) as F;
-    const { control } = formItem;
+    try {
+      const { formData, getItem, writeItems, fireEvent, createCommandItem } =
+        this.#command;
 
-    formItem.value = value;
+      const formItem = getItem(property) as F;
+      const { control } = formItem;
 
-    writeItems([formItem]);
+      formItem.value = value;
 
-    if (control) {
-      const command = await createCommandItem(formItem);
+      writeItems([formItem]);
 
-      control(command).then((formItems: any) => {
-        writeItems(formItems);
-        fireEvent('UPDATE_ITEM', [formItem, ...formItems]);
+      if (control) {
+        const command = await createCommandItem(formItem);
+
+        control(command).then((formItems: any) => {
+          writeItems(formItems);
+          fireEvent('UPDATE_ITEM', [formItem, ...formItems]);
+          fireEvent('UPDATE_FORM', formData);
+        });
+      } else {
+        fireEvent('UPDATE_ITEM', [formItem]);
         fireEvent('UPDATE_FORM', formData);
-      });
-    } else {
-      fireEvent('UPDATE_ITEM', [formItem]);
-      fireEvent('UPDATE_FORM', formData);
+      }
+    } catch (error) {
+      // Handle the error
+      console.error(error);
     }
   }
 
@@ -51,12 +57,17 @@ export class SetValue<E, F extends FormItem<E>>
    * @param command - The command service to be used.
    */
   public async initialize(command: CommandService<E, F>) {
-    this.#command = command;
+    try {
+      this.#command = command;
 
-    const { formData } = command;
+      const { formData } = command;
 
-    for await (const item of formData.items) {
-      item.setValue = this.setValue.bind(this); // Bind the context
+      for await (const item of formData.items) {
+        item.setValue = this.setValue.bind(this); // Bind the context
+      }
+    } catch (error) {
+      // Handle the error
+      console.error(error);
     }
   }
 }

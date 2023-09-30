@@ -65,6 +65,7 @@ export class Validate<E, F extends FormItem<E>>
         await this.validateFormItem(item);
       }
 
+      // Trigger update event
       fireEvent('UPDATE_FORM', formData);
 
       return !this.#hasError;

@@ -41,12 +41,17 @@ export class ResetItem<E, F extends FormItem<E>>
       try {
         const { fireEvent, itemsMap, formData, initialFormData } =
           this.#command;
+
+        // Retrieve the index and the initial form item
         const itemIndex = itemsMap[property];
         const oldFormItem = initialFormData.items[itemsMap[property]];
 
+        // Check if both index and form item are valid
         if (itemIndex !== undefined && oldFormItem !== undefined) {
+          // Create a deep copy of the initial form item
           formData.items[itemIndex] = deepCopy(oldFormItem);
 
+          // Trigger an update event to reset the form
           fireEvent('UPDATE_FORM', formData);
 
           resolve();

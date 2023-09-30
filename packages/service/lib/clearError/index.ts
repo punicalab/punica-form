@@ -40,9 +40,11 @@ export class ClearError<E, F extends FormItem<E>>
       const { formData, getItem, fireEvent } = this.#command;
       const item = getItem(property);
 
+      // Clear errors
       item.error = false;
       item.errorMessages = null;
 
+      // Trigger update event
       fireEvent('UPDATE_FORM', formData);
 
       resolve();

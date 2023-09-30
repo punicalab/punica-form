@@ -39,12 +39,15 @@ export class ClearErrors<E, F extends FormItem<E>>
       const { fireEvent, formData } = this.#command;
       const { items } = formData;
 
+      // Iterate through form items and clear errors
       for await (const item of items) {
         item.error = false;
         item.errorMessages = null;
       }
 
+      // Trigger form update event
       fireEvent('UPDATE_FORM', formData);
+
       resolve(true);
     });
   }

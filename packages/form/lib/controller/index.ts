@@ -71,8 +71,6 @@ export class FormController<
 
     this.#serviceMap = {};
     this.#itemsMap = {} as Record<keyof E, number>;
-    this.createCommandItem = this.createCommandItem.bind(this);
-    this.fireEvent = this.fireEvent.bind(this);
   }
 
   //#endregion
@@ -82,7 +80,7 @@ export class FormController<
    * @param eventType - The type of the event
    * @param data - Data associated with the event
    */
-  fireEvent(eventType: FormEvents, data: any): void {
+  private fireEvent(eventType: FormEvents, data: any): void {
     this.trigger(eventType, data);
   }
 
@@ -106,8 +104,8 @@ export class FormController<
     return {
       formItem: item,
       initialEntity: this.#initialEntity,
-      getItem: this.getItem,
-      writeItems: this.writeItems,
+      getItem: this.getItem.bind(this),
+      writeItems: this.writeItems.bind(this),
       ...itemCustomCommand
     };
   }
@@ -122,10 +120,10 @@ export class FormController<
       initialEntity: this.#initialEntity,
       formData: this.#formData,
       itemsMap: this.#itemsMap,
-      fireEvent: this.fireEvent,
-      getItem: this.getItem,
-      writeItems: this.writeItems,
-      createCommandItem: this.createCommandItem
+      getItem: this.getItem.bind(this),
+      writeItems: this.writeItems.bind(this),
+      fireEvent: this.fireEvent.bind(this),
+      createCommandItem: this.createCommandItem.bind(this)
     };
   }
 
@@ -161,25 +159,27 @@ export class FormController<
 
   /**
    * Get services by name(s).
-   * @param name - The name of the service
-   * @param names - Additional names of services
+   * @param serviceName - The name of the service
+   * @param additionalServiceNames - Additional names of services
    * @returns The requested services
    */
   public getServices<
     T = IServiceInitialize<E, F> & IServiceControl & IServiceAddCommand,
     R = T & Array<T>
-  >(name: string, ...names: Array<string>): R {
-    if (Array.isArray(names) && names.length > 1) {
-      const services = [this.#serviceMap[name]];
-
-      names.forEach((name) => {
-        services.push(this.#serviceMap[name]);
-      });
+  >(serviceName: string, ...additionalServiceNames: string[]): R {
+    if (
+      Array.isArray(additionalServiceNames) &&
+      additionalServiceNames.length > 0
+    ) {
+      const services = [
+        this.#serviceMap[serviceName],
+        ...additionalServiceNames.map((name) => this.#serviceMap[name])
+      ];
 
       return services as R;
     }
 
-    return this.#serviceMap[name] as R;
+    return this.#serviceMap[serviceName] as R;
   }
 
   /**

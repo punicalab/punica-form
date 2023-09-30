@@ -23,8 +23,8 @@ export class Trigger<E, F extends FormItem<E>>
   }
 
   /**
-   * Called when the service is initialized.
-   * @param command - Command service
+   * Initializes the service with a command.
+   * @param command - The command service to be used.
    */
   public initialize(command: CommandService<E, F>) {
     this.#command = command;
@@ -32,7 +32,7 @@ export class Trigger<E, F extends FormItem<E>>
 
   /**
    * Called when the value of a form item is changed.
-   * @param property - Property of the changed item
+   * @param property - Property of the changed item.
    */
   public async run(property: keyof E) {
     try {
@@ -46,15 +46,21 @@ export class Trigger<E, F extends FormItem<E>>
       const { validation, hidden } = item;
 
       if (validation && !hidden) {
+        // Create a command item for validation
         const commandItem = await this.#command.createCommandItem(item);
+
+        // Perform validation
         const { error, errorMessages } = await validation(commandItem);
 
+        // Update form item with validation results
         item.error = error;
         item.errorMessages = errorMessages;
       }
 
+      // Trigger an update event to reflect changes in the form
       fireEvent('UPDATE_FORM', formData);
     } catch (error) {
+      // Handle errors
       console.error(error);
     }
   }
