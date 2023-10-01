@@ -3,9 +3,11 @@ import { CustomTitle, CustomDescription } from '../../decorator';
 import { FormItemA, FormItemB, FormItemC } from '../../formItems';
 import { Service } from '../../service';
 import { Starter } from '../../starter';
-import property1 from './items/property1';
-import property2 from './items/property2';
-import property3 from './items/property3';
+import {
+  formItemProperty1,
+  formItemProperty2,
+  formItemProperty3
+} from './items';
 
 //@ts-ignore
 @Services([new Service()])
@@ -17,11 +19,11 @@ import property3 from './items/property3';
 @CustomDescription('Description')
 class FormA {
   public id = '';
-  @FormItemA(property1)
+  @FormItemA(formItemProperty1)
   public property1 = 'a|b|c';
-  @FormItemC(property2)
+  @FormItemC(formItemProperty2)
   public property2 = 'deneme';
-  @FormItemB(property3)
+  @FormItemB(formItemProperty3)
   public property3: Date = new Date();
 }
 

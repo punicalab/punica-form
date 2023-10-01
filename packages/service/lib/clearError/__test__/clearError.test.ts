@@ -36,6 +36,6 @@ describe('service clear error', () => {
     await clearError.run('name' as never);
 
     // Test the run method
-    expect(mockCommandService.formData.items[0].error).toEqual(false);
+    expect(mockCommandService.formData.items[0].errorMessages).toEqual(null);
   });
 });

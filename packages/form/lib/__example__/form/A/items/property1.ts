@@ -1,7 +1,7 @@
 import { ErrorDetail, FormItem } from '../../../..';
 import FormA from '..';
 
-const formItem: FormItem<FormA> = {
+export const formItemProperty1: FormItem<FormA> = {
   property: 'property1',
   label: 'Property 1',
   required: false,
@@ -26,5 +26,3 @@ const formItem: FormItem<FormA> = {
     });
   }
 };
-
-export default formItem;

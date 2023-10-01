@@ -209,10 +209,8 @@ export class FormController<
         this.#itemsMap[item.property] = index++;
       }
 
-      // Deep clone form data
-      this.#initialFormData = deepCopy(this.#formData);
-
       // Initialize services
+      // The services you want to use are started
       if (this.#formData.services) {
         for await (const service of this.#formData?.services) {
           const command = this.createCommandService();
@@ -236,6 +234,9 @@ export class FormController<
           );
         }
       }
+
+      // Deep clone form data
+      this.#initialFormData = deepCopy(this.#formData);
 
       resolve(this.#formData);
     });

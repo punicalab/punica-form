@@ -1,7 +1,7 @@
 import { FormItem } from '../../../..';
 import FormA from '..';
 
-const formItem: FormItem<FormA> = {
+export const formItemProperty2: FormItem<FormA> = {
   property: 'property2',
   label: 'Property 2',
   required: true,
@@ -22,5 +22,3 @@ const formItem: FormItem<FormA> = {
     });
   }
 };
-
-export default formItem;
