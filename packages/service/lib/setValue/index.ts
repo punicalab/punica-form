@@ -37,8 +37,9 @@ export class SetValue<E, F extends FormItem<E>>
       if (control) {
         const command = await createCommandItem(formItem);
 
-        control(command).then((formItems: any) => {
+        control(command).then((formItems: Array<FormItem<E>>) => {
           writeItems(formItems);
+
           fireEvent('UPDATE_ITEM', [formItem, ...formItems]);
           fireEvent('UPDATE_FORM', formData);
         });
