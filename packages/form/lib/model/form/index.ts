@@ -1,9 +1,12 @@
 import { FormItem, IService, IStarter } from '../..';
 
 // Defines the structure of a form, which may contain items and services.
-export type Form<E, F extends FormItem<E>> = {
+export type Form<E = any, F extends FormItem<E> = any> = {
+  // A map of form items.
+  itemsMap: { [key in keyof E]: number };
+
   // An array of form items.
-  items?: Array<F>;
+  items: Array<F>;
 
   // An array of services associated with the form.
   services?: Array<IService>;

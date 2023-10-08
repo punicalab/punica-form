@@ -1,4 +1,4 @@
-import { Form, FormItem, IStarter } from '../..';
+import { Form, FormItem, IStarter } from '../../..';
 
 /**
  *

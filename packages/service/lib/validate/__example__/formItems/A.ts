@@ -1,7 +1,6 @@
-import { IPropertyDecorator } from '@punica/common';
 import { defineFormItem, FormItem } from '@punica/form';
 
-const FormItemA: IPropertyDecorator<FormItem<any>> = defineFormItem(
+const FormItemA = defineFormItem<FormItem<any>>(
   'form-item-a',
   (data: FormItem<any>): any => {
     return data;

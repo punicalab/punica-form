@@ -1,7 +1,7 @@
 import {
-  IReader,
   FormItem,
   Form,
+  IReader,
   DECORATOR_SERVICES,
   DECORATOR_STARTERS
 } from '../..';
@@ -19,6 +19,7 @@ class Reader<E, F extends FormItem<E>> implements IReader<E, F> {
   constructor(initialForm: Form<E, F> = null) {
     // Initializes an empty form if initialForm is not provided
     this.#form = initialForm || {
+      itemsMap: null,
       items: null,
       services: null,
       starters: null
@@ -38,8 +39,10 @@ class Reader<E, F extends FormItem<E>> implements IReader<E, F> {
         reject(new Error('Entity is required'));
       }
 
-      // Retrieves services and starters metadata from the entity using reflection
+      // Retrieves services metadata from the entity using reflection
       this.#form.services = Reflect.getMetadata(DECORATOR_SERVICES, entity);
+
+      // Retrieves starters metadata from the entity using reflection
       this.#form.starters = Reflect.getMetadata(DECORATOR_STARTERS, entity);
 
       // Resolves the promise with the form data

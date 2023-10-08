@@ -1,6 +1,6 @@
 import { FormController, Form } from '..';
 import { FormA } from '../__example__/form';
-import { Reader } from '../__example__/reader';
+import { Reader } from '../__example__/design';
 
 describe('form', () => {
   let formData: Form<any, any>;

@@ -64,9 +64,9 @@ export const deepCopyFunction = (func: Function) => {
  * @returns The deep copy of the object.
  */
 export const deepCopy = (obj: any): any => {
-  if (obj instanceof Function) {
-    return deepCopyFunction(obj);
-  }
+  //if (obj instanceof Function) {
+  //  return deepCopyFunction(obj);
+  //}
 
   if (
     obj instanceof Date ||

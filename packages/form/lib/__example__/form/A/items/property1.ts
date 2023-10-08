@@ -1,7 +1,8 @@
 import { ErrorDetail, FormItem } from '../../../..';
 import FormA from '..';
+import { BaseFormItem } from '../../../design';
 
-export const formItemProperty1: FormItem<FormA> = {
+export const formItemProperty1: BaseFormItem<FormA> = {
   property: 'property1',
   label: 'Property 1',
   required: false,

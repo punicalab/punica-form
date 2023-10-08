@@ -4,7 +4,7 @@ import {
   IService,
   IServiceAddCommand,
   IServiceControl
-} from '../..';
+} from '../../..';
 
 /**
  *
