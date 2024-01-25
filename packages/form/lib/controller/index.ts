@@ -9,7 +9,7 @@ import {
   createInitialReader,
   CommandService,
   CommandItem,
-  IServiceAddCommand,
+  IServiceCommand,
   deepCopy,
   IServiceInitialize,
   IServiceControl
@@ -85,7 +85,7 @@ export class FormController<
   private async createCommandItem(item: F): Promise<CommandItem<E, F>> {
     let itemCustomCommand = {};
     for await (const service of this.#formData?.services) {
-      const { addCustomFeaturesForCommandItem } = service as IServiceAddCommand;
+      const { addCustomFeaturesForCommandItem } = service as IServiceCommand;
 
       if (addCustomFeaturesForCommandItem) {
         const command = addCustomFeaturesForCommandItem();
@@ -157,7 +157,7 @@ export class FormController<
    * @returns The requested services
    */
   public getServices<
-    T = IServiceInitialize<E, F> & IServiceControl & IServiceAddCommand,
+    T = IServiceInitialize<E, F> & IServiceControl & IServiceCommand,
     R = T & Array<T>
   >(serviceName: string, ...additionalServiceNames: string[]): R {
     if (

@@ -1,6 +1,6 @@
 {
   "name": "@punica/form",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Form",
   "author": {
     "name": "Uryan Sezgin TEKE",
@@ -33,8 +33,6 @@
     "path": "../../scripts/packages"
   },
   "dependencies": {
-    "@punica/common": "^1.0.1",
-    "@punica/converter": "^1.0.0",
-    "@punica/util": "^1.0.0"
+    "@punica/common": "^1.0.1"
   }
 }

@@ -19,7 +19,7 @@ export interface IServiceControl<T = any> extends IService {
 }
 
 // Interface for services that can add custom features to command items.
-export interface IServiceAddCommand extends IService {
+export interface IServiceCommand extends IService {
   // Returns custom features for a command item.
   addCustomFeaturesForCommandItem: () => { [key: string]: any };
 }

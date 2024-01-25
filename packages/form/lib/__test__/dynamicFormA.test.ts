@@ -3,6 +3,7 @@ import { Form, FormController } from '..';
 describe('form', () => {
   let formData: Form<any, any> = {
     services: [],
+    itemsMap: {},
     items: [
       {
         property: 'property1',

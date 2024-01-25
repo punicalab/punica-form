@@ -1,9 +1,9 @@
-import { IServiceAddCommand } from '@punica/form';
+import { IServiceCommand } from '@punica/form';
 
 /**
  * Service for storing data.
  */
-export class Store implements IServiceAddCommand {
+export class Store implements IServiceCommand {
   #name: string = 'store';
   #store: Record<string, any> = {};
 

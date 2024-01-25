@@ -34,9 +34,6 @@
     "path": "../../scripts/packages"
   },
   "dependencies": {
-    "@punica/form": "^1.0.2",
-    "@punica/common": "^1.0.1",
-    "@punica/converter": "^1.0.0",
-    "@punica/util": "^1.0.0"
+    "@punica/form": "^1.0.3"
   }
 }
