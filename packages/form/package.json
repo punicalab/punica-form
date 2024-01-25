@@ -33,6 +33,7 @@
     "path": "../../scripts/packages"
   },
   "dependencies": {
-    "@punica/common": "^1.0.1"
+    "@punica/common": "^1.0.1",
+    "@punica/util": "^1.0.0"
   }
 }
