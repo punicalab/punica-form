@@ -1,0 +1,39 @@
+{
+  "name": "@punica/form-service",
+  "version": "1.0.0",
+  "description": "Form Service",
+  "author": {
+    "name": "Uryan Sezgin TEKE",
+    "email": "uryan.sezgin.teke@gmail.com",
+    "url": "https://github.com/uryansezginteke"
+  },
+  "keywords": [
+    "form",
+    "service"
+  ],
+  "private": false,
+  "license": "MIT",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "url": "git@github.com:uryansezginteke/punica-form.git"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "scripty",
+    "clean": "scripty",
+    "lint": "scripty",
+    "compile": "scripty"
+  },
+  "scripty": {
+    "path": "../../scripts/packages"
+  },
+  "dependencies": {
+    "@punica/form": "^1.0.3"
+  }
+}

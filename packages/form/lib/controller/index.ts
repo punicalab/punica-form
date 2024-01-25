@@ -1,51 +1,132 @@
-import { IEntity } from '@punica/common';
-import { WriteToPropertyPath } from '@punica/util';
 import { BaseListener } from '@punica/common';
 import {
-  IForm,
-  IFormItem,
-  IReader,
-  GetItem,
-  WriteItems,
+  Form,
   FormEvents,
-  IFormController,
-  FormItemRegister
+  FormItemRegister,
+  FormItem,
+  IReader,
+  IService,
+  createInitialReader,
+  CommandService,
+  CommandItem,
+  IServiceCommand,
+  deepCopy,
+  IServiceInitialize,
+  IServiceControl
 } from '..';
 
 /**
- *
+ * Controller for managing a form and its associated services.
  */
-export abstract class BaseFormController<E extends IEntity, F extends IFormItem>
-  extends BaseListener<FormEvents>
-  implements IFormController<E, F>
-{
-  protected _formData: IForm<F>;
-  protected _entity: E;
-  protected _hasError: boolean;
+export class FormController<
+  E,
+  F extends FormItem<E>
+> extends BaseListener<FormEvents> {
+  #serviceMap: Record<string, IService>;
+  #itemsMap: Record<keyof E, number>;
+  #formData: Form<E, F>;
+  #reader: IReader<E, F>;
+  #initialFormData: Form<E, F>;
+  #initialEntity: E;
+
+  //#region constructor
+
+  /**
+   * Constructor for initializing the FormController with form data.
+   * @param formData - The initial form data
+   */
+  public constructor(formData: Form<E, F>);
+
+  /**
+   * Constructor for initializing the FormController with an entity and reader.
+   * @param entity - The entity for the form
+   * @param reader - The reader for initializing the form
+   */
+  public constructor(entity: E, reader: IReader<E, F>);
 
   /**
    *
-   * @param entity
+   * @param args
    */
-  constructor(entity: E) {
+  public constructor(...args: any[]) {
     super();
 
-    this._entity = entity;
+    if (args.length == 1) {
+      const [formData] = args;
 
-    this.updateValue = this.updateValue.bind(this);
-    this.getInitialEntity = this.getInitialEntity.bind(this);
-    this.updatePropertyValue = this.updatePropertyValue.bind(this);
-    this.getStoreItem = this.getStoreItem.bind(this);
-    this.setStoreItem = this.setStoreItem.bind(this);
+      this.#formData = formData;
+    } else if (args.length == 2) {
+      const [entity, reader] = args;
+
+      this.#initialEntity = entity;
+      this.#reader = reader;
+    }
+
+    this.#serviceMap = {};
+    this.#itemsMap = {} as Record<keyof E, number>;
+  }
+
+  //#endregion
+
+  /**
+   * Trigger a form event.
+   * @param eventType - The type of the event
+   * @param data - Data associated with the event
+   */
+  private fireEvent(eventType: FormEvents, data: any): void {
+    this.trigger(eventType, data);
   }
 
   /**
-   *
-   * @param property
-   * @returns
+   * Create a command item for a form item.
+   * @param item - The form item
+   * @returns A promise that resolves to a CommandItem
    */
-  protected getItem: GetItem = <F>(property: string): F => {
-    const { items, itemsMap } = this._formData;
+  private async createCommandItem(item: F): Promise<CommandItem<E, F>> {
+    let itemCustomCommand = {};
+    for await (const service of this.#formData?.services) {
+      const { addCustomFeaturesForCommandItem } = service as IServiceCommand;
+
+      if (addCustomFeaturesForCommandItem) {
+        const command = addCustomFeaturesForCommandItem();
+
+        itemCustomCommand = { ...itemCustomCommand, ...command };
+      }
+    }
+
+    return {
+      formItem: item,
+      initialEntity: this.#initialEntity,
+      getItem: this.getItem.bind(this),
+      writeItems: this.writeItems.bind(this),
+      ...itemCustomCommand
+    };
+  }
+
+  /**
+   * Create a command service for the form.
+   * @returns A CommandService for the form
+   */
+  private createCommandService(): CommandService<E, F> {
+    return {
+      initialFormData: this.#initialFormData,
+      initialEntity: this.#initialEntity,
+      formData: this.#formData,
+      itemsMap: this.#itemsMap,
+      getItem: this.getItem.bind(this),
+      writeItems: this.writeItems.bind(this),
+      fireEvent: this.fireEvent.bind(this),
+      createCommandItem: this.createCommandItem.bind(this)
+    };
+  }
+
+  /**
+   * Get a form item by its property key.
+   * @param property - The property key of the form item
+   * @returns The form item corresponding to the property key
+   */
+  private getItem(property: keyof E) {
+    const { items, itemsMap } = this.#formData;
     const itemIndex = itemsMap[property];
 
     if (!Number.isInteger(itemIndex)) {
@@ -53,228 +134,111 @@ export abstract class BaseFormController<E extends IEntity, F extends IFormItem>
     }
 
     return items[itemIndex] as unknown as F;
-  };
+  }
 
   /**
-   *
-   * @param items
+   * Write an array of form items to the form data.
+   * @param items - An array of form items
    */
-  protected writeItems: WriteItems = async (items: Array<IFormItem>) => {
+  private async writeItems(items: Array<FormItem<E>>) {
     for await (const item of items) {
-      const { itemsMap, items } = this._formData;
+      const { itemsMap, items } = this.#formData;
       const { property } = item;
       const index = itemsMap[property];
 
       items[index] = item as F;
     }
-  };
-
-  /**
-   *
-   * @param eventType
-   * @param data
-   */
-  protected fireEvent(eventType: FormEvents, data: any): void {
-    this.trigger(eventType, data);
   }
 
   /**
-   *
-   * @param reader
+   * Get services by name(s).
+   * @param serviceName - The name of the service
+   * @param additionalServiceNames - Additional names of services
+   * @returns The requested services
    */
-  public start(
-    reader: IReader<E, F>,
-    formData: IForm<F> = null
-  ): Promise<IForm<F>> {
-    return new Promise(async (resolve) => {
-      let updateMaps = false;
+  public getServices<
+    T = IServiceInitialize<E, F> & IServiceControl & IServiceCommand,
+    R = T & Array<T>
+  >(serviceName: string, ...additionalServiceNames: string[]): R {
+    if (
+      Array.isArray(additionalServiceNames) &&
+      additionalServiceNames.length > 0
+    ) {
+      const services = [
+        this.#serviceMap[serviceName],
+        ...additionalServiceNames.map((name) => this.#serviceMap[name])
+      ];
 
+      return services as R;
+    }
+
+    return this.#serviceMap[serviceName] as R;
+  }
+
+  /**
+   * Start the form controller.
+   * @returns A promise that resolves to the form data
+   */
+  public start(): Promise<Form<E, F>> {
+    return new Promise(async (resolve) => {
+      // Trigger the REGISTER_ITEMS event with the registered item keys
       this.fireEvent(
-        FormEvents.REGISTER_ITEMS,
-        FormItemRegister.getInstance().getKeys()
+        'REGISTER_ITEMS',
+        FormItemRegister.getInstance().getItemKeys()
       );
 
-      if (formData) {
-        this._formData = formData;
+      if (this.#formData == null) {
+        const initialReader: IReader<E, F> = createInitialReader();
+
+        this.#formData = await initialReader.read(this.#initialEntity);
+
+        if (this.#reader) {
+          this.#formData = await this.#reader.read(
+            this.#initialEntity,
+            this.#formData
+          );
+        }
       } else {
-        this._formData = await reader.read(this._entity);
+        this.#initialEntity = {} as E;
       }
 
-      //initializer
-      if (this._formData.initializer) {
-        this._formData = await this._formData.initializer(
-          this._formData,
-          this._entity
-        );
-
-        //reset items map
-        this._formData.itemsMap = {};
-        updateMaps = true;
-      }
-
-      //set update values
+      // Create item map
       let index = 0;
-      for await (const item of this._formData.items) {
-        item.updateValue = this.updateValue;
-        item.updatePropertyValue = this.updatePropertyValue;
-        item.getInitialEntity = this.getInitialEntity;
-        item.getStoreItem = this.getStoreItem;
-        item.setStoreItem = this.setStoreItem;
-
-        if (updateMaps) {
-          this._formData.itemsMap[item.property] = index++;
-        }
+      this.#itemsMap = {} as Record<keyof E, number>;
+      for await (const item of this.#formData.items) {
+        this.#itemsMap[item.property] = index++;
       }
 
-      resolve(this._formData);
-    });
-  }
+      // Initialize services
+      // The services you want to use are started
+      if (this.#formData.services) {
+        for await (const service of this.#formData?.services) {
+          const command = this.createCommandService();
+          const serviceControl = service as IServiceInitialize<E, F>;
 
-  /**
-   *
-   * @returns
-   */
-  public getEntity(): Promise<E> {
-    return new Promise(async (resolve) => {
-      const { items } = this._formData;
-      const entity = { ...this._entity };
+          this.#serviceMap[service.name] = service;
 
-      for await (const item of items) {
-        const { property, value, propertyPath } = item;
-        let writePath = property;
-
-        if (propertyPath) {
-          writePath = propertyPath;
-        }
-
-        WriteToPropertyPath(entity, writePath, value);
-      }
-
-      resolve(entity);
-    });
-  }
-
-  /**
-   *
-   * @returns
-   */
-  public validate(): Promise<boolean> {
-    return new Promise(async (resolve) => {
-      const { items } = this._formData;
-      this._hasError = false;
-
-      for await (const item of items) {
-        const { errorChecking, hidden } = item;
-
-        if (errorChecking && !hidden) {
-          const { error, errorMessage } = await errorChecking({
-            formItem: item,
-            entity: this._entity,
-            getItem: this.getItem,
-            store: { get: this.getStoreItem, set: this.setStoreItem }
-          });
-
-          if (error) {
-            this._hasError = true;
+          if (serviceControl.initialize) {
+            serviceControl.initialize(command);
           }
-
-          item.error = error;
-          item.errorMessage = errorMessage;
         }
       }
 
-      this.fireEvent(FormEvents.UPDATE, this._formData);
-
-      resolve(this._hasError);
-    });
-  }
-
-  /**
-   *
-   */
-  public reset(): void {
-    this._formData.items.forEach((formItem: F) => {
-      formItem.value = formItem.defaultValue;
-    });
-
-    this.fireEvent(FormEvents.RESET, null);
-    this.fireEvent(FormEvents.UPDATE, this._formData);
-  }
-
-  /**
-   *
-   * @param property
-   * @param key
-   * @param value
-   */
-  public updatePropertyValue(property: string, key: string, value: any): void {
-    const item = this.getItem(property);
-
-    item[key] = value;
-
-    this.writeItems([item]);
-    this.fireEvent(FormEvents.UPDATE_PROPERTY_VALUE, {
-      property,
-      key,
-      value
-    });
-    this.fireEvent(FormEvents.UPDATE, this._formData);
-  }
-
-  /**
-   * @returns
-   */
-  public submitControl(): Promise<boolean> {
-    return new Promise(async (resolve) => {
-      const { items } = this._formData;
-
-      for await (const item of items) {
-        const { submit } = item;
-
-        if (submit) {
-          await submit({
-            formItem: item,
-            entity: this._entity,
-            getItem: this.getItem,
-            store: { get: this.getStoreItem, set: this.setStoreItem }
-          });
+      // Executed starter methods
+      if (this.#formData.starters) {
+        for await (const starter of this.#formData.starters) {
+          // Execute starter run methods
+          this.#formData = await starter.run(
+            this.#formData,
+            this.#initialEntity
+          );
         }
       }
 
-      resolve(true);
+      // Deep clone form data
+      this.#initialFormData = deepCopy(this.#formData);
+
+      resolve(this.#formData);
     });
   }
-
-  /**
-   *
-   * @returns
-   */
-  public getInitialEntity(): IEntity {
-    return this._entity;
-  }
-
-  /**
-   *
-   * @param key
-   * @returns
-   */
-  public getStoreItem(key: string): any {
-    return this._formData.store.get(key);
-  }
-
-  /**
-   *
-   * @param key
-   * @param value
-   */
-  public setStoreItem(key: string, value: any): void {
-    this._formData.store.set(key, value);
-  }
-
-  /**
-   *
-   * @param property
-   * @param value
-   */
-  abstract updateValue(property: string, value: any): void;
 }

@@ -7,9 +7,9 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "declaration": true,
-    "sourceMap": true,
+    "sourceMap": false,
     "declarationMap": false,
-    "removeComments": true,
+    "removeComments": false,
     "strict": true,
     "noImplicitAny": true,
     "strictNullChecks": false,
@@ -22,5 +22,11 @@
     "noFallthroughCasesInSwitch": true,
     "esModuleInterop": true
   },
-  "exclude": ["node_modules", "dist", "**/*/__test__"]
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/*/__test__",
+    "**/*/__mocks__/*",
+    "**/*/__example__"
+  ]
 }

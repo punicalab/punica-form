@@ -1,0 +1,22 @@
+@startuml (id=IRender)
+
+    interface IRender<F extends FormItem> {
+        + create(props: F): any
+    }
+
+@enduml
+
+@startuml (id=IStoreMananger)
+
+    interface IStoreMananger {
+        + read: ReadStore
+        + write: WriteStore
+    }
+
+    class ReadStore{ }
+    class WriteStore{ }
+
+    IStoreMananger o-- ReadStore
+    IStoreMananger o-- WriteStore
+
+@enduml
