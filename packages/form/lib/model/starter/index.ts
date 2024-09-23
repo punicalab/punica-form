@@ -6,9 +6,9 @@ import { Form, FormItem } from '..';
 export interface IStarter<E, F extends FormItem<E>> {
   /**
    * Function to run the starter logic.
-   * @param formData - The current form data.
+   * @param form - The current form data.
    * @param entity - The entity associated with the form.
    * @returns A Promise that resolves to the updated form data after initialization.
    */
-  run: (formData: Form<E, F>, entity: E) => Promise<Form<E, F>>;
+  run: (form: Form<E, F>, entity: E) => Promise<Form<E, F>>;
 }

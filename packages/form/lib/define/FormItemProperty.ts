@@ -6,8 +6,6 @@ import { IPropertyDecorator } from '@punica/common';
  * @returns {IPropertyDecorator<T>} - Decorator function.
  */
 const defineFormItemProperty = <T>(type: string): IPropertyDecorator<T> => {
-  // Register the form item type and renderer
-
   return (data: T) => {
     return (target: any, propertyKey: string) => {
       const allMetadata = Reflect.getMetadata(type, target) || {};

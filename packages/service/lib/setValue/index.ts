@@ -24,7 +24,7 @@ export class SetValue<E, F extends FormItem<E>>
    */
   private async setValue(property: keyof E, value: any) {
     try {
-      const { formData, getItem, writeItems, fireEvent, createCommandItem } =
+      const { form, getItem, writeItems, fireEvent, createCommandItem } =
         this.#command;
 
       const formItem = getItem(property) as F;
@@ -41,11 +41,11 @@ export class SetValue<E, F extends FormItem<E>>
           writeItems(formItems);
 
           fireEvent('UPDATE_ITEM', [formItem, ...formItems]);
-          fireEvent('UPDATE_FORM', formData);
+          fireEvent('UPDATE_FORM', form);
         });
       } else {
         fireEvent('UPDATE_ITEM', [formItem]);
-        fireEvent('UPDATE_FORM', formData);
+        fireEvent('UPDATE_FORM', form);
       }
     } catch (error) {
       // Handle the error
@@ -61,9 +61,9 @@ export class SetValue<E, F extends FormItem<E>>
     try {
       this.#command = command;
 
-      const { formData } = command;
+      const { form } = command;
 
-      for await (const item of formData.items) {
+      for await (const item of form.items) {
         item.setValue = this.setValue.bind(this); // Bind the context
       }
     } catch (error) {

@@ -2,7 +2,7 @@ import { FormA } from '../__example__/form';
 import { Form, createInitialReader } from '..';
 
 describe('formA', () => {
-  let formData: Form<any, any>;
+  let form: Form<any, any> = { items: [], itemsMap: {} };
 
   /**
    *
@@ -11,13 +11,13 @@ describe('formA', () => {
     const entity = new FormA();
     const reader = createInitialReader();
 
-    formData = await reader.read(entity);
+    await reader.read(entity, form);
   });
 
   /**
    *
    */
   test('read entity schema', () => {
-    expect(formData.items?.length).toEqual(3);
+    expect(form.items?.length).toEqual(3);
   });
 });

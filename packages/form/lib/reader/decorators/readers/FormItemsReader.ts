@@ -41,13 +41,12 @@ class Reader<E, F extends FormItem<E>> extends BaseReader<E, F> {
   }
 
   /**
-   * Creates the form from the entity.
-   * @param entity - The entity to be read
-   * @returns Promise<Form<E, F>> - Created form
+   * Reads form data from the entity.
+   * @param {E} entity - The entity to read form data from.
+   * @param form
    */
-  public async read(entity: E): Promise<Form<E, F>> {
-    const form: Form<E, F> = await super.read(entity);
-
+  public async read(entity: E, form: Form<E, F>): Promise<void> {
+    await super.read(entity, form);
     // Create form items from the entity
     form.items = await this.createFormItemsFromEntity(entity);
     form.itemsMap = {} as Record<keyof E, number>;
@@ -56,8 +55,6 @@ class Reader<E, F extends FormItem<E>> extends BaseReader<E, F> {
     form.items.forEach((item: F, index: number) => {
       form.itemsMap[item.property] = index;
     });
-
-    return form;
   }
 }
 

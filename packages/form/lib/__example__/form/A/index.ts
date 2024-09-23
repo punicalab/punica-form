@@ -1,4 +1,4 @@
-import { Services, Starters } from '../../..';
+import { Services, Starters, Readers } from '../../..';
 import {
   Title,
   Description,
@@ -7,7 +7,8 @@ import {
   FormItemB,
   FormItemC,
   Service,
-  Starter
+  Starter,
+  Reader
 } from '../../design';
 import {
   formItemProperty1,
@@ -15,13 +16,10 @@ import {
   formItemProperty3
 } from './items';
 
-//@ts-ignore
 @Title('Title')
-//@ts-ignore
 @Description('Description')
-//@ts-ignore
 @Services([new Service()])
-//@ts-ignore
+@Readers([new Reader()])
 @Starters([new Starter()])
 class FormA {
   public id = '';

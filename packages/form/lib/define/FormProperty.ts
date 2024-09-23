@@ -1,16 +1,12 @@
-import { IClassDecorator } from '@punica/common';
-
 /**
  * Defines a form property with the specified type.
  * @param {string} type - Type of the form property.
- * @returns {IClassDecorator<T>} - Decorator function.
+ * @returns {ClassDecorator<T>} - Decorator function.
  */
-const defineFormProperty = <T>(type: string): IClassDecorator<T> => {
+const defineFormProperty = <T>(type: string): ((data: T) => ClassDecorator) => {
   return (data: T) => {
-    return (target) => {
+    return (target: Function): void => {
       Reflect.defineMetadata(type, data, target.prototype);
-
-      return target;
     };
   };
 };

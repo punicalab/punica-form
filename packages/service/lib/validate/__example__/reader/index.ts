@@ -1,27 +1,21 @@
-import { IReader, FormItem, Form } from '@punica/form';
+import { IReader, FormItem } from '@punica/form';
 
 /**
  *
  */
-export class Reader<E extends Object, F extends FormItem<E>>
-  implements IReader<E, F>
-{
-  #form: Form<E, F>;
-
+export class Reader<E, F extends FormItem<E>> implements IReader<E, F> {
   /**
    *
    * @param entity
    * @returns
    */
-  public read(entity: E, initialForm: Form<E, F>): Promise<Form<E, F>> {
+  public read(entity: E): Promise<void> {
     return new Promise((resolve, reject) => {
       if (!entity) {
         reject();
       }
 
-      this.#form = initialForm;
-
-      resolve(this.#form);
+      resolve();
     });
   }
 }

@@ -1,7 +1,7 @@
 import { Form, FormController } from '..';
 
 describe('form', () => {
-  let formData: Form<any, any> = {
+  let form: Form<any, any> = {
     services: [],
     itemsMap: {},
     items: [
@@ -38,16 +38,16 @@ describe('form', () => {
    *
    */
   beforeAll(async () => {
-    const formController = new FormController(formData);
+    const formController = await FormController.fromForm(form);
 
-    formData = await formController.start();
+    form = await formController.start();
   });
 
   /**
    *
    */
   test('disable check', () => {
-    const formItem = formData?.items?.[0];
+    const formItem = form?.items?.[0];
 
     expect(formItem.disabled).toEqual(true);
   });

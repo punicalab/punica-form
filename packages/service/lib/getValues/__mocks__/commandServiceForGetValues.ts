@@ -4,7 +4,7 @@ export const mockCommandService = {
     email: 'john.doe@example.com',
     age: 42
   },
-  formData: {
+  form: {
     items: [
       {
         label: 'Name',

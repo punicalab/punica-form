@@ -39,20 +39,19 @@ export class ResetItem<E, F extends FormItem<E>>
   public run(property: keyof E): Promise<void> {
     return new Promise<void>((resolve, reject) => {
       try {
-        const { fireEvent, itemsMap, formData, initialFormData } =
-          this.#command;
+        const { fireEvent, itemsMap, form, initialForm } = this.#command;
 
         // Retrieve the index and the initial form item
         const itemIndex = itemsMap[property];
-        const oldFormItem = initialFormData.items[itemsMap[property]];
+        const oldFormItem = initialForm.items[itemsMap[property]];
 
         // Check if both index and form item are valid
         if (itemIndex !== undefined && oldFormItem !== undefined) {
           // Create a deep copy of the initial form item
-          formData.items[itemIndex] = deepCopy(oldFormItem);
+          form.items[itemIndex] = deepCopy(oldFormItem);
 
           // Trigger an update event to reset the form
-          fireEvent('UPDATE_FORM', formData);
+          fireEvent('UPDATE_FORM', form);
 
           resolve();
         } else {

@@ -1,5 +1,4 @@
-import { IClassDecorator } from '@punica/common';
-import { IStarter, defineFormProperty } from '..';
+import { FormItem, IStarter, defineFormProperty } from '..';
 
 /**
  * Constant for identifying form starters decorator.
@@ -9,5 +8,8 @@ export const DECORATOR_STARTERS = 'form-starters';
 /**
  * Decorator for adding starters to a form class.
  */
-export const Starters: IClassDecorator<Array<IStarter<any, any>>> =
-  defineFormProperty<Array<IStarter<any, any>>>(DECORATOR_STARTERS);
+export const Starters = <E, F extends FormItem<E>>(
+  data: Array<IStarter<E, F>>
+): ClassDecorator => {
+  return defineFormProperty<Array<IStarter<E, F>>>(DECORATOR_STARTERS)(data);
+};

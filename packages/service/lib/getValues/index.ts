@@ -36,13 +36,13 @@ export class GetValues<E, F extends FormItem<E>>
    */
   public run(): Promise<E> {
     return new Promise<E>(async (resolve) => {
-      const { formData, initialEntity } = this.#command;
+      const { form, initialEntity } = this.#command;
 
       // Create a copy of the initial entity
       const entity = { ...initialEntity };
 
       // Iterate through form items to extract values
-      for await (const item of formData.items) {
+      for await (const item of form.items) {
         const { property, value } = item;
 
         // Assign the form value to the corresponding entity property

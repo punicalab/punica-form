@@ -36,7 +36,7 @@ export class Trigger<E, F extends FormItem<E>>
    */
   public async run(property: keyof E) {
     try {
-      const { fireEvent, getItem, formData } = this.#command;
+      const { fireEvent, getItem, form } = this.#command;
       const item = getItem(property);
 
       if (!item) {
@@ -58,7 +58,7 @@ export class Trigger<E, F extends FormItem<E>>
       }
 
       // Trigger an update event to reflect changes in the form
-      fireEvent('UPDATE_FORM', formData);
+      fireEvent('UPDATE_FORM', form);
     } catch (error) {
       // Handle errors
       console.error(error);

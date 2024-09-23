@@ -6,13 +6,13 @@ import { CommandItem } from '.';
  */
 export type CommandService<E, F extends FormItem<E>> = {
   // The initial form data before any modifications.
-  initialFormData: Form<E, F>;
+  initialForm: Form<E, F>;
 
   // The initial entity data before any modifications.
   initialEntity: E;
 
   // The current form data that may have been modified.
-  formData: Form<E, F>;
+  form: Form<E, F>;
 
   // A mapping of property names to their respective form item index.
   itemsMap: Record<keyof E, number>;

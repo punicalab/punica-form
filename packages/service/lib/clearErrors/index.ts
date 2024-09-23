@@ -36,8 +36,8 @@ export class ClearErrors<E, F extends FormItem<E>>
    */
   public run(): Promise<boolean> {
     return new Promise<boolean>(async (resolve) => {
-      const { fireEvent, formData } = this.#command;
-      const { items } = formData;
+      const { fireEvent, form } = this.#command;
+      const { items } = form;
 
       // Iterate through form items and clear errors
       for await (const item of items) {
@@ -46,7 +46,7 @@ export class ClearErrors<E, F extends FormItem<E>>
       }
 
       // Trigger form update event
-      fireEvent('UPDATE_FORM', formData);
+      fireEvent('UPDATE_FORM', form);
 
       resolve(true);
     });

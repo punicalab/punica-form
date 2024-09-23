@@ -37,7 +37,7 @@ export class ClearError<E, F extends FormItem<E>>
    */
   public run(property: keyof E): Promise<void> {
     return new Promise<void>((resolve) => {
-      const { formData, getItem, fireEvent } = this.#command;
+      const { form, getItem, fireEvent } = this.#command;
       const item = getItem(property);
 
       // Clear errors
@@ -45,7 +45,7 @@ export class ClearError<E, F extends FormItem<E>>
       item.errorMessages = null;
 
       // Trigger update event
-      fireEvent('UPDATE_FORM', formData);
+      fireEvent('UPDATE_FORM', form);
 
       resolve();
     });

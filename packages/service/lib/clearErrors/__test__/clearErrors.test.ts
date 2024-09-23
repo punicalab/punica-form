@@ -21,9 +21,9 @@ describe('service clear error', () => {
 
     await clearErrorsService.run();
 
-    expect(
-      mockCommandService.formData.items.some((item) => item.error)
-    ).toEqual(false);
+    expect(mockCommandService.form.items.some((item) => item.error)).toEqual(
+      false
+    );
   });
 
   /**
@@ -42,9 +42,7 @@ describe('service clear error', () => {
     await clearErrorsService.run();
 
     expect(
-      mockCommandService.formData.items.some(
-        (item) => item.errorMessages != null
-      )
+      mockCommandService.form.items.some((item) => item.errorMessages != null)
     ).toEqual(false);
   });
 });
