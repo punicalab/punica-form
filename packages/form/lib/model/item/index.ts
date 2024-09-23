@@ -1,7 +1,7 @@
 import { CommandItem } from '../command';
 
 // Represents a form item, which is a field or element in a form.
-export type FormItem<E = any> = {
+export type FormItem<E> = {
   // The property associated with the form item.
   property: keyof E;
 

@@ -32,13 +32,13 @@ abstract class BaseReader<E, F extends FormItem<E>> implements IReader<E, F> {
   /**
    * Reads form data from the entity.
    * @param {E} entity - The entity to read form data from.
-   * @returns {Promise<Form<E, F>>} - Resolves to the form data.
+   * @param form
    */
-  public async read(entity: E): Promise<Form<E, F>> {
+  public async read(entity: E, form: Form<E, F>): Promise<void> {
     this.#entity = entity;
-    this.#form = await this.reader.read(entity);
+    this.#form = form;
 
-    return this.#form;
+    await this.reader.read(entity, form);
   }
 
   /**

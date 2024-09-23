@@ -37,13 +37,13 @@ export class Reset<E, F extends FormItem<E>>
    */
   public run(): Promise<void> {
     return new Promise<void>((resolve) => {
-      const { fireEvent, initialFormData } = this.#command;
+      const { fireEvent, initialForm } = this.#command;
 
       // Create a deep copy of the initial form data
-      const formDataCopy = deepCopy(initialFormData);
+      const formCopy = deepCopy(initialForm);
 
       // Trigger an update event to reset the form
-      fireEvent('UPDATE_FORM', formDataCopy);
+      fireEvent('UPDATE_FORM', formCopy);
 
       resolve();
     });

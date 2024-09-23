@@ -22,56 +22,73 @@ export class FormController<
   E,
   F extends FormItem<E>
 > extends BaseListener<FormEvents> {
-  #serviceMap: Record<string, IService>;
-  #itemsMap: Record<keyof E, number>;
-  #formData: Form<E, F>;
-  #reader: IReader<E, F>;
-  #initialFormData: Form<E, F>;
-  #initialEntity: E;
+  #serviceMap: Record<string, IService>; // Map to store services by their names
+  #itemsMap: Record<keyof E, number>; // Map to store form items by their properties
+  #form: Form<E, F>; // Current form data
+  #initialForm: Form<E, F>; // Initial deep copy of the form data
+  #initialEntity: E; // Initial entity for the form
 
   //#region constructor
 
   /**
-   * Constructor for initializing the FormController with form data.
-   * @param formData - The initial form data
+   * Private constructor to prevent direct instantiation.
    */
-  public constructor(formData: Form<E, F>);
-
-  /**
-   * Constructor for initializing the FormController with an entity and reader.
-   * @param entity - The entity for the form
-   * @param reader - The reader for initializing the form
-   */
-  public constructor(entity: E, reader: IReader<E, F>);
-
-  /**
-   *
-   * @param args
-   */
-  public constructor(...args: any[]) {
+  private constructor() {
     super();
-
-    if (args.length == 1) {
-      const [formData] = args;
-
-      this.#formData = formData;
-    } else if (args.length == 2) {
-      const [entity, reader] = args;
-
-      this.#initialEntity = entity;
-      this.#reader = reader;
-    }
 
     this.#serviceMap = {};
     this.#itemsMap = {} as Record<keyof E, number>;
+  }
+
+  /**
+   * Static method to initialize the FormController with form data.
+   * @param form The initial form data
+   */
+  public static fromForm<E, F extends FormItem<E>>(
+    form: Form<E, F>
+  ): Promise<FormController<E, F>> {
+    return new Promise((resolve) => {
+      const instance = new FormController<E, F>();
+
+      instance.#form = form;
+      instance.#initialEntity = {} as E;
+
+      resolve(instance);
+    });
+  }
+
+  /**
+   * Static method to initialize the FormController with an entity.
+   * @param entity The entity for the form
+   */
+  public static fromEntity<E, F extends FormItem<E>>(
+    entity: E
+  ): Promise<FormController<E, F>> {
+    return new Promise(async (resolve) => {
+      const instance = new FormController<E, F>();
+      const initialReader: IReader<E, F> = createInitialReader();
+
+      instance.#initialEntity = entity;
+      instance.#form = {
+        itemsMap: null,
+        items: null,
+        services: null,
+        starters: null,
+        readers: null
+      };
+
+      await initialReader.read(instance.#initialEntity, instance.#form);
+
+      resolve(instance);
+    });
   }
 
   //#endregion
 
   /**
    * Trigger a form event.
-   * @param eventType - The type of the event
-   * @param data - Data associated with the event
+   * @param eventType The type of the event
+   * @param data Data associated with the event
    */
   private fireEvent(eventType: FormEvents, data: any): void {
     this.trigger(eventType, data);
@@ -79,17 +96,16 @@ export class FormController<
 
   /**
    * Create a command item for a form item.
-   * @param item - The form item
+   * @param item The form item
    * @returns A promise that resolves to a CommandItem
    */
   private async createCommandItem(item: F): Promise<CommandItem<E, F>> {
     let itemCustomCommand = {};
-    for await (const service of this.#formData?.services) {
+    for await (const service of this.#form?.services) {
       const { addCustomFeaturesForCommandItem } = service as IServiceCommand;
 
       if (addCustomFeaturesForCommandItem) {
         const command = addCustomFeaturesForCommandItem();
-
         itemCustomCommand = { ...itemCustomCommand, ...command };
       }
     }
@@ -109,9 +125,9 @@ export class FormController<
    */
   private createCommandService(): CommandService<E, F> {
     return {
-      initialFormData: this.#initialFormData,
+      initialForm: this.#initialForm,
       initialEntity: this.#initialEntity,
-      formData: this.#formData,
+      form: this.#form,
       itemsMap: this.#itemsMap,
       getItem: this.getItem.bind(this),
       writeItems: this.writeItems.bind(this),
@@ -122,11 +138,11 @@ export class FormController<
 
   /**
    * Get a form item by its property key.
-   * @param property - The property key of the form item
+   * @param property The property key of the form item
    * @returns The form item corresponding to the property key
    */
   private getItem(property: keyof E) {
-    const { items, itemsMap } = this.#formData;
+    const { items, itemsMap } = this.#form;
     const itemIndex = itemsMap[property];
 
     if (!Number.isInteger(itemIndex)) {
@@ -138,11 +154,11 @@ export class FormController<
 
   /**
    * Write an array of form items to the form data.
-   * @param items - An array of form items
+   * @param items An array of form items
    */
   private async writeItems(items: Array<FormItem<E>>) {
     for await (const item of items) {
-      const { itemsMap, items } = this.#formData;
+      const { itemsMap, items } = this.#form;
       const { property } = item;
       const index = itemsMap[property];
 
@@ -151,9 +167,9 @@ export class FormController<
   }
 
   /**
-   * Get services by name(s).
-   * @param serviceName - The name of the service
-   * @param additionalServiceNames - Additional names of services
+   * Get services by their names.
+   * @param serviceName The name of the service
+   * @param additionalServiceNames Additional names of services
    * @returns The requested services
    */
   public getServices<
@@ -176,69 +192,94 @@ export class FormController<
   }
 
   /**
-   * Start the form controller.
-   * @returns A promise that resolves to the form data
+   * Registers form items by triggering the REGISTER_ITEMS event.
    */
-  public start(): Promise<Form<E, F>> {
-    return new Promise(async (resolve) => {
-      // Trigger the REGISTER_ITEMS event with the registered item keys
-      this.fireEvent(
-        'REGISTER_ITEMS',
-        FormItemRegister.getInstance().getItemKeys()
-      );
+  private registerFormItems(): void {
+    this.fireEvent(
+      'REGISTER_ITEMS',
+      FormItemRegister.getInstance().getItemKeys()
+    );
+  }
 
-      if (this.#formData == null) {
-        const initialReader: IReader<E, F> = createInitialReader();
+  /**
+   * Maps form items to their properties.
+   */
+  private mapFormItems(): void {
+    let index = 0;
+    this.#itemsMap = {} as Record<keyof E, number>;
+    for (const item of this.#form.items) {
+      this.#itemsMap[item.property] = index++;
+    }
+  }
 
-        this.#formData = await initialReader.read(this.#initialEntity);
+  /**
+   * Initializes the services defined in the form data.
+   */
+  private async initializeServices(): Promise<void> {
+    if (this.#form.services) {
+      for await (const service of this.#form.services) {
+        const command = this.createCommandService();
+        const serviceControl = service as IServiceInitialize<E, F>;
 
-        if (this.#reader) {
-          this.#formData = await this.#reader.read(
-            this.#initialEntity,
-            this.#formData
-          );
-        }
-      } else {
-        this.#initialEntity = {} as E;
-      }
+        this.#serviceMap[service.name] = service;
 
-      // Create item map
-      let index = 0;
-      this.#itemsMap = {} as Record<keyof E, number>;
-      for await (const item of this.#formData.items) {
-        this.#itemsMap[item.property] = index++;
-      }
-
-      // Initialize services
-      // The services you want to use are started
-      if (this.#formData.services) {
-        for await (const service of this.#formData?.services) {
-          const command = this.createCommandService();
-          const serviceControl = service as IServiceInitialize<E, F>;
-
-          this.#serviceMap[service.name] = service;
-
-          if (serviceControl.initialize) {
-            serviceControl.initialize(command);
-          }
+        if (serviceControl.initialize) {
+          serviceControl.initialize(command);
         }
       }
+    }
+  }
 
-      // Executed starter methods
-      if (this.#formData.starters) {
-        for await (const starter of this.#formData.starters) {
-          // Execute starter run methods
-          this.#formData = await starter.run(
-            this.#formData,
-            this.#initialEntity
-          );
-        }
+  /**
+   * Executes the readers defined in the form data.
+   */
+  private async runReaders(): Promise<void> {
+    if (this.#form.readers) {
+      for await (const reader of this.#form.readers) {
+        reader.read(this.#initialEntity, this.#form);
       }
+    }
+  }
 
-      // Deep clone form data
-      this.#initialFormData = deepCopy(this.#formData);
+  /**
+   * Executes the starters defined in the form data.
+   */
+  private async runStarters(): Promise<void> {
+    if (this.#form.starters) {
+      for await (const starter of this.#form.starters) {
+        this.#form = await starter.run(this.#form, this.#initialEntity);
+      }
+    }
+  }
 
-      resolve(this.#formData);
-    });
+  /**
+   * Creates a deep copy of the form data for the initial state.
+   */
+  private deepCopyForm(): void {
+    this.#initialForm = deepCopy(this.#form);
+  }
+
+  /**
+   * Starts the form controller by executing all necessary steps to initialize the form.
+   * @returns A promise that resolves when the form is fully initialized.
+   */
+  public async start(): Promise<Form<E, F>> {
+    try {
+      this.registerFormItems();
+      this.mapFormItems();
+
+      await this.initializeServices();
+      await this.runReaders();
+      await this.runStarters();
+
+      this.mapFormItems();
+      this.deepCopyForm();
+
+      // Trigger an update event after the form is fully initialized
+      return this.#form;
+    } catch (error) {
+      console.error('Error starting the form controller:', error);
+      throw error;
+    }
   }
 }

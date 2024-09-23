@@ -57,16 +57,16 @@ export class Validate<E, F extends FormItem<E>>
    */
   public async run(): Promise<boolean> {
     try {
-      const { fireEvent, formData } = this.#command;
+      const { fireEvent, form } = this.#command;
 
       this.#hasError = false;
 
-      for await (const item of formData.items) {
+      for await (const item of form.items) {
         await this.validateFormItem(item);
       }
 
       // Trigger update event
-      fireEvent('UPDATE_FORM', formData);
+      fireEvent('UPDATE_FORM', form);
 
       return !this.#hasError;
     } catch (error) {

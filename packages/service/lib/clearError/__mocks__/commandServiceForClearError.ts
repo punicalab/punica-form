@@ -1,7 +1,7 @@
 import { FormItem } from '@punica/form';
 
 export const mockCommandService = {
-  formData: {
+  form: {
     items: [
       {
         label: 'Name',
@@ -22,7 +22,7 @@ export const mockCommandService = {
   //@ts-ignore
   fireEvent: (eventName: string, data: any) => {},
   getItem: (property: any) =>
-    mockCommandService.formData.items.find(
+    mockCommandService.form.items.find(
       (item) => item.property === property
     ) as FormItem<any>
 };

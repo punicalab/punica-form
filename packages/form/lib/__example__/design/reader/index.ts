@@ -40,14 +40,9 @@ export class Reader<E extends Object, F extends BaseFormItem<E>>
    * @param entity
    * @returns
    */
-  public read(entity: E, initialForm: Form<E, F>): Promise<Form<E, F>> {
-    return new Promise(async (resolve, reject) => {
-      if (!entity) {
-        reject();
-      }
-
+  public read(entity: E, initialForm: Form<E, F>): Promise<void> {
+    return new Promise(async () => {
       this.#form = initialForm;
-
       this.#form.title = Reflect.getMetadata(DECORATOR_TITLE, entity as E);
 
       this.#form.description = Reflect.getMetadata(
@@ -56,8 +51,6 @@ export class Reader<E extends Object, F extends BaseFormItem<E>>
       );
 
       await this.readItemsLayout(entity);
-
-      resolve(this.#form);
     });
   }
 }
