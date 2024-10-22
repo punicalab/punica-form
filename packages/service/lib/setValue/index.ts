@@ -57,18 +57,22 @@ export class SetValue<E, F extends FormItem<E>>
    * Initializes the service with a command.
    * @param command - The command service to be used.
    */
-  public async initialize(command: CommandService<E, F>) {
-    try {
-      this.#command = command;
+  public initialize(command: CommandService<E, F>): Promise<void> {
+    return new Promise(async (resolve) => {
+      try {
+        this.#command = command;
 
-      const { form } = command;
+        const { form } = command;
 
-      for await (const item of form.items) {
-        item.setValue = this.setValue.bind(this); // Bind the context
+        for await (const item of form.items) {
+          item.setValue = this.setValue.bind(this); // Bind the context
+        }
+      } catch (error) {
+        // Handle the error
+        console.error(error);
       }
-    } catch (error) {
-      // Handle the error
-      console.error(error);
-    }
+
+      resolve();
+    });
   }
 }

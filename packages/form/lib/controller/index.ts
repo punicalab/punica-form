@@ -224,7 +224,7 @@ export class FormController<
         this.#serviceMap[service.name] = service;
 
         if (serviceControl.initialize) {
-          serviceControl.initialize(command);
+          await serviceControl.initialize(command);
         }
       }
     }
