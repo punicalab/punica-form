@@ -27,8 +27,10 @@ export class Reset<E, F extends FormItem<E>>
    * Initializes the service with a command.
    * @param command - The command service to be used.
    */
-  public initialize(command: CommandService<E, F>) {
+  public initialize(command: CommandService<E, F>): Promise<void> {
     this.#command = command;
+
+    return Promise.resolve();
   }
 
   /**

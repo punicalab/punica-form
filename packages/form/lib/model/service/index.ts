@@ -9,7 +9,7 @@ export interface IService {
 // Interface for services that require initialization.
 export interface IServiceInitialize<E, F extends FormItem<E>> extends IService {
   // Initializes the service with a command.
-  initialize: (command: CommandService<E, F>) => void;
+  initialize: (command: CommandService<E, F>) => Promise<void>;
 }
 
 // Interface for services that can be controlled or triggered.
