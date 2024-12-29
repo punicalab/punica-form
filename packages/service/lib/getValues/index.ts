@@ -1,3 +1,4 @@
+import { writeToPropertyPath } from '@punica/util';
 import {
   CommandService,
   FormItem,
@@ -45,10 +46,14 @@ export class GetValues<E, F extends FormItem<E>>
 
       // Iterate through form items to extract values
       for await (const item of form.items) {
-        const { property, value } = item;
+        const { property, value, path } = item;
 
         // Assign the form value to the corresponding entity property
-        entity[property] = value;
+        if (path) {
+          writeToPropertyPath(entity, path, value);
+        } else {
+          entity[property] = value;
+        }
       }
 
       // Resolve the entity with form values
