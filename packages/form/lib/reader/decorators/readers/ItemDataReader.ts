@@ -12,7 +12,7 @@ class Reader<E, F extends FormItem<E>> extends BaseReader<E, F> {
   private getPropertyData(entity: E, item: F) {
     const { property, path } = item;
 
-    if (path) return readPropertyPath(entity, property as string);
+    if (path) return readPropertyPath(entity, path);
 
     return entity[property];
   }

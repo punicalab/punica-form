@@ -19,7 +19,6 @@ describe('form', () => {
    */
   test('disable check', () => {
     const formItem = form?.items?.[0];
-
     expect(formItem.disabled).toEqual(true);
   });
 
