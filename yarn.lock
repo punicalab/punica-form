@@ -1728,10 +1728,10 @@
   dependencies:
     reflect-metadata "^0.1.13"
 
-"@punica/util@^1.0.0":
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/@punica/util/-/util-1.0.0.tgz#9e5a16b63a861c556f5709dc46225b6e91499621"
-  integrity sha512-wEv9UJmpcQpS9k6CLKQdpTU57c27dgnc3dImoPzAGCWkj6s3NgWCJ6IF5oQG9SpM05p9wgUlicQFuTkp+FuaHw==
+"@punica/util@^1.0.2":
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/@punica/util/-/util-1.0.2.tgz#c6a90d0cdf68b68dc0e31f0d475ccf7ab25389e6"
+  integrity sha512-dRY8wdK0ByF2FMNNHm3a/nfEFqAN9lFpFuzTurKInaOkZf3La/liefgwDF4GCrTHRordBYrjDJXpJY23Tf9o2w==
 
 "@sigstore/bundle@^1.1.0":
   version "1.1.0"

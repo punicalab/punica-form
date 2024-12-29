@@ -1,4 +1,4 @@
-import { ReadPropertyPath } from '@punica/util';
+import { readPropertyPath } from '@punica/util';
 import { Form, FormItem } from '../../..';
 import BaseReader from '../base';
 
@@ -12,7 +12,7 @@ class Reader<E, F extends FormItem<E>> extends BaseReader<E, F> {
   private getPropertyData(entity: E, item: F) {
     const { property, path } = item;
 
-    if (path) return ReadPropertyPath(entity, property as string);
+    if (path) return readPropertyPath(entity, property as string);
 
     return entity[property];
   }

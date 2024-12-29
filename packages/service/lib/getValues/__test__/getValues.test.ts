@@ -23,7 +23,10 @@ describe('service clear error', () => {
     expect(values).toEqual({
       name: 'John Doe',
       email: 'john.doe@example.com',
-      age: 42
+      age: 42,
+      address: {
+        street: 'New York'
+      }
     });
   });
 
