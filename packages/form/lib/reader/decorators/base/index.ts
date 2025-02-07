@@ -6,6 +6,7 @@ import { Form, FormItem, IReader, CommandItem } from '../../../';
 abstract class BaseReader<E, F extends FormItem<E>> implements IReader<E, F> {
   #form: Form<E, F>;
   #entity: E;
+  #itemsMap: Record<keyof E, number>;
   protected reader: IReader<E, F>;
 
   /**
@@ -14,6 +15,24 @@ abstract class BaseReader<E, F extends FormItem<E>> implements IReader<E, F> {
    */
   constructor(reader: IReader<E, F>) {
     this.reader = reader;
+  }
+
+  /**
+   * Maps form items to their properties.
+   */
+  private mapFormItems(): void {
+    if (this.#itemsMap) {
+      return;
+    }
+
+    let index = 0;
+    this.#itemsMap = {} as Record<keyof E, number>;
+
+    if (this.#form.items) {
+      for (const item of this.#form.items) {
+        this.#itemsMap[item.property] = index++;
+      }
+    }
   }
 
   /**
@@ -37,8 +56,9 @@ abstract class BaseReader<E, F extends FormItem<E>> implements IReader<E, F> {
   public async read(entity: E, form: Form<E, F>): Promise<void> {
     this.#entity = entity;
     this.#form = form;
+    this.mapFormItems();
 
-    await this.reader.read(entity, form);
+    await this.reader.read(entity, form, this.#itemsMap);
   }
 
   /**
@@ -47,8 +67,8 @@ abstract class BaseReader<E, F extends FormItem<E>> implements IReader<E, F> {
    * @returns {F} - The form item.
    */
   protected getItem(property: keyof E): F {
-    const { items, itemsMap } = this.#form;
-    const index = itemsMap[property];
+    const { items } = this.#form;
+    const index = this.#itemsMap[property];
     const item = items[index];
 
     return item as F;
@@ -60,9 +80,8 @@ abstract class BaseReader<E, F extends FormItem<E>> implements IReader<E, F> {
    */
   protected async writeItems(items: Array<FormItem<E>>): Promise<void> {
     for (const item of items) {
-      const { itemsMap } = this.#form;
       const { property } = item;
-      const index = itemsMap[property];
+      const index = this.#itemsMap[property];
 
       this.#form.items[index] = item as F;
     }
