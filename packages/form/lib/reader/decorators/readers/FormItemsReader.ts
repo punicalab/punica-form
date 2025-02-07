@@ -49,12 +49,6 @@ class Reader<E, F extends FormItem<E>> extends BaseReader<E, F> {
     await super.read(entity, form);
     // Create form items from the entity
     form.items = await this.createFormItemsFromEntity(entity);
-    form.itemsMap = {} as Record<keyof E, number>;
-
-    // Create a map of form items
-    form.items.forEach((item: F, index: number) => {
-      form.itemsMap[item.property] = index;
-    });
   }
 }
 

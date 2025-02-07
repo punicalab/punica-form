@@ -70,14 +70,17 @@ export class FormController<
 
       instance.#initialEntity = entity;
       instance.#form = {
-        itemsMap: null,
         items: null,
         services: null,
         starters: null,
         readers: null
       };
 
-      await initialReader.read(instance.#initialEntity, instance.#form);
+      await initialReader.read(
+        instance.#initialEntity,
+        instance.#form,
+        {} as any
+      );
 
       resolve(instance);
     });
@@ -142,8 +145,8 @@ export class FormController<
    * @returns The form item corresponding to the property key
    */
   private getItem(property: keyof E) {
-    const { items, itemsMap } = this.#form;
-    const itemIndex = itemsMap[property];
+    const { items } = this.#form;
+    const itemIndex = this.#itemsMap[property];
 
     if (!Number.isInteger(itemIndex)) {
       return null;
@@ -158,9 +161,9 @@ export class FormController<
    */
   private async writeItems(items: Array<FormItem<E>>) {
     for await (const item of items) {
-      const { itemsMap, items } = this.#form;
+      const { items } = this.#form;
       const { property } = item;
-      const index = itemsMap[property];
+      const index = this.#itemsMap[property];
 
       items[index] = item as F;
     }
@@ -236,7 +239,7 @@ export class FormController<
   private async runReaders(): Promise<void> {
     if (this.#form.readers) {
       for await (const reader of this.#form.readers) {
-        reader.read(this.#initialEntity, this.#form);
+        reader.read(this.#initialEntity, this.#form, this.#itemsMap);
       }
     }
   }

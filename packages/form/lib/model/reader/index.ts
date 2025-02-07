@@ -4,5 +4,9 @@ import { Form, FormItem } from '..';
 export interface IReader<E, F extends FormItem<E>> {
   // Reads the entity data and returns a form object.
   // If form is provided, it will be used as a starting point for the form.
-  read(entity: E, form: Form<E, F>): Promise<void>;
+  read(
+    entity: E,
+    form: Form<E, F>,
+    itemsMap?: Record<keyof E, number>
+  ): Promise<void>;
 }
