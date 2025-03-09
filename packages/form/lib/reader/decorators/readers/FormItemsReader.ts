@@ -33,7 +33,7 @@ class Reader<E, F extends FormItem<E>> extends BaseReader<E, F> {
 
         formItem.property = key;
 
-        items.push(formItem);
+        items.push({ ...formItem });
       }
 
       resolve(items);
