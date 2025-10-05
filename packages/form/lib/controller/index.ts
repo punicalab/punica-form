@@ -8,7 +8,6 @@ import {
   IService,
   createInitialReader,
   CommandService,
-  CommandItem,
   IServiceCommand,
   deepCopy,
   IServiceInitialize,
@@ -93,81 +92,135 @@ export class FormController<
    * @param eventType The type of the event
    * @param data Data associated with the event
    */
-  private fireEvent(eventType: FormEvents, data: any): void {
+  private fireEvent = (eventType: FormEvents, data: any): void => {
     this.trigger(eventType, data);
-  }
-
-  /**
-   * Create a command item for a form item.
-   * @param item The form item
-   * @returns A promise that resolves to a CommandItem
-   */
-  private async createCommandItem(item: F): Promise<CommandItem<E, F>> {
-    let itemCustomCommand = {};
-    for await (const service of this.#form?.services) {
-      const { addCustomFeaturesForCommandItem } = service as IServiceCommand;
-
-      if (addCustomFeaturesForCommandItem) {
-        const command = addCustomFeaturesForCommandItem();
-        itemCustomCommand = { ...itemCustomCommand, ...command };
-      }
-    }
-
-    return {
-      formItem: item,
-      initialEntity: this.#initialEntity,
-      getItem: this.getItem.bind(this),
-      writeItems: this.writeItems.bind(this),
-      ...itemCustomCommand
-    };
-  }
+  };
 
   /**
    * Create a command service for the form.
    * @returns A CommandService for the form
    */
-  private createCommandService(): CommandService<E, F> {
-    return {
-      initialForm: this.#initialForm,
-      initialEntity: this.#initialEntity,
-      form: this.#form,
-      itemsMap: this.#itemsMap,
-      getItem: this.getItem.bind(this),
-      writeItems: this.writeItems.bind(this),
-      fireEvent: this.fireEvent.bind(this),
-      createCommandItem: this.createCommandItem.bind(this)
+  private createCommandService = (): CommandService<E, F> => {
+    const self = this;
+
+    const getItem: CommandService<E, F>['getItem'] = (property: keyof E) => {
+      const { items } = self.#form;
+      const itemIndex = self.#itemsMap[property];
+      if (!Number.isInteger(itemIndex)) return null;
+      return items[itemIndex] as unknown as F;
     };
-  }
+
+    const writeItems: CommandService<E, F>['writeItems'] = async (arr) => {
+      for (const item of arr) {
+        const { items } = self.#form;
+        const index = self.#itemsMap[item.property];
+        items[index] = item as F;
+      }
+    };
+
+    const fireEvent: CommandService<E, F>['fireEvent'] = (ev, data) => {
+      self.trigger(ev, data);
+    };
+
+    const createCommandItem: CommandService<E, F>['createCommandItem'] = async (
+      item: F
+    ) => {
+      let itemCustomCommand = {};
+      for await (const service of self.#form?.services ?? []) {
+        const { addCustomFeaturesForCommandItem } = service as IServiceCommand;
+        if (addCustomFeaturesForCommandItem) {
+          const command = addCustomFeaturesForCommandItem();
+          itemCustomCommand = { ...itemCustomCommand, ...command };
+        }
+      }
+      return {
+        formItem: item,
+        initialEntity: self.#initialEntity,
+        getItem,
+        writeItems,
+        ...itemCustomCommand
+      };
+    };
+
+    return {
+      initialForm: self.#initialForm,
+      initialEntity: self.#initialEntity,
+      form: self.#form,
+      itemsMap: self.#itemsMap,
+      getItem,
+      writeItems,
+      fireEvent,
+      createCommandItem
+    };
+  };
 
   /**
-   * Get a form item by its property key.
-   * @param property The property key of the form item
-   * @returns The form item corresponding to the property key
+   * Registers form items by triggering the REGISTER_ITEMS event.
    */
-  private getItem(property: keyof E) {
-    const { items } = this.#form;
-    const itemIndex = this.#itemsMap[property];
-
-    if (!Number.isInteger(itemIndex)) {
-      return null;
-    }
-
-    return items[itemIndex] as unknown as F;
-  }
+  private registerFormItems = (): void => {
+    this.fireEvent(
+      'REGISTER_ITEMS',
+      FormItemRegister.getInstance().getItemKeys()
+    );
+  };
 
   /**
-   * Write an array of form items to the form data.
-   * @param items An array of form items
+   * Maps form items to their properties.
    */
-  private async writeItems(items: Array<FormItem<E>>) {
-    for await (const item of items) {
-      const { items } = this.#form;
-      const { property } = item;
-      const index = this.#itemsMap[property];
-
-      items[index] = item as F;
+  private mapFormItems = (): void => {
+    let index = 0;
+    this.#itemsMap = {} as Record<keyof E, number>;
+    for (const item of this.#form.items) {
+      this.#itemsMap[item.property] = index++;
     }
-  }
+  };
+
+  /**
+   * Initializes the services defined in the form data.
+   */
+  private initializeServices = async (): Promise<void> => {
+    if (this.#form.services) {
+      for await (const service of this.#form.services) {
+        const command = this.createCommandService();
+        const serviceControl = service as IServiceInitialize<E, F>;
+
+        this.#serviceMap[service.name] = service;
+
+        if (serviceControl.initialize) {
+          await serviceControl.initialize(command);
+        }
+      }
+    }
+  };
+
+  /**
+   * Executes the readers defined in the form data.
+   */
+  private runReaders = async (): Promise<void> => {
+    if (this.#form.readers) {
+      for await (const reader of this.#form.readers) {
+        reader.read(this.#initialEntity, this.#form, this.#itemsMap);
+      }
+    }
+  };
+
+  /**
+   * Executes the starters defined in the form data.
+   */
+  private runStarters = async (): Promise<void> => {
+    if (this.#form.starters) {
+      for await (const starter of this.#form.starters) {
+        this.#form = await starter.run(this.#form, this.#initialEntity);
+      }
+    }
+  };
+
+  /**
+   * Creates a deep copy of the form data for the initial state.
+   */
+  private deepCopyForm = (): void => {
+    this.#initialForm = deepCopy(this.#form);
+  };
 
   /**
    * Get services by their names.
@@ -192,74 +245,6 @@ export class FormController<
     }
 
     return this.#serviceMap[serviceName] as R;
-  }
-
-  /**
-   * Registers form items by triggering the REGISTER_ITEMS event.
-   */
-  private registerFormItems(): void {
-    this.fireEvent(
-      'REGISTER_ITEMS',
-      FormItemRegister.getInstance().getItemKeys()
-    );
-  }
-
-  /**
-   * Maps form items to their properties.
-   */
-  private mapFormItems(): void {
-    let index = 0;
-    this.#itemsMap = {} as Record<keyof E, number>;
-    for (const item of this.#form.items) {
-      this.#itemsMap[item.property] = index++;
-    }
-  }
-
-  /**
-   * Initializes the services defined in the form data.
-   */
-  private async initializeServices(): Promise<void> {
-    if (this.#form.services) {
-      for await (const service of this.#form.services) {
-        const command = this.createCommandService();
-        const serviceControl = service as IServiceInitialize<E, F>;
-
-        this.#serviceMap[service.name] = service;
-
-        if (serviceControl.initialize) {
-          await serviceControl.initialize(command);
-        }
-      }
-    }
-  }
-
-  /**
-   * Executes the readers defined in the form data.
-   */
-  private async runReaders(): Promise<void> {
-    if (this.#form.readers) {
-      for await (const reader of this.#form.readers) {
-        reader.read(this.#initialEntity, this.#form, this.#itemsMap);
-      }
-    }
-  }
-
-  /**
-   * Executes the starters defined in the form data.
-   */
-  private async runStarters(): Promise<void> {
-    if (this.#form.starters) {
-      for await (const starter of this.#form.starters) {
-        this.#form = await starter.run(this.#form, this.#initialEntity);
-      }
-    }
-  }
-
-  /**
-   * Creates a deep copy of the form data for the initial state.
-   */
-  private deepCopyForm(): void {
-    this.#initialForm = deepCopy(this.#form);
   }
 
   /**

@@ -7,37 +7,27 @@ class Reader<E, F extends FormItem<E>> extends BaseReader<E, F> {
    * @param entity - The entity to be read
    * @returns Promise<Array<F>> - Created form items
    */
-  private createFormItemsFromEntity(entity: E): Promise<Array<F>> {
-    return new Promise(async (resolve) => {
-      const items = new Array<F>();
-      const keys = Object.keys(entity);
-      const formItemPool: any = {};
-      const registeredItems = FormItemRegister.getInstance().getItemKeys();
+  private async createFormItemsFromEntity(entity: E): Promise<Array<F>> {
+    const items: F[] = [];
+    const formItemPool: Record<string, any> = {};
+    const registeredItems = FormItemRegister.getInstance().getItemKeys();
 
-      // Read metadata from the entity and create form items
-      for (const property of registeredItems) {
-        const formItems = Reflect.getMetadata(property, entity);
+    for (const property of registeredItems) {
+      const meta = Reflect.getMetadata(property, entity) as
+        | Record<string, any>
+        | undefined;
+      if (meta) Object.assign(formItemPool, meta);
+    }
 
-        for (const key in formItems) {
-          formItemPool[key] = { ...formItems[key] };
-        }
-      }
+    for (const key of Object.keys(entity as object)) {
+      const formItem = formItemPool[key];
 
-      for (let i = 0; i < keys.length; i++) {
-        const key = keys[i];
-        const formItem = formItemPool[key];
+      if (!formItem) continue;
 
-        if (!formItem) {
-          continue;
-        }
+      items.push({ ...formItem, property: key } as F);
+    }
 
-        formItem.property = key;
-
-        items.push({ ...formItem });
-      }
-
-      resolve(items);
-    });
+    return items;
   }
 
   /**
