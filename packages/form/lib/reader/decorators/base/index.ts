@@ -26,9 +26,9 @@ abstract class BaseReader<E, F extends FormItem<E>> implements IReader<E, F> {
     }
 
     let index = 0;
-    this.#itemsMap = {} as Record<keyof E, number>;
 
     if (this.#form.items) {
+      this.#itemsMap = {} as Record<keyof E, number>;
       for (const item of this.#form.items) {
         this.#itemsMap[item.property] = index++;
       }
@@ -41,10 +41,20 @@ abstract class BaseReader<E, F extends FormItem<E>> implements IReader<E, F> {
    * @returns {CommandItem<E, F>} - The command item.
    */
   protected getCommand(item: F): CommandItem<E, F> {
+    const self = this;
+
+    const getItem = (property: keyof E): F => {
+      const { items } = self.#form;
+      const index = self.#itemsMap[property];
+      const item = items[index];
+
+      return item as F;
+    };
+
     return {
       formItem: item,
-      initialEntity: this.#entity,
-      getItem: this.getItem
+      initialEntity: self.#entity,
+      getItem: getItem
     };
   }
 
@@ -56,22 +66,10 @@ abstract class BaseReader<E, F extends FormItem<E>> implements IReader<E, F> {
   public async read(entity: E, form: Form<E, F>): Promise<void> {
     this.#entity = entity;
     this.#form = form;
+
+    await this.reader.read(entity, this.#form, this.#itemsMap);
+
     this.mapFormItems();
-
-    await this.reader.read(entity, form, this.#itemsMap);
-  }
-
-  /**
-   * Gets a form item by property.
-   * @param {keyof E} property - The property of the form item.
-   * @returns {F} - The form item.
-   */
-  protected getItem(property: keyof E): F {
-    const { items } = this.#form;
-    const index = this.#itemsMap[property];
-    const item = items[index];
-
-    return item as F;
   }
 
   /**
