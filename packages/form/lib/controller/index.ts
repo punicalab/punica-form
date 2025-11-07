@@ -167,7 +167,7 @@ export class FormController<
     };
 
     const fireEvent: CommandService<E, F>['fireEvent'] = (ev, data) => {
-      self.trigger(ev, data);
+      self.fireEvent(ev, data);
     };
 
     const createCommandItem: CommandService<E, F>['createCommandItem'] = async (
