@@ -11,7 +11,8 @@ import {
   IServiceCommand,
   deepCopy,
   IServiceInitialize,
-  IServiceControl
+  IServiceControl,
+  getDevToolsBridge
 } from '..';
 
 /**
@@ -94,6 +95,53 @@ export class FormController<
    */
   private fireEvent = (eventType: FormEvents, data: any): void => {
     this.trigger(eventType, data);
+
+    const devTools = getDevToolsBridge();
+    if (devTools.isEnabled()) {
+      switch (eventType) {
+        case 'UPDATE_FORM':
+          devTools.sendUpdate(this.#form);
+          this.sendEntityToDevTools();
+          break;
+        case 'RESET':
+          devTools.sendReset(this.#form);
+          break;
+        case 'UPDATE_ITEM':
+          devTools.sendUpdateItem(data);
+          break;
+        case 'REGISTER_ITEMS':
+          devTools.sendRegisterItems(Array.from(data));
+          break;
+      }
+    }
+  };
+
+  /**
+   * Send entity data to DevTools
+   */
+  private sendEntityToDevTools = (): void => {
+    const devTools = getDevToolsBridge();
+    if (!devTools.isEnabled()) {
+      return;
+    }
+
+    try {
+      // Try both 'getValues' and 'GetValues' service names
+      const getValuesService =
+        this.getServices('getValues') || this.getServices('GetValues');
+      if (getValuesService && typeof getValuesService.run === 'function') {
+        getValuesService
+          .run()
+          .then((entity: E) => {
+            devTools.sendEntity(entity);
+          })
+          .catch(() => {
+            // Silently fail
+          });
+      }
+    } catch {
+      // Silently fail
+    }
   };
 
   /**
@@ -224,27 +272,25 @@ export class FormController<
 
   /**
    * Get services by their names.
-   * @param serviceName The name of the service
-   * @param additionalServiceNames Additional names of services
-   * @returns The requested services
+   * Overloads to return a single item or an array based on provided names.
    */
   public getServices<
-    T = IServiceInitialize<E, F> & IServiceControl & IServiceCommand,
-    R = T & Array<T>
-  >(serviceName: string, ...additionalServiceNames: string[]): R {
-    if (
-      Array.isArray(additionalServiceNames) &&
-      additionalServiceNames.length > 0
-    ) {
-      const services = [
+    T = IServiceInitialize<E, F> & IServiceControl & IServiceCommand
+  >(serviceName: string): T;
+  public getServices<
+    T = IServiceInitialize<E, F> & IServiceControl & IServiceCommand
+  >(serviceName: string, ...additionalServiceNames: string[]): T[];
+  public getServices<
+    T = IServiceInitialize<E, F> & IServiceControl & IServiceCommand
+  >(serviceName: string, ...additionalServiceNames: string[]): T | T[] {
+    if (additionalServiceNames.length > 0) {
+      const list = [
         this.#serviceMap[serviceName],
         ...additionalServiceNames.map((name) => this.#serviceMap[name])
       ];
-
-      return services as R;
+      return list as T[];
     }
-
-    return this.#serviceMap[serviceName] as R;
+    return this.#serviceMap[serviceName] as T;
   }
 
   /**
@@ -262,6 +308,13 @@ export class FormController<
 
       this.mapFormItems();
       this.deepCopyForm();
+
+      // Send initialization event to DevTools
+      const devTools = getDevToolsBridge();
+      if (devTools.isEnabled()) {
+        devTools.sendInit(this.#form);
+        this.sendEntityToDevTools();
+      }
 
       // Trigger an update event after the form is fully initialized
       return this.#form;
