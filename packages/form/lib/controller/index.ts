@@ -98,14 +98,17 @@ export class FormController<
 
     const devTools = getDevToolsBridge();
     const isEnabled = devTools.isEnabled();
-    
-    if (typeof process !== 'undefined' && process.env?.NODE_ENV === 'development') {
+
+    if (
+      typeof process !== 'undefined' &&
+      process.env?.NODE_ENV === 'development'
+    ) {
       console.log('🔥 FormController.fireEvent:', eventType, {
         devToolsEnabled: isEnabled,
         hasData: !!data
       });
     }
-    
+
     if (isEnabled) {
       switch (eventType) {
         case 'UPDATE_FORM':
@@ -124,8 +127,14 @@ export class FormController<
           break;
       }
     } else {
-      if (typeof process !== 'undefined' && process.env?.NODE_ENV === 'development') {
-        console.warn('⚠️ FormController: DevTools bridge is disabled. Event not sent:', eventType);
+      if (
+        typeof process !== 'undefined' &&
+        process.env?.NODE_ENV === 'development'
+      ) {
+        console.warn(
+          '⚠️ FormController: DevTools bridge is disabled. Event not sent:',
+          eventType
+        );
       }
     }
   };
