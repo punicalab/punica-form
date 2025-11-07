@@ -106,7 +106,7 @@ class DevToolsBridge {
    * Send form update event
    */
   public sendUpdate<E, F extends FormItem<E>>(form: Form<E, F>): void {
-    this.sendMessage('UPDATE', form);
+    this.sendMessage('UPDATE_FORM', form);
   }
 
   /**
