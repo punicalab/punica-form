@@ -97,10 +97,20 @@ export class FormController<
     this.trigger(eventType, data);
 
     const devTools = getDevToolsBridge();
-    if (devTools.isEnabled()) {
+    const isEnabled = devTools.isEnabled();
+    
+    if (typeof process !== 'undefined' && process.env?.NODE_ENV === 'development') {
+      console.log('🔥 FormController.fireEvent:', eventType, {
+        devToolsEnabled: isEnabled,
+        hasData: !!data
+      });
+    }
+    
+    if (isEnabled) {
       switch (eventType) {
         case 'UPDATE_FORM':
           devTools.sendUpdate(this.#form);
+          // Also send entity update
           this.sendEntityToDevTools();
           break;
         case 'RESET':
@@ -112,6 +122,10 @@ export class FormController<
         case 'REGISTER_ITEMS':
           devTools.sendRegisterItems(Array.from(data));
           break;
+      }
+    } else {
+      if (typeof process !== 'undefined' && process.env?.NODE_ENV === 'development') {
+        console.warn('⚠️ FormController: DevTools bridge is disabled. Event not sent:', eventType);
       }
     }
   };

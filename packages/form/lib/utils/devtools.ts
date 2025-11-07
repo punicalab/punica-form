@@ -66,6 +66,15 @@ class DevToolsBridge {
    */
   private sendMessage(type: string, data: any, formItemKey?: string): void {
     if (!this.isEnabled()) {
+      if (
+        typeof process !== 'undefined' &&
+        process.env?.NODE_ENV === 'development'
+      ) {
+        console.warn(
+          '⚠️ Punica Form DevTools: Bridge is DISABLED. Event not sent:',
+          type
+        );
+      }
       return;
     }
 
@@ -77,13 +86,29 @@ class DevToolsBridge {
       };
 
       window.postMessage(message, '*');
+
+      // Log in development for debugging
+      if (
+        typeof process !== 'undefined' &&
+        process.env?.NODE_ENV === 'development'
+      ) {
+        console.log('📤 Punica Form DevTools: Sending event', type, {
+          hasData: !!data,
+          hasFormItemKey: !!formItemKey,
+          dataType: typeof data,
+          dataKeys:
+            data && typeof data === 'object'
+              ? Object.keys(data).slice(0, 5)
+              : null
+        });
+      }
     } catch (error) {
       // Silently fail in production
       if (
         typeof process !== 'undefined' &&
         process.env?.NODE_ENV === 'development'
       ) {
-        console.warn('Punica Form DevTools: Failed to send message', error);
+        console.warn('❌ Punica Form DevTools: Failed to send message', error);
       }
     }
   }
