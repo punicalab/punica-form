@@ -5,7 +5,7 @@ import { Form, FormItem } from '../model';
  */
 interface DevToolsMessage {
   type: string;
-  data: any;
+  data: string;
   formItemKey?: string;
 }
 
@@ -16,20 +16,6 @@ class DevToolsBridge {
   private static instance: DevToolsBridge | null = null;
   private enabled: boolean = false;
 
-  private constructor() {
-    // Check if we're in a browser environment
-    if (typeof window !== 'undefined') {
-      // Enable by default in development
-      // Check for NODE_ENV or global flag
-      const isDevelopment =
-        (typeof process !== 'undefined' &&
-          process.env?.NODE_ENV === 'development') ||
-        (window as any).__PUNICA_FORM_DEVTOOLS__ === true;
-
-      this.enabled = isDevelopment;
-    }
-  }
-
   /**
    * Get singleton instance
    */
@@ -37,6 +23,7 @@ class DevToolsBridge {
     if (!DevToolsBridge.instance) {
       DevToolsBridge.instance = new DevToolsBridge();
     }
+
     return DevToolsBridge.instance;
   }
 
@@ -66,50 +53,28 @@ class DevToolsBridge {
    */
   private sendMessage(type: string, data: any, formItemKey?: string): void {
     if (!this.isEnabled()) {
-      if (
-        typeof process !== 'undefined' &&
-        process.env?.NODE_ENV === 'development'
-      ) {
-        console.warn(
-          '⚠️ Punica Form DevTools: Bridge is DISABLED. Event not sent:',
-          type
-        );
-      }
       return;
     }
+
+    console.log('🔥 DevToolsBridge.sendMessage:', type, data, formItemKey);
 
     try {
       const message: DevToolsMessage = {
         type,
-        data,
-        ...(formItemKey && { formItemKey })
+        data: JSON.stringify(data)
       };
 
-      window.postMessage(message, '*');
-
-      // Log in development for debugging
-      if (
-        typeof process !== 'undefined' &&
-        process.env?.NODE_ENV === 'development'
-      ) {
-        console.log('📤 Punica Form DevTools: Sending event', type, {
-          hasData: !!data,
-          hasFormItemKey: !!formItemKey,
-          dataType: typeof data,
-          dataKeys:
-            data && typeof data === 'object'
-              ? Object.keys(data).slice(0, 5)
-              : null
-        });
+      // Try multiple ways to send message to ensure it reaches content script
+      try {
+        window.postMessage(message, '*');
+      } catch (e) {
+        // Fallback: try with current window
+        if (typeof window !== 'undefined') {
+          window.postMessage(message, '*');
+        }
       }
     } catch (error) {
       // Silently fail in production
-      if (
-        typeof process !== 'undefined' &&
-        process.env?.NODE_ENV === 'development'
-      ) {
-        console.warn('❌ Punica Form DevTools: Failed to send message', error);
-      }
     }
   }
 
