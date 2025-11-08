@@ -99,16 +99,6 @@ export class FormController<
     const devTools = getDevToolsBridge();
     const isEnabled = devTools.isEnabled();
 
-    if (
-      typeof process !== 'undefined' &&
-      process.env?.NODE_ENV === 'development'
-    ) {
-      console.log('🔥 FormController.fireEvent:', eventType, {
-        devToolsEnabled: isEnabled,
-        hasData: !!data
-      });
-    }
-
     if (isEnabled) {
       switch (eventType) {
         case 'UPDATE_FORM':
@@ -125,16 +115,6 @@ export class FormController<
         case 'REGISTER_ITEMS':
           devTools.sendRegisterItems(Array.from(data));
           break;
-      }
-    } else {
-      if (
-        typeof process !== 'undefined' &&
-        process.env?.NODE_ENV === 'development'
-      ) {
-        console.warn(
-          '⚠️ FormController: DevTools bridge is disabled. Event not sent:',
-          eventType
-        );
       }
     }
   };
