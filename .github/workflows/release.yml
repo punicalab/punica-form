@@ -48,7 +48,11 @@ jobs:
         with:
           version: pnpm version-packages
           publish: pnpm release
+          commit: 'chore: version packages'
+          title: 'chore: version packages'
         env:
+          # The commit hooks are for people; the action commits on its own
+          HUSKY: 0
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # The action authenticates with NPM_TOKEN; without it, it falls back
           # to npm trusted publishing, which is not configured for the packages
