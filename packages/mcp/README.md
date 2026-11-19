@@ -13,16 +13,16 @@ and validates its answer.
 | Tool            | What it does                                                                                                                  |
 | --------------- | ----------------------------------------------------------------------------------------------------------------------------- |
 | `get_guide`     | The rules: what the packages provide and what your application builds, the lifecycle, services, events and a complete example |
-| `search_api`    | Finds exports of `@punica/form` and `@punica/form-service` by name or documentation                                           |
+| `search_api`    | Finds exports of the Punica Form packages (core, services, React hooks, form kit) by name or documentation                    |
 | `get_api`       | The exact TypeScript declaration and documentation of one or more exports                                                     |
 | `validate_code` | Checks code for imports that do not exist, wrong service names and service calls that do not exist; each problem with a fix   |
 
 Resources: `punica-form://guide` and `punica-form://api/<name>`.
 
-The API is read from the type declarations of the `@punica/form` and
-`@punica/form-service` installed in the project the server is started in, so
-the answers match that version. Without them it uses the versions it was
-built with.
+The API is read from the type declarations of the Punica Form packages
+installed in the project the server is started in, so the answers match
+those versions. For a package that is not installed it uses the version it
+was built with.
 
 ## Set up
 

@@ -339,6 +339,12 @@ importers:
       '@punica/form':
         specifier: workspace:^
         version: link:../form
+      '@punica/form-kit':
+        specifier: workspace:^
+        version: link:../kit
+      '@punica/form-react':
+        specifier: workspace:^
+        version: link:../react
       '@punica/form-service':
         specifier: workspace:^
         version: link:../service

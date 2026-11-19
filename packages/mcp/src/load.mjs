@@ -23,19 +23,27 @@ export function readTypes(root) {
   return files;
 }
 
-/** @returns {{ name: string, version: string, files: Map<string, string>, installed: boolean }} */
-export function loadPackage(name, cwd = process.cwd()) {
+/**
+ * @param {string} name - The package
+ * @param {string} [cwd] - The project to look for the package in
+ * @param {string} [entry] - A second entry point of the package, such as
+ *   `react` for `@punica/form-kit/react`
+ * @returns {{ name: string, version: string, files: Map<string, string>, installed: boolean }}
+ */
+export function loadPackage(name, cwd = process.cwd(), entry = '') {
+  const entryName = entry ? `${name}/${entry}` : name;
+
   try {
     const require = createRequire(join(cwd, 'package.json'));
     const manifestPath = require.resolve(`${name}/package.json`);
     const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
-    const root = dirname(join(dirname(manifestPath), manifest.types));
+    const root = join(dirname(join(dirname(manifestPath), manifest.types)), entry);
 
-    return { name, version: manifest.version, files: readTypes(root), installed: true };
+    return { name: entryName, version: manifest.version, files: readTypes(root), installed: true };
   } catch {
     const root = join(BUNDLED, name.split('/')[1]);
     const { version } = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
 
-    return { name, version, files: readTypes(root), installed: false };
+    return { name: entryName, version, files: readTypes(join(root, entry)), installed: false };
   }
 }

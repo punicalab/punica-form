@@ -11,7 +11,10 @@ import { loadPackage, readTypes } from '../src/load.mjs';
 const types = (path) => readTypes(fileURLToPath(new URL(path, import.meta.url)));
 const packages = [
   { name: '@punica/form', version: '2.0.0', files: types('../../form/dist/') },
-  { name: '@punica/form-service', version: '2.0.0', files: types('../../service/dist/') }
+  { name: '@punica/form-service', version: '2.0.0', files: types('../../service/dist/') },
+  { name: '@punica/form-react', version: '0.1.0', files: types('../../react/dist/') },
+  { name: '@punica/form-kit', version: '0.1.0', files: types('../../kit/dist/') },
+  { name: '@punica/form-kit/react', version: '0.1.0', files: types('../../kit/dist/react/') }
 ];
 const guide = readFileSync(new URL('../src/guide.md', import.meta.url), 'utf8');
 
@@ -112,8 +115,29 @@ test('validate_code accepts correct code', async () => {
   assert.match(report, /^No problems/);
 });
 
+test('the React hooks and the form kit are part of the API', async () => {
+  const { call } = await connect();
+  const all = await call('search_api');
+
+  assert.match(all, /^useFormController \(const, @punica\/form-react\)/m);
+  assert.match(all, /^TextField \(const, @punica\/form-kit\)/m);
+  assert.match(all, /^KitForm \(function, @punica\/form-kit\/react\)/m);
+  assert.match(await call('get_api', { names: ['FormKit'] }), /FormKitOptions/);
+  assert.match(await call('get_guide'), /@punica\/form-kit/);
+
+  // The components live in the second entry point of the kit
+  assert.match(
+    await call('validate_code', { code: 'import { KitForm, TextField } from "@punica/form-kit";' }),
+    /does not export KitForm\. \[fix: import it from "@punica\/form-kit\/react"\]/
+  );
+});
+
 test('a project on 1.x is not steered into the 2.x API', async () => {
-  const legacy = packages.map((pkg) => ({ ...pkg, version: '1.2.0', installed: true }));
+  const legacy = packages.map((pkg) =>
+    pkg.name.startsWith('@punica/form-kit') || pkg.name === '@punica/form-react'
+      ? pkg
+      : { ...pkg, version: '1.2.0', installed: true }
+  );
   const server = createPunicaFormServer({ packages: legacy, guide });
   const [a, b] = InMemoryTransport.createLinkedPair();
   const client = new Client({ name: 'test', version: '1.0.0' });

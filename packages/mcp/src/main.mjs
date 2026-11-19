@@ -5,7 +5,13 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { createPunicaFormServer } from './create.mjs';
 import { loadPackage } from './load.mjs';
 
-const packages = ['@punica/form', '@punica/form-service'].map((name) => loadPackage(name));
+const packages = [
+  loadPackage('@punica/form'),
+  loadPackage('@punica/form-service'),
+  loadPackage('@punica/form-react'),
+  loadPackage('@punica/form-kit'),
+  loadPackage('@punica/form-kit', process.cwd(), 'react')
+];
 const guide = readFileSync(new URL('./guide.md', import.meta.url), 'utf8');
 
 const server = createPunicaFormServer({ packages, guide });

@@ -1,8 +1,13 @@
-// bundled/: the type declarations of the two packages, the fallback for a
+// bundled/: the type declarations of the packages, the fallback for a
 // project that has not installed them. Run the packages' build first.
 import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 
-const packages = { form: '../form', 'form-service': '../service' };
+const packages = {
+  form: '../form',
+  'form-service': '../service',
+  'form-react': '../react',
+  'form-kit': '../kit'
+};
 
 await rm('bundled', { recursive: true, force: true });
 
