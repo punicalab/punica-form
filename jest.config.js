@@ -10,7 +10,8 @@ const project = (displayName, tsconfig) => ({
   testRegex: '/__test__/.*\\.test\\.ts$',
   moduleFileExtensions: ['ts', 'js', 'json', 'node'],
   moduleNameMapper: {
-    '^@punica/form$': '<rootDir>/packages/form/lib'
+    '^@punica/form$': '<rootDir>/packages/form/lib',
+    '^@punica/form-service$': '<rootDir>/packages/service/lib'
   },
   clearMocks: true,
   coveragePathIgnorePatterns: ['/node_modules/', '/__example__/', '/dist/']
