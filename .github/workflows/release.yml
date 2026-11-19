@@ -41,21 +41,24 @@ jobs:
       - name: Test
         run: pnpm build && pnpm typecheck && pnpm test
 
+      # The token the publish step authenticates with. Version 2 of the
+      # Changesets action no longer writes it
+      - name: Authenticate with npm
+        run: echo "//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}" >> ~/.npmrc
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
       # Opens the "Version Packages" pull request while changesets are pending,
       # publishes to npm once that pull request is merged
       - name: Version or Publish
-        uses: changesets/action@v1
+        uses: changesets/action@v2
         with:
-          version: pnpm version-packages
-          publish: pnpm release
-          commit: 'chore: version packages'
-          title: 'chore: version packages'
+          version-script: pnpm version-packages
+          publish-script: pnpm release
+          commit-message: 'chore: version packages'
+          pr-title: 'chore: version packages'
         env:
           # The commit hooks are for people; the action commits on its own
           HUSKY: 0
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # The action authenticates with NPM_TOKEN; without it, it falls back
-          # to npm trusted publishing, which is not configured for the packages
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          # Read by the .npmrc that actions/setup-node writes
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NPM_CONFIG_PROVENANCE: true
