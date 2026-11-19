@@ -1,5 +1,5 @@
 import { IClassDecorator } from '@punica/common';
-import { defineFormProperty } from '@punica/form';
+import { defineFormProperty } from '../../..';
 
 /**
  * Unique identifier for the form property decorator.

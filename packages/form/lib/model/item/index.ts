@@ -36,7 +36,7 @@ export type FormItem<E> = {
   getData?: (params?: any) => Promise<any>;
 
   // A function to set the value of the form item.
-  setValue?: (property: keyof E, value: any) => void;
+  setValue?: (property: keyof E, value: any) => Promise<void>;
 
   // A function to control the form item based on a command.
   control?: (command: CommandItem<E, any>) => Promise<Array<FormItem<E>>>;

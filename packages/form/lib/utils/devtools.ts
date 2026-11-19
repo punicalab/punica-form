@@ -1,9 +1,15 @@
 import { Form, FormItem } from '../model';
 
 /**
+ * Marker used by the DevTools extension to recognize bridge messages
+ */
+export const DEVTOOLS_MESSAGE_SOURCE = 'punica-form-devtools';
+
+/**
  * Interface for DevTools message
  */
 interface DevToolsMessage {
+  source: typeof DEVTOOLS_MESSAGE_SOURCE;
   type: string;
   data: string;
   formItemKey?: string;
@@ -56,25 +62,17 @@ class DevToolsBridge {
       return;
     }
 
-    console.log('🔥 DevToolsBridge.sendMessage:', type, data, formItemKey);
-
     try {
       const message: DevToolsMessage = {
+        source: DEVTOOLS_MESSAGE_SOURCE,
         type,
-        data: JSON.stringify(data)
+        data: JSON.stringify(data),
+        formItemKey
       };
 
-      // Try multiple ways to send message to ensure it reaches content script
-      try {
-        window.postMessage(message, '*');
-      } catch (e) {
-        // Fallback: try with current window
-        if (typeof window !== 'undefined') {
-          window.postMessage(message, '*');
-        }
-      }
-    } catch (error) {
-      // Silently fail in production
+      window.postMessage(message, window.location.origin);
+    } catch {
+      // Debugging must never break the form (e.g. non-serializable data)
     }
   }
 
@@ -121,7 +119,7 @@ class DevToolsBridge {
    * Send register items event
    */
   public sendRegisterItems(itemKeys: string[]): void {
-    this.sendMessage('REGISTER_ITEMS', Array.from(itemKeys));
+    this.sendMessage('REGISTER_ITEMS', itemKeys);
   }
 
   /**
@@ -134,11 +132,7 @@ class DevToolsBridge {
   ): void {
     this.sendMessage(
       'UPDATE_PROPERTY_VALUE',
-      {
-        property,
-        value,
-        item
-      },
+      { property, value, item },
       property as string
     );
   }

@@ -1,0 +1,41 @@
+// Reads the type declarations of a Punica Form package from disk: the copy
+// installed in the project the server is started in, so the answers match
+// that version; without one, the copy bundled with this server.
+import { readdirSync, readFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
+import { dirname, join, relative, sep } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const BUNDLED = fileURLToPath(new URL('../bundled/', import.meta.url));
+
+/** Every .d.ts file below `root`, keyed by its path relative to it. */
+export function readTypes(root) {
+  const files = new Map();
+
+  for (const entry of readdirSync(root, { recursive: true, withFileTypes: true })) {
+    if (entry.isFile() && entry.name.endsWith('.d.ts')) {
+      const path = join(entry.parentPath, entry.name);
+
+      files.set(relative(root, path).split(sep).join('/'), readFileSync(path, 'utf8'));
+    }
+  }
+
+  return files;
+}
+
+/** @returns {{ name: string, version: string, files: Map<string, string>, installed: boolean }} */
+export function loadPackage(name, cwd = process.cwd()) {
+  try {
+    const require = createRequire(join(cwd, 'package.json'));
+    const manifestPath = require.resolve(`${name}/package.json`);
+    const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
+    const root = dirname(join(dirname(manifestPath), manifest.types));
+
+    return { name, version: manifest.version, files: readTypes(root), installed: true };
+  } catch {
+    const root = join(BUNDLED, name.split('/')[1]);
+    const { version } = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
+
+    return { name, version, files: readTypes(root), installed: false };
+  }
+}

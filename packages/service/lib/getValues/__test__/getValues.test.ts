@@ -46,4 +46,16 @@ describe('service clear error', () => {
     //@ts-ignore
     expect(values?.['age']).toEqual(42);
   });
+
+  test('when the GetValues service executed, the initial entity is not mutated', async () => {
+    const getValues = new GetValues();
+
+    getValues.initialize(mockCommandService as CommandService<any, any>);
+
+    await getValues.run();
+
+    expect(mockCommandService.initialEntity.address.street).toEqual(
+      'New York City'
+    );
+  });
 });

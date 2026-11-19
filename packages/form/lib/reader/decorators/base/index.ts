@@ -41,20 +41,10 @@ abstract class BaseReader<E, F extends FormItem<E>> implements IReader<E, F> {
    * @returns {CommandItem<E, F>} - The command item.
    */
   protected getCommand(item: F): CommandItem<E, F> {
-    const self = this;
-
-    const getItem = (property: keyof E): F => {
-      const { items } = self.#form;
-      const index = self.#itemsMap[property];
-      const item = items[index];
-
-      return item as F;
-    };
-
     return {
       formItem: item,
-      initialEntity: self.#entity,
-      getItem: getItem
+      initialEntity: this.#entity,
+      getItem: (property) => this.#form.items[this.#itemsMap[property]]
     };
   }
 
@@ -81,7 +71,9 @@ abstract class BaseReader<E, F extends FormItem<E>> implements IReader<E, F> {
       const { property } = item;
       const index = this.#itemsMap[property];
 
-      this.#form.items[index] = item as F;
+      if (Number.isInteger(index)) {
+        this.#form.items[index] = item as F;
+      }
     }
   }
 }

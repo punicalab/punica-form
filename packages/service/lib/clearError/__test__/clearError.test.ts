@@ -1,4 +1,3 @@
-import { CommandService } from '@punica/form';
 import { mockCommandService } from '../__mocks__/commandServiceForClearError';
 import { ClearError } from '..';
 
@@ -15,7 +14,7 @@ describe('service clear error', () => {
     const clearError = new ClearError();
 
     // Initialize the service with the mocked CommandService
-    clearError.initialize(mockCommandService as CommandService<any, any>);
+    clearError.initialize(mockCommandService);
 
     await clearError.run('name' as never);
 
@@ -31,7 +30,7 @@ describe('service clear error', () => {
     const clearError = new ClearError();
 
     // Initialize the service with the mocked CommandService
-    clearError.initialize(mockCommandService as CommandService<any, any>);
+    clearError.initialize(mockCommandService);
 
     await clearError.run('name' as never);
 

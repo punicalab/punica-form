@@ -1,6 +1,7 @@
-import { FormItem } from '@punica/form';
+import { CommandService, FormItem } from '@punica/form';
 
-export const mockCommandService = {
+// Only the members used by the service are mocked
+const command: Partial<CommandService<any, FormItem<any>>> = {
   form: {
     items: [
       {
@@ -19,10 +20,9 @@ export const mockCommandService = {
       }
     ]
   },
-  //@ts-ignore
-  fireEvent: (eventName: string, data: any) => {},
-  getItem: (property: any) =>
-    mockCommandService.form.items.find(
-      (item) => item.property === property
-    ) as FormItem<any>
+  fireEvent: jest.fn(),
+  getItem: (property) =>
+    command.form.items.find((item) => item.property === property)
 };
+
+export const mockCommandService = command as CommandService<any, FormItem<any>>;

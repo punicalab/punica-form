@@ -36,34 +36,24 @@ export class Trigger<E, F extends FormItem<E>>
    * Called when the value of a form item is changed.
    * @param property - Property of the changed item.
    */
-  public async run(property: keyof E) {
-    try {
-      const { fireEvent, getItem, form } = this.#command;
-      const item = getItem(property);
+  public async run(property: keyof E): Promise<void> {
+    const { fireEvent, getItem, form, createCommandItem } = this.#command;
+    const item = getItem(property);
 
-      if (!item) {
-        throw new Error(`Item not found: ${property as string}`);
-      }
-
-      const { validation, hidden } = item;
-
-      if (validation && !hidden) {
-        // Create a command item for validation
-        const commandItem = await this.#command.createCommandItem(item);
-
-        // Perform validation
-        const { error, errorMessages } = await validation(commandItem);
-
-        // Update form item with validation results
-        item.error = error;
-        item.errorMessages = errorMessages;
-      }
-
-      // Trigger an update event to reflect changes in the form
-      fireEvent('UPDATE_FORM', form);
-    } catch (error) {
-      // Handle errors
-      console.error(error);
+    if (!item) {
+      throw new Error(`Item not found: ${String(property)}`);
     }
+
+    const { validation, hidden } = item;
+
+    if (validation && !hidden) {
+      const commandItem = await createCommandItem(item);
+      const { error, errorMessages } = await validation(commandItem);
+
+      item.error = error;
+      item.errorMessages = errorMessages;
+    }
+
+    fireEvent('UPDATE_FORM', form);
   }
 }

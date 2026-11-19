@@ -38,30 +38,17 @@ export class ResetItem<E, F extends FormItem<E>>
    * @param {keyof E} property - The name of the property to reset.
    * @returns {Promise} - Resolves when the operation is complete, rejects on error.
    */
-  public run(property: keyof E): Promise<void> {
-    return new Promise<void>((resolve, reject) => {
-      try {
-        const { fireEvent, itemsMap, form, initialForm } = this.#command;
+  public async run(property: keyof E): Promise<void> {
+    const { fireEvent, itemsMap, form, initialForm } = this.#command;
+    const itemIndex = itemsMap[property];
+    const initialItem = initialForm.items[itemIndex];
 
-        // Retrieve the index and the initial form item
-        const itemIndex = itemsMap[property];
-        const oldFormItem = initialForm.items[itemsMap[property]];
+    if (!initialItem) {
+      throw new Error(`Item not found: ${String(property)}`);
+    }
 
-        // Check if both index and form item are valid
-        if (itemIndex !== undefined && oldFormItem !== undefined) {
-          // Create a deep copy of the initial form item
-          form.items[itemIndex] = deepCopy(oldFormItem);
+    form.items[itemIndex] = deepCopy(initialItem);
 
-          // Trigger an update event to reset the form
-          fireEvent('UPDATE_FORM', form);
-
-          resolve();
-        } else {
-          reject(new Error('Unexpected condition'));
-        }
-      } catch (error) {
-        reject(error);
-      }
-    });
+    fireEvent('UPDATE_FORM', form);
   }
 }

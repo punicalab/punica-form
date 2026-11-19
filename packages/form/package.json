@@ -18,19 +18,15 @@
     "access": "public"
   },
   "repository": {
-    "url": "git@github.com:uryansezginteke/punica-form.git"
+    "url": "git+https://github.com/punicalab/punica-form.git"
   },
   "files": [
     "dist"
   ],
   "scripts": {
-    "build": "scripty",
-    "clean": "scripty",
-    "lint": "scripty",
-    "compile": "scripty"
-  },
-  "scripty": {
-    "path": "../../scripts/packages"
+    "build": "tsc -p tsconfig.build.json",
+    "clean": "rimraf dist",
+    "lint": "eslint lib"
   },
   "dependencies": {
     "@punica/common": "^1.0.1",

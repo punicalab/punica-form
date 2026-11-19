@@ -6,6 +6,9 @@ module.exports = {
   testEnvironment: 'jsdom',
   testRegex: '(/__test__/.*|(\\.|/)(test|spec))\\.ts?$',
   moduleFileExtensions: ['ts', 'js', 'json', 'node'],
+  moduleNameMapper: {
+    '^@punica/form$': '<rootDir>/packages/form/lib'
+  },
   clearMocks: true,
   setupFiles: ['<rootDir>jest/jest-setup-file.ts'],
   collectCoverage: true,

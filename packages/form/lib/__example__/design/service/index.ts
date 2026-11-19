@@ -1,19 +1,9 @@
-import {
-  CommandService,
-  FormItem,
-  IService,
-  IServiceCommand,
-  IServiceControl
-} from '../../..';
+import { IService, IServiceCommand, IServiceControl } from '../../..';
 
 /**
  *
  */
-export class Service<E, F extends FormItem<E>>
-  implements IService, IServiceCommand, IServiceControl
-{
-  //@ts-ignore
-  #command: CommandService<E, F> = null;
+export class Service implements IService, IServiceCommand, IServiceControl {
   #name: string = 'service';
 
   /**
@@ -31,12 +21,8 @@ export class Service<E, F extends FormItem<E>>
 
   /**
    *
-   * @param command
    */
-  public initialize(command: CommandService<E, F>) {
-    //@ts-ignore
-    this.#command = command;
-  }
+  public async initialize(): Promise<void> {}
 
   /**
    *

@@ -17,23 +17,19 @@ export class Reader<E extends Object, F extends BaseFormItem<E>>
    * @param entity
    * @returns
    */
-  private readItemsLayout(entity: E): Promise<void> {
-    return new Promise(async (resolve) => {
-      const { items } = this.#form;
-      const itemLayoutMap: any = Reflect.getMetadata(
-        DECORATOR_FORM_ITEM_LAYOUT,
-        entity
-      );
+  private readItemsLayout(entity: E): void {
+    const { items } = this.#form;
+    const itemLayoutMap: any = Reflect.getMetadata(
+      DECORATOR_FORM_ITEM_LAYOUT,
+      entity
+    );
 
-      for await (const key of Object.keys(itemLayoutMap)) {
-        const itemIndex = this.#itemsMap[key as keyof E];
-        const item = items[itemIndex];
+    for (const key of Object.keys(itemLayoutMap)) {
+      const itemIndex = this.#itemsMap[key as keyof E];
+      const item = items[itemIndex];
 
-        items[itemIndex] = { ...item, layout: { ...itemLayoutMap[key] } };
-      }
-
-      resolve();
-    });
+      items[itemIndex] = { ...item, layout: { ...itemLayoutMap[key] } };
+    }
   }
 
   /**
@@ -41,22 +37,20 @@ export class Reader<E extends Object, F extends BaseFormItem<E>>
    * @param entity
    * @returns
    */
-  public read(
+  public async read(
     entity: E,
     initialForm: Form<E, F>,
     itemsMap: Record<keyof E, number>
   ): Promise<void> {
-    return new Promise(async () => {
-      this.#form = initialForm;
-      this.#itemsMap = itemsMap;
-      this.#form.title = Reflect.getMetadata(DECORATOR_TITLE, entity as E);
+    this.#form = initialForm;
+    this.#itemsMap = itemsMap;
+    this.#form.title = Reflect.getMetadata(DECORATOR_TITLE, entity as E);
 
-      this.#form.description = Reflect.getMetadata(
-        DECORATOR_DESCRIPTION,
-        entity as E
-      );
+    this.#form.description = Reflect.getMetadata(
+      DECORATOR_DESCRIPTION,
+      entity as E
+    );
 
-      await this.readItemsLayout(entity);
-    });
+    this.readItemsLayout(entity);
   }
 }

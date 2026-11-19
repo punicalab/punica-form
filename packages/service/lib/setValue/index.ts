@@ -22,57 +22,37 @@ export class SetValue<E, F extends FormItem<E>>
    * @param {keyof E} property  - Property of the form item
    * @param value - Value to be set
    */
-  private async setValue(property: keyof E, value: any) {
-    try {
-      const { form, getItem, writeItems, fireEvent, createCommandItem } =
-        this.#command;
+  private setValue = async (property: keyof E, value: any): Promise<void> => {
+    const { form, getItem, writeItems, fireEvent, createCommandItem } =
+      this.#command;
+    const formItem = getItem(property);
 
-      const formItem = getItem(property) as F;
-      const { control } = formItem;
-
-      formItem.value = value;
-
-      writeItems([formItem]);
-
-      if (control) {
-        const command = await createCommandItem(formItem);
-
-        control(command).then((formItems: Array<FormItem<E>>) => {
-          writeItems(formItems);
-
-          fireEvent('UPDATE_ITEM', [formItem, ...formItems]);
-          fireEvent('UPDATE_FORM', form);
-        });
-      } else {
-        fireEvent('UPDATE_ITEM', [formItem]);
-        fireEvent('UPDATE_FORM', form);
-      }
-    } catch (error) {
-      // Handle the error
-      console.error(error);
+    if (!formItem) {
+      throw new Error(`Item not found: ${String(property)}`);
     }
-  }
+
+    formItem.value = value;
+
+    // Items changed by the control function of the form item, if any
+    const controlledItems = formItem.control
+      ? await formItem.control(await createCommandItem(formItem))
+      : [];
+
+    await writeItems(controlledItems);
+
+    fireEvent('UPDATE_ITEM', [formItem, ...controlledItems]);
+    fireEvent('UPDATE_FORM', form);
+  };
 
   /**
    * Initializes the service with a command.
    * @param command - The command service to be used.
    */
-  public initialize(command: CommandService<E, F>): Promise<void> {
-    return new Promise(async (resolve) => {
-      try {
-        this.#command = command;
+  public async initialize(command: CommandService<E, F>): Promise<void> {
+    this.#command = command;
 
-        const { form } = command;
-
-        for await (const item of form.items) {
-          item.setValue = this.setValue.bind(this); // Bind the context
-        }
-      } catch (error) {
-        // Handle the error
-        console.error(error);
-      }
-
-      resolve();
-    });
+    for (const item of command.form.items) {
+      item.setValue = this.setValue;
+    }
   }
 }

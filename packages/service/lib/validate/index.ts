@@ -58,23 +58,16 @@ export class Validate<E, F extends FormItem<E>>
    * @returns {Promise<boolean>} - Resolves to true if all validations pass, otherwise resolves to false.
    */
   public async run(): Promise<boolean> {
-    try {
-      const { fireEvent, form } = this.#command;
+    const { fireEvent, form } = this.#command;
 
-      this.#hasError = false;
+    this.#hasError = false;
 
-      for await (const item of form.items) {
-        await this.validateFormItem(item);
-      }
-
-      // Trigger update event
-      fireEvent('UPDATE_FORM', form);
-
-      return !this.#hasError;
-    } catch (error) {
-      // Handle the error condition
-      console.error(error);
-      return false;
+    for (const item of form.items) {
+      await this.validateFormItem(item);
     }
+
+    fireEvent('UPDATE_FORM', form);
+
+    return !this.#hasError;
   }
 }

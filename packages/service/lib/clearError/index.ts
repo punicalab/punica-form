@@ -37,19 +37,17 @@ export class ClearError<E, F extends FormItem<E>>
    * @param {keyof E} property - The name of the property to clear errors for.
    * @returns {Promise<void>} - Resolves when the operation is complete.
    */
-  public run(property: keyof E): Promise<void> {
-    return new Promise<void>((resolve) => {
-      const { form, getItem, fireEvent } = this.#command;
-      const item = getItem(property);
+  public async run(property: keyof E): Promise<void> {
+    const { form, getItem, fireEvent } = this.#command;
+    const item = getItem(property);
 
-      // Clear errors
-      item.error = false;
-      item.errorMessages = null;
+    if (!item) {
+      throw new Error(`Item not found: ${String(property)}`);
+    }
 
-      // Trigger update event
-      fireEvent('UPDATE_FORM', form);
+    item.error = false;
+    item.errorMessages = null;
 
-      resolve();
-    });
+    fireEvent('UPDATE_FORM', form);
   }
 }
