@@ -1,34 +1,67 @@
-import { IReader } from '..';
-import { Reader } from './reader';
+import { readPropertyPath } from '@punica/util';
 import {
-  FormItemsReader,
-  ItemDataReader,
-  ItemInitializerReader
-} from './decorators/readers';
+  DECORATOR_READERS,
+  DECORATOR_SERVICES,
+  DECORATOR_STARTERS,
+  Form,
+  FormItem,
+  IReader,
+  getFormItemProperties,
+  getFormProperty
+} from '..';
+import { FORM_ITEMS } from '../define/FormItem';
 
 /**
- * Decorator Design Pattern for a Reader System
+ * Creates the reader that turns an entity into a form:
  *
- * - The `IReader` interface defines the contract for all types of readers.
- * - The `Reader` class serves as the base reader.
- * - Decorators are implemented as classes (e.g., `FormItemsReader`, `ItemDataReader`, `ItemInitializerReader`) that wrap existing readers and enhance their behavior.
- * - The `createInitialReader` function creates an initial reader object with a chain of decorators applied.
- *
- * - `FormItemsReader` adds functionality related to reading form items.
- * - `ItemDataReader` adds functionality related to reading item data.
- * - `ItemInitializerReader` adds functionality related to initializing items.
- *
- * - The final `itemInitializerReader` returned by `createInitialReader` has all the decorators chained together,
- *   creating a powerful reader object that can perform a series of operations in a coordinated way.
- *
- * @returns {IReader<any, any>} - Initial reader object with a chain of decorators.
+ * 1. the services, readers and starters of the class decorators
+ * 2. one item for every decorated property the entity holds, in the order
+ *    of the properties
+ * 3. the values of the entity
+ * 4. the `initialize` function of every item that has one
  */
-export const createInitialReader = (): IReader<any, any> => {
-  const reader = new Reader();
+export const createInitialReader = <
+  E extends object,
+  F extends FormItem<E>
+>(): IReader<E, F> => ({
+  async read(entity: E, form: Form<E, F>): Promise<void> {
+    form.services = getFormProperty(entity, DECORATOR_SERVICES);
+    form.readers = getFormProperty(entity, DECORATOR_READERS);
+    form.starters = getFormProperty(entity, DECORATOR_STARTERS);
 
-  const formItemsReader = new FormItemsReader(reader);
-  const itemDataReader = new ItemDataReader(formItemsReader);
-  const itemInitializerReader = new ItemInitializerReader(itemDataReader);
+    const definitions = getFormItemProperties<F>(entity, FORM_ITEMS);
 
-  return itemInitializerReader;
-};
+    form.items = (Object.keys(entity) as Array<keyof E & string>)
+      .filter((property) => definitions[property])
+      .map((property) => {
+        const item: F = { ...definitions[property], property };
+
+        return {
+          ...item,
+          value: item.path
+            ? readPropertyPath(entity, item.path)
+            : entity[property]
+        };
+      });
+
+    const getItem = (property: keyof E) => {
+      return form.items.find((item) => item.property === property);
+    };
+
+    for (const { property, initialize } of form.items) {
+      if (!initialize) continue;
+
+      const initialized = await initialize({
+        formItem: getItem(property) as F,
+        initialEntity: entity,
+        getItem
+      });
+
+      for (const item of initialized) {
+        const index = form.items.findIndex((i) => i.property === item.property);
+
+        if (index >= 0) form.items[index] = item as F;
+      }
+    }
+  }
+});

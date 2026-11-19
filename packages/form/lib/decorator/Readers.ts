@@ -1,4 +1,4 @@
-import { FormItem, IReader, defineFormProperty } from '..';
+import { FormClassDecorator, FormItem, IReader, defineFormProperty } from '..';
 
 /**
  * Constant for identifying form readers decorator.
@@ -10,6 +10,6 @@ export const DECORATOR_READERS = 'form-readers';
  */
 export const Readers = <E, F extends FormItem<E>>(
   data: Array<IReader<E, F>>
-): ClassDecorator => {
+): FormClassDecorator => {
   return defineFormProperty<Array<IReader<E, F>>>(DECORATOR_READERS)(data);
 };

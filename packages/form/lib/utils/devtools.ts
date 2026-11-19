@@ -1,167 +1,56 @@
-import { Form, FormItem } from '../model';
-
-/**
- * Marker used by the DevTools extension to recognize bridge messages
- */
+/** Marker the DevTools extension recognizes bridge messages by. */
 export const DEVTOOLS_MESSAGE_SOURCE = 'punica-form-devtools';
 
-/**
- * Interface for DevTools message
- */
-interface DevToolsMessage {
-  source: typeof DEVTOOLS_MESSAGE_SOURCE;
-  type: string;
-  data: string;
-  formItemKey?: string;
-}
+/** Version of the message format. */
+export const DEVTOOLS_PROTOCOL_VERSION = 2;
+
+let enabled = false;
 
 /**
- * DevTools bridge for sending form events to Chrome DevTools extension
+ * Makes the forms of the page report to the Punica Form DevTools extension.
+ * Call it once, in development only.
  */
-class DevToolsBridge {
-  private static instance: DevToolsBridge | null = null;
-  private enabled: boolean = false;
+export const enableDevTools = (): void => {
+  enabled = true;
+};
 
-  /**
-   * Get singleton instance
-   */
-  public static getInstance(): DevToolsBridge {
-    if (!DevToolsBridge.instance) {
-      DevToolsBridge.instance = new DevToolsBridge();
-    }
+export const disableDevTools = (): void => {
+  enabled = false;
+};
 
-    return DevToolsBridge.instance;
+export const isDevToolsEnabled = (): boolean => {
+  return enabled && typeof window !== 'undefined';
+};
+
+/**
+ * Sends a message to the DevTools extension, to the page's own origin only.
+ * @param formId - Identifies the form among the forms of the page
+ * @param type - `@@INIT`, `ENTITY` or the name of a form event
+ * @param formItemKey - The property the message is about
+ */
+export const sendToDevTools = (
+  formId: string,
+  type: string,
+  data: unknown,
+  formItemKey?: string
+): void => {
+  if (!isDevToolsEnabled()) {
+    return;
   }
 
-  /**
-   * Enable DevTools bridge
-   */
-  public enable(): void {
-    this.enabled = true;
-  }
-
-  /**
-   * Disable DevTools bridge
-   */
-  public disable(): void {
-    this.enabled = false;
-  }
-
-  /**
-   * Check if DevTools bridge is enabled
-   */
-  public isEnabled(): boolean {
-    return this.enabled && typeof window !== 'undefined';
-  }
-
-  /**
-   * Send message to DevTools extension
-   */
-  private sendMessage(type: string, data: any, formItemKey?: string): void {
-    if (!this.isEnabled()) {
-      return;
-    }
-
-    try {
-      const message: DevToolsMessage = {
+  try {
+    window.postMessage(
+      {
         source: DEVTOOLS_MESSAGE_SOURCE,
+        version: DEVTOOLS_PROTOCOL_VERSION,
+        formId,
         type,
         data: JSON.stringify(data),
         formItemKey
-      };
-
-      window.postMessage(message, window.location.origin);
-    } catch {
-      // Debugging must never break the form (e.g. non-serializable data)
-    }
-  }
-
-  /**
-   * Send initialization event
-   */
-  public sendInit<E, F extends FormItem<E>>(form: Form<E, F>): void {
-    this.sendMessage('@@INIT', form);
-  }
-
-  /**
-   * Send entity data
-   */
-  public sendEntity<E>(entity: E): void {
-    this.sendMessage('ENTITY', entity);
-  }
-
-  /**
-   * Send form update event
-   */
-  public sendUpdate<E, F extends FormItem<E>>(form: Form<E, F>): void {
-    this.sendMessage('UPDATE_FORM', form);
-  }
-
-  /**
-   * Send form reset event
-   */
-  public sendReset<E, F extends FormItem<E>>(form: Form<E, F>): void {
-    this.sendMessage('RESET', form);
-  }
-
-  /**
-   * Send item update event
-   */
-  public sendUpdateItem<E, F extends FormItem<E>>(item: F | F[]): void {
-    const items = Array.isArray(item) ? item : [item];
-
-    items.forEach((formItem) => {
-      this.sendMessage('UPDATE_ITEM', formItem, formItem.property as string);
-    });
-  }
-
-  /**
-   * Send register items event
-   */
-  public sendRegisterItems(itemKeys: string[]): void {
-    this.sendMessage('REGISTER_ITEMS', itemKeys);
-  }
-
-  /**
-   * Send property value update event
-   */
-  public sendUpdatePropertyValue<E, F extends FormItem<E>>(
-    property: keyof E,
-    value: any,
-    item: F
-  ): void {
-    this.sendMessage(
-      'UPDATE_PROPERTY_VALUE',
-      { property, value, item },
-      property as string
+      },
+      window.location.origin
     );
+  } catch {
+    // Debugging must never break the form (e.g. non-serializable data)
   }
-}
-
-/**
- * Get DevTools bridge instance
- */
-export const getDevToolsBridge = (): DevToolsBridge => {
-  return DevToolsBridge.getInstance();
-};
-
-/**
- * Enable DevTools bridge
- */
-export const enableDevTools = (): void => {
-  getDevToolsBridge().enable();
-};
-
-/**
- * Disable DevTools bridge
- */
-export const disableDevTools = (): void => {
-  getDevToolsBridge().disable();
-};
-
-/**
- * Check if DevTools bridge is enabled
- */
-export const isDevToolsEnabled = (): boolean => {
-  return getDevToolsBridge().isEnabled();
 };

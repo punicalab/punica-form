@@ -1,10 +1,10 @@
 // Checks code that uses Punica Form for the mistakes models make most often:
-// names the packages do not export and service calls that do not exist.
-
-/** The name a service registers under: its class name in camelCase. */
-const serviceName = (className) => className[0].toLowerCase() + className.slice(1);
+// names the packages do not export and calls that do not exist (any more).
 
 const lineOf = (code, index) => code.slice(0, index).split('\n').length;
+
+/** The name of the service a `run`-less call such as `.validate(form)` means. */
+const className = (method) => method[0].toUpperCase() + method.slice(1);
 
 /** @param {ReturnType<typeof import('./knowledge.mjs').createKnowledge>} knowledge */
 export function createValidator(knowledge) {
@@ -13,16 +13,63 @@ export function createValidator(knowledge) {
     .map((name) => knowledge.get(name))
     .filter((item) => item.kind === 'class' && item.package.endsWith('-service'))
     .map((item) => item.name);
+  const methods = services.map((name) => name[0].toLowerCase() + name.slice(1));
 
-  /** Service calls that take the form as an argument do not exist. */
-  const formCall = new RegExp(
-    `\\.(${services.map(serviceName).join('|')})\\(\\s*(?:this\\.)?(?:form|mockForm)\\b`,
-    'g'
-  );
+  /** Calls that do not exist, with what to write instead. */
+  const rules = [
+    {
+      rule: 'service-access',
+      pattern: /\.getServices\(/g,
+      message: 'There is no getServices: services are read by class, not by name.',
+      fix: () => 'controller.getService(Validate) (import the class from "@punica/form-service")'
+    },
+    {
+      rule: 'service-call',
+      pattern: new RegExp(`\\.(${methods.join('|')})\\(\\s*(?:this\\.)?(?:form|mockForm)\\b`, 'g'),
+      message: (match) => `There is no ${match[1]}(form, …) method.`,
+      fix: (match) => `await controller.getService(${className(match[1])}).run(…)`
+    },
+    {
+      rule: 'service-call',
+      pattern: /\.validateItem\(/g,
+      message: 'There is no validateItem method.',
+      fix: () => 'await controller.getService(Trigger).run(property)'
+    },
+    {
+      rule: 'service-call',
+      pattern: /\b(?:item|formItem|\w+Item)\.setValue\(/g,
+      message: 'Form items have no setValue method.',
+      fix: () => 'await controller.getService(SetValue).run(property, value)'
+    },
+    {
+      rule: 'events',
+      pattern: /\bcontroller\.off\(/g,
+      message: 'There is no off method.',
+      fix: () => 'call the function controller.on(event, handler) returned'
+    },
+    {
+      rule: 'register',
+      pattern: /FormItemRegister\.getInstance\(/g,
+      message: 'FormItemRegister is not a singleton.',
+      fix: () => 'defaultFormItemRegister.getItem(type), or a register of your own from createFormItemRegister()'
+    },
+    {
+      rule: 'register',
+      pattern: /\.getRenderer\(/g,
+      message: 'A register has no getRenderer method.',
+      fix: () => 'defaultFormItemRegister.getItem(type)'
+    },
+    {
+      rule: 'metadata',
+      pattern: /Reflect\.(?:get|define)Metadata\(/g,
+      message: 'Punica Form does not use reflect-metadata.',
+      fix: () => 'getFormProperty(entity, key) or getFormItemProperties(entity, key) from "@punica/form"'
+    }
+  ];
 
   /**
    * @param {string} code
-   * @returns {Array<{ line: number, rule: string, message: string, fix?: string }>}
+   * @returns {Array<{ line: number, rule: string, message: string, fix: string }>}
    */
   function validate(code) {
     const findings = [];
@@ -51,44 +98,10 @@ export function createValidator(knowledge) {
       }
     }
 
-    for (const match of code.matchAll(/getServices(?:<[^(\n]*>)?\(([^)]*)\)/g)) {
-      for (const [, name] of match[1].matchAll(/['"](\w+)['"]/g)) {
-        if (services.includes(name)) {
-          add(
-            match.index,
-            'service-name',
-            `Services are registered in camelCase; "${name}" is not found.`,
-            `getServices('${serviceName(name)}')`
-          );
-        }
+    for (const { rule, pattern, message, fix } of rules) {
+      for (const match of code.matchAll(pattern)) {
+        add(match.index, rule, typeof message === 'string' ? message : message(match), fix(match));
       }
-    }
-
-    for (const match of code.matchAll(formCall)) {
-      const fix =
-        match[1] === 'setValue'
-          ? 'await item.setValue(item.property, value) (SetValue adds setValue to every form item)'
-          : `await controller.getServices('${match[1]}').run(${/^(clearError|resetItem|trigger)$/.test(match[1]) ? 'property' : ''})`;
-
-      add(match.index, 'service-call', `There is no ${match[1]}(form, …) method.`, fix);
-    }
-
-    for (const match of code.matchAll(/\.validateItem\(/g)) {
-      add(
-        match.index,
-        'service-call',
-        'There is no validateItem method.',
-        "await controller.getServices('trigger').run(property) (needs new Trigger() in @Services)"
-      );
-    }
-
-    for (const match of code.matchAll(/FormItemRegister(?:\.getInstance\(\))?\.getRenderer\(/g)) {
-      add(
-        match.index,
-        'register',
-        'FormItemRegister has no getRenderer method.',
-        'FormItemRegister.getInstance().getItem(type)'
-      );
     }
 
     return findings.sort((a, b) => a.line - b.line);

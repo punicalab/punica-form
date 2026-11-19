@@ -1,31 +1,34 @@
-import { Form, FormEvents, FormItem } from '..';
-import { CommandItem } from '.';
+import { CommandItem, Form, FormEventMap, FormItem } from '..';
 
 /**
- * Defines the structure of the CommandService.
+ * What a service receives when it is initialized: the only way to read and
+ * change the state of the form.
  */
 export type CommandService<E, F extends FormItem<E>> = {
-  // The initial form data before any modifications.
-  initialForm: Form<E, F>;
-
-  // The initial entity data before any modifications.
+  /** The entity the form was created from. */
   initialEntity: E;
 
-  // The current form data that may have been modified.
-  form: Form<E, F>;
+  /** The current form. */
+  getForm: () => Form<E, F>;
 
-  // A mapping of property names to their respective form item index.
-  itemsMap: Record<keyof E, number>;
+  /** The items as they were when the form was started. */
+  getInitialItems: () => F[];
 
-  // Creates a CommandItem from a form item for further processing.
-  createCommandItem: (item: F) => Promise<CommandItem<E, F>>;
+  /** The current item of a property. */
+  getItem: (property: keyof E) => F | undefined;
 
-  // Fires an event to notify listeners of changes in the form.
-  fireEvent: (eventType: FormEvents, data: any) => void;
+  /**
+   * Replaces the items with the same properties. The form gets a new
+   * reference and UPDATE_FORM is fired. Unknown properties are ignored.
+   */
+  setItems: (items: Array<FormItem<E>>) => void;
 
-  // Retrieves a form item based on its property name.
-  getItem: (property: keyof E) => F;
+  /** Fires an event of the controller. */
+  emit: <K extends keyof FormEventMap<E, F>>(
+    event: K,
+    payload: FormEventMap<E, F>[K]
+  ) => void;
 
-  // Writes an array of form items to the current form data.
-  writeItems: (items: Array<FormItem<E>>) => Promise<void>;
+  /** Creates what the functions of a form item receive. */
+  createCommandItem: (item: F) => CommandItem<E, F>;
 };

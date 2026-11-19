@@ -1,4 +1,3 @@
-import { writeToPropertyPath } from '@punica/util';
 import {
   CommandService,
   FormItem,
@@ -6,49 +5,34 @@ import {
   IServiceInitialize,
   deepCopy
 } from '@punica/form';
+import { writeToPropertyPath } from '@punica/util';
 
 /**
- * Service for retrieving form values as an entity.
+ * Returns the entity with the values of the form.
  */
-export class GetValues<E, F extends FormItem<E>>
-  implements IServiceInitialize<E, F>, IServiceControl<E>
+export class GetValues<E, F extends FormItem<E> = FormItem<E>>
+  implements IServiceInitialize<E, F>, IServiceControl
 {
-  #command: CommandService<E, F> = null;
-  #name: string = 'getValues';
+  #command!: CommandService<E, F>;
 
-  /**
-   * Returns the name of the service.
-   * @returns {string} - Service name
-   */
   public get name(): string {
-    return this.#name;
+    return 'getValues';
   }
 
-  /**
-   * Initializes the service with a command.
-   * @param command - The command service to be used.
-   */
-  public initialize(command: CommandService<E, F>): Promise<void> {
+  public initialize(command: CommandService<E, F>): void {
     this.#command = command;
-
-    return Promise.resolve();
   }
 
   /**
-   * Retrieves form values and returns them as an entity.
-   * @returns {Promise<E>} - Resolves with the entity containing form values.
+   * @returns A copy of the entity the form was created from, holding the
+   * current values. The entity itself is never changed.
    */
   public async run(): Promise<E> {
-    const { form, initialEntity } = this.#command;
+    const entity = deepCopy(this.#command.initialEntity);
 
-    // Deep copy so nested values of the initial entity are never mutated
-    const entity = deepCopy(initialEntity);
-
-    for (const item of form.items) {
-      const { property, value, path } = item;
-
+    for (const { property, value, path } of this.#command.getForm().items) {
       if (path) {
-        writeToPropertyPath(entity, path, value);
+        writeToPropertyPath(entity as Record<string, unknown>, path, value);
       } else {
         entity[property] = value;
       }

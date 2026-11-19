@@ -6,48 +6,31 @@ import {
 } from '@punica/form';
 
 /**
- * Service for clearing errors on a specific form item.
+ * Clears the validation error of one item.
  */
-export class ClearError<E, F extends FormItem<E>>
+export class ClearError<E, F extends FormItem<E> = FormItem<E>>
   implements IServiceInitialize<E, F>, IServiceControl
 {
-  #command: CommandService<E, F> = null;
-  #name: string = 'clearError';
+  #command!: CommandService<E, F>;
 
-  /**
-   * Returns the name of the service.
-   * @returns {string} - Service name
-   */
   public get name(): string {
-    return this.#name;
+    return 'clearError';
   }
 
-  /**
-   * Initializes the service with a command.
-   * @param command - The command service to be used.
-   */
-  public initialize(command: CommandService<E, F>): Promise<void> {
+  public initialize(command: CommandService<E, F>): void {
     this.#command = command;
-
-    return Promise.resolve();
   }
 
   /**
-   * Clears errors on the specified form item.
-   * @param {keyof E} property - The name of the property to clear errors for.
-   * @returns {Promise<void>} - Resolves when the operation is complete.
+   * @throws When the form has no item for the property
    */
   public async run(property: keyof E): Promise<void> {
-    const { form, getItem, fireEvent } = this.#command;
-    const item = getItem(property);
+    const item = this.#command.getItem(property);
 
     if (!item) {
       throw new Error(`Item not found: ${String(property)}`);
     }
 
-    item.error = false;
-    item.errorMessages = null;
-
-    fireEvent('UPDATE_FORM', form);
+    this.#command.setItems([{ ...item, error: false, errorMessages: [] }]);
   }
 }

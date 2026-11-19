@@ -1,67 +1,57 @@
 import { CommandItem } from '../command';
 
-// Represents a form item, which is a field or element in a form.
+/**
+ * A field of a form. Extend it with the properties of your own form system:
+ * `type AppItem<E> = FormItem<E> & { layout?: Layout }`.
+ */
 export type FormItem<E> = {
-  // The property associated with the form item.
+  /** The property of the entity this item belongs to. */
   property: keyof E;
 
-  // The path for the form item (if applicable).
+  /** Path of the value inside the entity, for nested values (`address/city`). */
   path?: string;
 
-  // The label or display text for the form item.
+  /** The label or display text of the item. */
   label: string;
 
-  // Indicates if the form item is required.
-  required?: boolean;
-
-  // The type of the form item.
+  /** The form item type the item was created with. */
   type?: string;
 
-  // The value of the form item.
+  /**
+   * The value of the item. Deliberately `any`: its type depends on the
+   * property and on the form item type.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   value?: any;
 
-  // Indicates if there is an error associated with the form item.
-  error?: boolean;
-
-  // An array of error messages related to the form item.
-  errorMessages?: Array<string>;
-
-  // Indicates if the form item is disabled.
+  required?: boolean;
   disabled?: boolean;
-
-  // Indicates if the form item is hidden.
   hidden?: boolean;
 
-  // A function to fetch data for the form item (if needed).
-  getData?: (params?: any) => Promise<any>;
+  /** Whether the last validation of the item failed. */
+  error?: boolean;
 
-  // A function to set the value of the form item.
-  setValue?: (property: keyof E, value: any) => Promise<void>;
+  /** The messages of the last failed validation. */
+  errorMessages?: string[];
 
-  // A function to control the form item based on a command.
-  control?: (command: CommandItem<E, any>) => Promise<Array<FormItem<E>>>;
+  /** Runs once while the form is created; the returned items are written to the form. */
+  initialize?: (
+    command: CommandItem<E, FormItem<E>>
+  ) => Promise<Array<FormItem<E>>>;
 
-  // A function called when the form item is submitted.
-  submitted?: (command: CommandItem<E, any>) => Promise<void>;
+  /** Runs after the value of the item was set; the returned items are written to the form. */
+  control?: (
+    command: CommandItem<E, FormItem<E>>
+  ) => Promise<Array<FormItem<E>>>;
 
-  // A function to initialize the form item.
-  initialize?: (command: CommandItem<E, any>) => Promise<Array<FormItem<E>>>;
-
-  // A function to validate the form item.
-  validation?: (command: CommandItem<E, any>) => Promise<ErrorDetail>;
-
-  // Additional properties can be added here if needed.
-  [key: string]: any; // Allows for any additional custom properties to be attached.
+  /** Validates the item. */
+  validation?: (command: CommandItem<E, FormItem<E>>) => Promise<ErrorDetail>;
 };
 
-// Represents detailed error information.
+/**
+ * The result of a validation.
+ */
 export type ErrorDetail = {
-  // Indicates if there is an error.
   error: boolean;
-
-  // An array of error messages.
-  errorMessages?: Array<string>;
-
-  // Additional properties can be added here if needed.
-  [key: string]: any; // Allows for any additional custom properties to be attached.
+  errorMessages?: string[];
 };

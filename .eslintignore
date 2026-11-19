@@ -4,4 +4,4 @@ jest.config.js
 tsconfig.json
 .eslintrc
 coverage
-__test__
+bundled

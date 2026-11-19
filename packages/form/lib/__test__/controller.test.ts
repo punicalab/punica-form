@@ -4,74 +4,175 @@ import {
   FormController,
   FormItem,
   IServiceInitialize,
-  IStarter
+  IStarter,
+  createFormItemRegister,
+  defineFormItem
 } from '..';
 
 type Entity = { name: string; age: number };
+type Item = FormItem<Entity>;
 
-class CaptureService implements IServiceInitialize<Entity, FormItem<Entity>> {
-  public command: CommandService<Entity, FormItem<Entity>>;
+/** Exposes the command services work with. */
+class Capture implements IServiceInitialize<Entity, Item> {
+  public command!: CommandService<Entity, Item>;
 
   public get name() {
     return 'capture';
   }
 
-  public async initialize(command: CommandService<Entity, FormItem<Entity>>) {
+  public initialize(command: CommandService<Entity, Item>) {
     this.command = command;
   }
 }
 
 const createForm = (
-  starters?: Array<IStarter<Entity, FormItem<Entity>>>
-): Form<Entity, FormItem<Entity>> => ({
-  items: [{ property: 'name', label: 'Name', value: 'a' }],
-  services: [new CaptureService()],
-  starters
+  extra: Partial<Form<Entity, Item>> = {}
+): Form<Entity, Item> => ({
+  items: [
+    { property: 'name', label: 'Name', value: 'a' },
+    { property: 'age', label: 'Age', value: 1 }
+  ],
+  services: [new Capture()],
+  ...extra
 });
 
+const start = async (extra?: Partial<Form<Entity, Item>>) => {
+  const controller = await FormController.fromForm(createForm(extra));
+  const form = await controller.start();
+
+  return { controller, form, command: controller.getService(Capture).command };
+};
+
 describe('form controller', () => {
-  test('services see the form produced by starters', async () => {
-    const starter: IStarter<Entity, FormItem<Entity>> = {
-      run: async (form) => ({
-        ...form,
-        items: [...form.items, { property: 'age', label: 'Age', value: 1 }]
-      })
-    };
-    const controller = await FormController.fromForm(createForm([starter]));
-    const form = await controller.start();
-    const { command } = controller.getServices<CaptureService>('capture');
+  test('every change produces a new form and leaves the old one untouched', async () => {
+    const { controller, form, command } = await start();
 
-    expect(command.form).toBe(form);
-    expect(command.getItem('age')).toBe(form.items[1]);
+    command.setItems([{ ...form.items[0], value: 'b' }]);
+
+    const next = controller.getForm();
+
+    expect(next).not.toBe(form);
+    expect(next.items[0].value).toEqual('b');
+    expect(form.items[0].value).toEqual('a');
+    // Items that did not change keep their identity
+    expect(next.items[1]).toBe(form.items[1]);
   });
 
-  test('initial form is an independent copy of the items', async () => {
-    const controller = await FormController.fromForm(createForm());
-    const form = await controller.start();
-    const { command } = controller.getServices<CaptureService>('capture');
+  test('items of unknown properties are ignored', async () => {
+    const { controller, form, command } = await start();
 
-    form.items[0].value = 'changed';
+    command.setItems([{ property: 'unknown' as keyof Entity, label: 'x' }]);
 
-    expect(command.initialForm.items[0].value).toEqual('a');
+    expect(controller.getForm()).toBe(form);
   });
 
-  test('writeItems ignores unknown properties', async () => {
-    const controller = await FormController.fromForm(createForm());
-    const form = await controller.start();
-    const { command } = controller.getServices<CaptureService>('capture');
-
-    await command.writeItems([{ property: 'age', label: 'Age' }]);
-
-    expect(form.items).toHaveLength(1);
-  });
-
-  test('REGISTER_ITEMS is fired with an array of keys', async () => {
-    const controller = await FormController.fromForm(createForm());
+  test('subscribers and UPDATE_FORM listeners are called on a change, until removed', async () => {
+    const { controller, form, command } = await start();
+    const subscriber = jest.fn();
     const listener = jest.fn();
+    const unsubscribe = controller.subscribe(subscriber);
+    const off = controller.on('UPDATE_FORM', listener);
+
+    command.setItems([{ ...form.items[0], value: 'b' }]);
+
+    expect(subscriber).toHaveBeenCalledTimes(1);
+    expect(listener).toHaveBeenCalledWith(controller.getForm());
+
+    unsubscribe();
+    off();
+    command.setItems([{ ...form.items[0], value: 'c' }]);
+
+    expect(subscriber).toHaveBeenCalledTimes(1);
+    expect(listener).toHaveBeenCalledTimes(1);
+  });
+
+  test('item functions receive copies, so the state cannot be changed from outside', async () => {
+    const { controller, form, command } = await start();
+    const { formItem, getItem } = command.createCommandItem(form.items[0]);
+
+    formItem.value = 'changed';
+    (getItem('age') as Item).value = 99;
+
+    expect(controller.getForm().items.map((item) => item.value)).toEqual([
+      'a',
+      1
+    ]);
+  });
+
+  test('the initial items are an independent copy', async () => {
+    const { form, command } = await start();
+
+    command.setItems([{ ...form.items[0], value: 'b' }]);
+
+    expect(command.getInitialItems()[0].value).toEqual('a');
+  });
+
+  test('services see the form the starters produced', async () => {
+    const starter: IStarter<Entity, Item> = {
+      run: async (form) => ({ ...form, items: [form.items[1]] })
+    };
+    const { controller, command } = await start({ starters: [starter] });
+
+    expect(command.getForm()).toBe(controller.getForm());
+    expect(command.getItem('name')).toBeUndefined();
+    expect(command.getItem('age')).toBe(controller.getForm().items[0]);
+  });
+
+  test('getService throws for a service the form does not have', async () => {
+    const controller = await FormController.fromForm(
+      createForm({ services: [] })
+    );
+
+    await controller.start();
+
+    expect(() => controller.getService(Capture)).toThrow(
+      'Service not found: Capture'
+    );
+  });
+
+  test('start rejects when a reader or a starter throws', async () => {
+    const failing = async () => {
+      throw new Error('failed');
+    };
+
+    await expect(start({ readers: [{ read: failing }] })).rejects.toThrow(
+      'failed'
+    );
+    await expect(start({ starters: [{ run: failing }] })).rejects.toThrow(
+      'failed'
+    );
+  });
+
+  test('REGISTER_ITEMS reports the types of the given register', async () => {
+    const register = createFormItemRegister();
+    const listener = jest.fn();
+
+    defineFormItem('isolated:text', () => null, { register });
+
+    const controller = await FormController.fromForm(createForm(), {
+      register
+    });
 
     controller.on('REGISTER_ITEMS', listener);
     await controller.start();
 
-    expect(Array.isArray(listener.mock.calls[0][0])).toBe(true);
+    expect(listener).toHaveBeenCalledWith(['isolated:text']);
+  });
+
+  test('a register keeps the first renderer of a type until it is unregistered', () => {
+    const register = createFormItemRegister();
+    const first = () => 'first';
+    const second = () => 'second';
+
+    register.register('text', first);
+    register.register('text', second);
+
+    expect(register.getItem('text')).toBe(first);
+
+    register.unregister('text');
+    register.register('text', second);
+
+    expect(register.getItem('text')).toBe(second);
+    expect(register.getItemKeys()).toEqual(['text']);
   });
 });

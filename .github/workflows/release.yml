@@ -39,7 +39,7 @@ jobs:
         run: pnpm lint
 
       - name: Test
-        run: pnpm build && pnpm test
+        run: pnpm build && pnpm typecheck && pnpm test
 
       # Opens the "Version Packages" pull request while changesets are pending,
       # publishes to npm once that pull request is merged

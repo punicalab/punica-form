@@ -1,8 +1,0 @@
-@startuml FormItemRegister
-
-skin rose
-
-!include ./register.puml
-!include ./storeManager.puml
-
-@enduml
