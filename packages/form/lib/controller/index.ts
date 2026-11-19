@@ -64,8 +64,8 @@ export class FormController<
   #form: Form<E, F>;
   #initialItems: F[] = [];
   #itemsMap = new Map<keyof E, number>();
-  // eslint-disable-next-line @typescript-eslint/ban-types
-  #services = new Map<Function, IService>();
+  /** The services of the form, by their class. */
+  #services = new Map<object, IService>();
   #started = false;
   #batching = 0;
   #dirty = false;

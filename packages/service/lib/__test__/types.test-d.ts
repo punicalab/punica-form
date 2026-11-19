@@ -137,7 +137,7 @@ export const items = (): void => {
   const layout: number | undefined = form.items[0].layout;
 
   // @ts-expect-error items have no properties beyond their type
-  form.items[0].unknownProperty;
+  void form.items[0].unknownProperty;
 
   // @ts-expect-error property must be a property of the entity
   const item: Item = { property: 'email', label: 'Email' };
