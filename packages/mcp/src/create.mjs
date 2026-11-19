@@ -21,13 +21,15 @@ export function createPunicaFormServer({ packages, guide }) {
     .join(', ');
 
   // The guide describes 2.x; a project on 1.x must not be steered into it
-  const legacy = packages.find((pkg) => parseInt(pkg.version) < 2);
+  const legacy = packages.find(
+    (pkg) => pkg.name === '@punica/form' && parseInt(pkg.version) < 2
+  );
   const legacyNote = legacy
     ? `This project has ${legacy.name} ${legacy.version} installed, but this server documents Punica Form 2. search_api and get_api show the installed 1.x API and are correct; get_guide describes 2.x and applies only after upgrading. Do not rewrite 1.x code to the 2.x API unless the user asks to upgrade.\n\n`
     : '';
 
   const server = new McpServer(
-    { name: 'punica-form', version: '0.2.0' },
+    { name: 'punica-form', version: '0.3.0' },
     {
       instructions: `${legacyNote}${versions}. Punica Form is a headless form engine and is rarely in training data: never write an import, a service name or a method from memory. Read get_guide first, look names up with search_api and get_api, and check the code with validate_code before handing it over.`
     }
@@ -50,7 +52,7 @@ export function createPunicaFormServer({ packages, guide }) {
     {
       title: 'Find Punica Form exports',
       description:
-        'Finds exports of @punica/form and @punica/form-service by name or by words in their documentation ("validate", "reader", "event"). Without a query: every export.',
+        'Finds exports of the Punica Form packages (@punica/form, @punica/form-service, @punica/form-react, @punica/form-kit) by name or by words in their documentation ("validate", "reader", "field"). Without a query: every export.',
       inputSchema: { query: z.string().optional().describe('Words to look for') },
       annotations: { readOnlyHint: true }
     },
@@ -74,7 +76,7 @@ export function createPunicaFormServer({ packages, guide }) {
     {
       title: 'The declaration of an export',
       description:
-        'The exact TypeScript declaration and documentation of one or more exports, such as FormController, Validate, FormItem or IReader, read from the installed packages.',
+        'The exact TypeScript declaration and documentation of one or more exports, such as FormController, Validate, TextField or KitForm, read from the installed packages.',
       inputSchema: { names: z.array(z.string()).min(1).max(12).describe('Export names') },
       annotations: { readOnlyHint: true }
     },

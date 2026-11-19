@@ -1,7 +1,7 @@
 {
   "name": "@punica/form-mcp",
   "version": "0.2.1",
-  "description": "MCP server for Punica Form: look up the exact API, read the rules and check code that uses it.",
+  "description": "MCP server for Punica Form: look up the exact API of its packages, read the rules and check code that uses them.",
   "keywords": [
     "mcp",
     "model-context-protocol",
@@ -45,6 +45,8 @@
   },
   "devDependencies": {
     "@punica/form": "workspace:^",
-    "@punica/form-service": "workspace:^"
+    "@punica/form-service": "workspace:^",
+    "@punica/form-react": "workspace:^",
+    "@punica/form-kit": "workspace:^"
   }
 }
