@@ -2,8 +2,22 @@
  * Type tests: this file is only compiled, never run. Every line marked with
  * `@ts-expect-error` must be a compile error.
  */
-import { Form, FormController, FormItem } from '@punica/form';
-import { GetValues, SetValue, Store, Trigger, Validate } from '..';
+import {
+  CommandItem,
+  Form,
+  FormController,
+  FormItem,
+  IServiceControl,
+  TypedFormItem
+} from '@punica/form';
+import {
+  GetValues,
+  SetValue,
+  Store,
+  StoreCommand,
+  Trigger,
+  Validate
+} from '..';
 
 type Entity = { name: string; age: number };
 type Item = FormItem<Entity> & { layout?: number };
@@ -63,6 +77,57 @@ export const events = (): void => {
 
     void items;
   });
+};
+
+export const itemFunctions = (): Item[] => [
+  {
+    property: 'name',
+    label: 'Name',
+    // The item type of the form system and the features of Store, without a cast
+    validation: async ({
+      formItem,
+      readStoreItem
+    }: CommandItem<Entity, Item, StoreCommand>) => ({
+      error: formItem.layout === readStoreItem('layout')
+    }),
+    control: async ({ formItem }: CommandItem<Entity, Item>) => [
+      { ...formItem, layout: 1 }
+    ]
+  }
+];
+
+export const typedValues = async (): Promise<void> => {
+  const typed = await FormController.fromEntity<Entity, TypedFormItem<Entity>>({
+    name: 'a',
+    age: 1
+  });
+  const [item] = typed.getForm().items;
+
+  if (item.property === 'age') {
+    const age: number | undefined = item.value;
+
+    // @ts-expect-error the value of 'age' is a number
+    const wrong: string | undefined = item.value;
+
+    void age;
+    void wrong;
+  }
+};
+
+/** A service of the application, read with its types given explicitly. */
+declare class AutoSave<E> implements IServiceControl<E> {
+  get name(): string;
+  run(property: keyof E): Promise<E>;
+}
+
+export const customServices = async (): Promise<void> => {
+  const autoSave = controller.getService<AutoSave<Entity>>(AutoSave);
+  const saved: Entity = await autoSave.run('name');
+
+  // @ts-expect-error 'email' is not a property of the entity
+  await autoSave.run('email');
+
+  void saved;
 };
 
 export const items = (): void => {

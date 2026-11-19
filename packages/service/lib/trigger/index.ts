@@ -4,7 +4,7 @@ import {
   IServiceControl,
   IServiceInitialize
 } from '@punica/form';
-import { validateItem } from '../validateItem';
+import { validateItem, writeResults } from '../validateItem';
 
 /**
  * Validates one item of the form.
@@ -34,6 +34,6 @@ export class Trigger<E, F extends FormItem<E> = FormItem<E>>
 
     const result = await validateItem(this.#command, item);
 
-    if (result) this.#command.setItems([result]);
+    if (result) writeResults(this.#command, new Map([[property, result]]));
   }
 }

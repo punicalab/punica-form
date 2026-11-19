@@ -8,6 +8,8 @@ export const DECORATOR_SERVICES = 'form-services';
 /**
  * Decorator for adding services to a form class.
  */
-export const Services = (data: Array<IService>): FormClassDecorator => {
-  return defineFormProperty<Array<IService>>(DECORATOR_SERVICES)(data);
+export const Services = (
+  data: Array<IService | (new () => IService)>
+): FormClassDecorator => {
+  return defineFormProperty<typeof data>(DECORATOR_SERVICES)(data);
 };

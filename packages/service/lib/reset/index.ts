@@ -26,7 +26,11 @@ export class Reset<E, F extends FormItem<E> = FormItem<E>>
    * Fires RESET after the form was updated.
    */
   public async run(): Promise<void> {
-    const { getForm, getInitialItems, setItems, emit } = this.#command;
+    const { getForm, getInitialItems, setItems, supersede, emit } =
+      this.#command;
+
+    // Results of control functions that are still running are dropped
+    supersede();
 
     // A fresh copy, so the initial state stays intact
     setItems(deepCopy(getInitialItems()));

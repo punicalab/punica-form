@@ -1,16 +1,10 @@
+import { shared } from '../shared';
+
 /**
  * The metadata decorators attach to form classes. It is kept per class, so
  * no reflection polyfill is needed.
  */
-
-/** Class → key → data of the class decorators. */
-const formProperties = new WeakMap<object, Map<string, unknown>>();
-
-/** Class → key → property → data of the property decorators. */
-const formItemProperties = new WeakMap<
-  object,
-  Map<string, Record<string, unknown>>
->();
+const { formProperties, formItemProperties } = shared;
 
 /** The class of an entity and its base classes, the base class first. */
 const classesOf = (entity: object): object[] => {

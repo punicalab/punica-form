@@ -1,6 +1,6 @@
 {
   "name": "@punica/form",
-  "version": "1.2.0",
+  "version": "2.0.0",
   "description": "Headless, framework-agnostic form engine",
   "author": {
     "name": "Uryan Sezgin TEKE",
@@ -40,8 +40,5 @@
     "build": "tsup lib/index.ts --format esm,cjs --target es2020 --clean && tsc -p tsconfig.build.json --emitDeclarationOnly",
     "clean": "rimraf dist",
     "lint": "eslint lib"
-  },
-  "dependencies": {
-    "@punica/util": "^1.0.2"
   }
 }

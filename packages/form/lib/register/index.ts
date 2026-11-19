@@ -1,3 +1,5 @@
+import { shared } from '../shared';
+
 /**
  * What renders the items of a form item type. Punica Form is headless: it
  * stores renderers for the application and never calls them.
@@ -47,4 +49,5 @@ export const createFormItemRegister = (): FormItemRegister => {
  * The register `defineFormItem` and `FormController` use unless they are
  * given another one.
  */
-export const defaultFormItemRegister = createFormItemRegister();
+export const defaultFormItemRegister = (shared.register ??=
+  createFormItemRegister());

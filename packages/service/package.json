@@ -1,6 +1,6 @@
 {
   "name": "@punica/form-service",
-  "version": "1.2.0",
+  "version": "2.0.0",
   "description": "Built-in services of Punica Form",
   "author": {
     "name": "Uryan Sezgin TEKE",
@@ -37,13 +37,11 @@
   "scripts": {
     "build": "tsup lib/index.ts --format esm,cjs --target es2020 --clean && tsc -p tsconfig.build.json --emitDeclarationOnly",
     "clean": "rimraf dist",
-    "lint": "eslint lib"
-  },
-  "dependencies": {
-    "@punica/util": "^1.0.2"
+    "lint": "eslint lib",
+    "test": "node --test test/*.test.mjs"
   },
   "peerDependencies": {
-    "@punica/form": "^2.0.0"
+    "@punica/form": "^2.1.0"
   },
   "devDependencies": {
     "@punica/form": "workspace:^"

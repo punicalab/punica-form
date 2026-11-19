@@ -11,7 +11,7 @@ export class Marker implements IService {
 @Title('Create User')
 @Readers([new Reader()])
 @Starters([new Starter()])
-@Services([new Marker()])
+@Services([Marker])
 export class UserForm {
   // Not decorated: no form item
   public id = 1;

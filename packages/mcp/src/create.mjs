@@ -20,10 +20,16 @@ export function createPunicaFormServer({ packages, guide }) {
     .map((pkg) => `${pkg.name} ${pkg.version} (${pkg.installed ? 'installed in this project' : 'not installed, bundled copy'})`)
     .join(', ');
 
+  // The guide describes 2.x; a project on 1.x must not be steered into it
+  const legacy = packages.find((pkg) => parseInt(pkg.version) < 2);
+  const legacyNote = legacy
+    ? `This project has ${legacy.name} ${legacy.version} installed, but this server documents Punica Form 2. search_api and get_api show the installed 1.x API and are correct; get_guide describes 2.x and applies only after upgrading. Do not rewrite 1.x code to the 2.x API unless the user asks to upgrade.\n\n`
+    : '';
+
   const server = new McpServer(
     { name: 'punica-form', version: '0.2.0' },
     {
-      instructions: `${versions}. Punica Form is a headless form engine and is rarely in training data: never write an import, a service name or a method from memory. Read get_guide first, look names up with search_api and get_api, and check the code with validate_code before handing it over.`
+      instructions: `${legacyNote}${versions}. Punica Form is a headless form engine and is rarely in training data: never write an import, a service name or a method from memory. Read get_guide first, look names up with search_api and get_api, and check the code with validate_code before handing it over.`
     }
   );
 
@@ -36,7 +42,7 @@ export function createPunicaFormServer({ packages, guide }) {
       inputSchema: {},
       annotations: { readOnlyHint: true }
     },
-    async () => text(guide)
+    async () => text(legacyNote + guide)
   );
 
   server.registerTool(

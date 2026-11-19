@@ -34,6 +34,7 @@ export class ResetItem<E, F extends FormItem<E> = FormItem<E>>
       throw new Error(`Item not found: ${String(property)}`);
     }
 
+    this.#command.supersede(property);
     this.#command.setItems([deepCopy(initial)]);
   }
 }

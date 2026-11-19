@@ -10,8 +10,8 @@ import { loadPackage, readTypes } from '../src/load.mjs';
 // The type declarations the packages of this repository were built with
 const types = (path) => readTypes(fileURLToPath(new URL(path, import.meta.url)));
 const packages = [
-  { name: '@punica/form', version: '0.0.0', files: types('../../form/dist/') },
-  { name: '@punica/form-service', version: '0.0.0', files: types('../../service/dist/') }
+  { name: '@punica/form', version: '2.0.0', files: types('../../form/dist/') },
+  { name: '@punica/form-service', version: '2.0.0', files: types('../../service/dist/') }
 ];
 const guide = readFileSync(new URL('../src/guide.md', import.meta.url), 'utf8');
 
@@ -110,6 +110,25 @@ test('validate_code accepts correct code', async () => {
   });
 
   assert.match(report, /^No problems/);
+});
+
+test('a project on 1.x is not steered into the 2.x API', async () => {
+  const legacy = packages.map((pkg) => ({ ...pkg, version: '1.2.0', installed: true }));
+  const server = createPunicaFormServer({ packages: legacy, guide });
+  const [a, b] = InMemoryTransport.createLinkedPair();
+  const client = new Client({ name: 'test', version: '1.0.0' });
+
+  await Promise.all([server.connect(a), client.connect(b)]);
+
+  const call = async (name, args = {}) =>
+    (await client.callTool({ name, arguments: args })).content[0].text;
+
+  assert.match(client.getInstructions(), /documents Punica Form 2/);
+  assert.match(await call('get_guide'), /^This project has @punica\/form 1\.2\.0 installed/);
+  assert.match(
+    await call('validate_code', { code: 'controller.getServices("validate"); item.setValue("a", 1);' }),
+    /^No problems/
+  );
 });
 
 test('the guide and the resources', async () => {
