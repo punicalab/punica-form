@@ -1,25 +1,25 @@
+import { shared } from '../shared';
+
 /** Marker the DevTools extension recognizes bridge messages by. */
 export const DEVTOOLS_MESSAGE_SOURCE = 'punica-form-devtools';
 
 /** Version of the message format. */
 export const DEVTOOLS_PROTOCOL_VERSION = 2;
 
-let enabled = false;
-
 /**
  * Makes the forms of the page report to the Punica Form DevTools extension.
  * Call it once, in development only.
  */
 export const enableDevTools = (): void => {
-  enabled = true;
+  shared.devTools = true;
 };
 
 export const disableDevTools = (): void => {
-  enabled = false;
+  shared.devTools = false;
 };
 
 export const isDevToolsEnabled = (): boolean => {
-  return enabled && typeof window !== 'undefined';
+  return shared.devTools && typeof window !== 'undefined';
 };
 
 /**

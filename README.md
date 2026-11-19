@@ -51,7 +51,7 @@ import { Title, FormItemInputText, Reader } from "@/commons";
 // Define your form class
 @Title("Create User")
 @Readers([new Reader()])
-@Services([new GetValues(), new SetValue(), new Validate()])
+@Services([GetValues, SetValue, Validate])
 export class UserForm {
   @FormItemInputText({ label: "Name", required: true })
   name: string = "";
@@ -146,6 +146,7 @@ This repository is a monorepo containing the following packages:
 
 - **[@punica/form](./packages/form)** - Core form engine
 - **[@punica/form-service](./packages/service)** - Built-in services (GetValues, SetValue, Validate, etc.)
+- **[@punica/form-react](./packages/react)** - React hooks: `useFormController` and `useForm`
 - **[@punica/form-mcp](./packages/mcp)** - MCP server that lets AI assistants look up the API and check their code
 
 ## 🤖 AI Assistants

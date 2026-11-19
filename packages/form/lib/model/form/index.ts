@@ -6,7 +6,8 @@ import { FormItem, IReader, IService, IStarter } from '../..';
  */
 export type Form<E, F extends FormItem<E> = FormItem<E>> = {
   items: F[];
-  services?: IService[];
+  /** Service classes (one instance per form) or instances. */
+  services?: Array<IService | (new () => IService)>;
   readers?: Array<IReader<E, F>>;
   starters?: Array<IStarter<E, F>>;
   [key: string]: unknown;

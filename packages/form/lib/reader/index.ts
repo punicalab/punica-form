@@ -1,4 +1,3 @@
-import { readPropertyPath } from '@punica/util';
 import {
   DECORATOR_READERS,
   DECORATOR_SERVICES,
@@ -7,7 +6,8 @@ import {
   FormItem,
   IReader,
   getFormItemProperties,
-  getFormProperty
+  getFormProperty,
+  readPropertyPath
 } from '..';
 import { FORM_ITEMS } from '../define/FormItem';
 
@@ -15,8 +15,9 @@ import { FORM_ITEMS } from '../define/FormItem';
  * Creates the reader that turns an entity into a form:
  *
  * 1. the services, readers and starters of the class decorators
- * 2. one item for every decorated property the entity holds, in the order
- *    of the properties
+ * 2. one item for every decorated property, in the order of the properties
+ *    of the entity; decorated properties the entity does not hold (declared
+ *    without a value) follow
  * 3. the values of the entity
  * 4. the `initialize` function of every item that has one
  */
@@ -31,18 +32,21 @@ export const createInitialReader = <
 
     const definitions = getFormItemProperties<F>(entity, FORM_ITEMS);
 
-    form.items = (Object.keys(entity) as Array<keyof E & string>)
-      .filter((property) => definitions[property])
-      .map((property) => {
-        const item: F = { ...definitions[property], property };
+    const properties = new Set([
+      ...Object.keys(entity).filter((property) => definitions[property]),
+      ...Object.keys(definitions)
+    ]) as Set<keyof E & string>;
 
-        return {
-          ...item,
-          value: item.path
-            ? readPropertyPath(entity, item.path)
-            : entity[property]
-        };
-      });
+    form.items = [...properties].map((property) => {
+      const item: F = { ...definitions[property], property };
+
+      return {
+        ...item,
+        value: item.path
+          ? readPropertyPath(entity, item.path)
+          : entity[property]
+      };
+    });
 
     const getItem = (property: keyof E) => {
       return form.items.find((item) => item.property === property);

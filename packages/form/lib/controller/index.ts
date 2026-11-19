@@ -14,7 +14,8 @@ import {
   deepCopy,
   defaultFormItemRegister
 } from '..';
-import { sendToDevTools } from '../utils/devtools';
+import { shared } from '../shared';
+import { isDevToolsEnabled, sendToDevTools } from '../utils/devtools';
 
 export type FormControllerOptions = {
   /** Identifies the form in developer tools. Defaults to the name of its class. */
@@ -63,8 +64,13 @@ export class FormController<
   #form: Form<E, F>;
   #initialItems: F[] = [];
   #itemsMap = new Map<keyof E, number>();
-  // eslint-disable-next-line @typescript-eslint/ban-types
-  #services = new Map<Function, IService>();
+  /** The services of the form, by their class. */
+  #services = new Map<object, IService>();
+  #started = false;
+  #batching = 0;
+  #dirty = false;
+  #epoch = 0;
+  #writes = new Map<keyof E, number>();
   #subscribers = new Set<() => void>();
   #listeners = new Map<string, Set<(payload: never) => void>>();
   readonly #initialEntity: E;
@@ -116,8 +122,8 @@ export class FormController<
   }
 
   /**
-   * The current form. It is never changed: after a change this returns a
-   * new object.
+   * The current form. A form object is never changed once it is returned:
+   * after `start()` and after every change this returns a new object.
    */
   public getForm = (): Form<E, F> => {
     return this.#form;
@@ -149,13 +155,21 @@ export class FormController<
   }
 
   /**
-   * The service of a class listed in `@Services`.
-   * @throws When the form has no service of the class
+   * The service of a class listed in `@Services`, or of a subclass of it.
+   * @throws When the form is not started yet or has no service of the class
    */
   public getService<S extends IService>(
     service: ServiceClass<S>
   ): BoundService<S, E, F> {
-    const instance = this.#services.get(service);
+    if (!this.#started) {
+      throw new Error(
+        `Services are available after start(): ${service.name} was read too early.`
+      );
+    }
+
+    const instance =
+      this.#services.get(service) ??
+      [...this.#services.values()].find((other) => other instanceof service);
 
     if (!instance) {
       throw new Error(
@@ -167,6 +181,36 @@ export class FormController<
   }
 
   /**
+   * Runs changes as one: subscribers and UPDATE_FORM listeners are notified
+   * once, after the function returned or the promise it returned settled.
+   */
+  public batch = <T>(change: () => T): T => {
+    const done = (): void => {
+      if (--this.#batching === 0 && this.#dirty) {
+        this.#dirty = false;
+        this.#notify();
+      }
+    };
+
+    this.#batching++;
+
+    try {
+      const result = change();
+
+      if (result instanceof Promise) {
+        return result.finally(done) as T;
+      }
+
+      done();
+
+      return result;
+    } catch (error) {
+      done();
+      throw error;
+    }
+  };
+
+  /**
    * Starts the form: runs its readers and starters and initializes its
    * services.
    * @returns The form
@@ -174,19 +218,41 @@ export class FormController<
   public async start(): Promise<Form<E, F>> {
     this.#emit('REGISTER_ITEMS', this.#register.getItemKeys());
 
-    for (const reader of this.#form.readers ?? []) {
-      await reader.read(this.#initialEntity, this.#form);
+    // Readers and starters work on a draft: the form getForm() returned
+    // before start() is left as it was
+    let form: Form<E, F> = { ...this.#form, items: [...this.#form.items] };
+
+    for (const reader of form.readers ?? []) {
+      await reader.read(this.#initialEntity, form);
     }
 
-    for (const starter of this.#form.starters ?? []) {
-      this.#form = await starter.run(this.#form, this.#initialEntity);
+    for (const starter of form.starters ?? []) {
+      form = await starter.run(form, this.#initialEntity);
     }
 
+    this.#form = form;
     this.#mapItems();
 
     const command = this.#createCommandService();
 
-    for (const service of this.#form.services ?? []) {
+    for (const entry of form.services ?? []) {
+      // A class gives every form its own service; an instance is shared by
+      // the forms it is given to and only serves the last one started
+      const service =
+        typeof entry === 'function'
+          ? new (entry as new () => IService)()
+          : entry;
+
+      if (typeof entry !== 'function') {
+        if (shared.usedServices.has(service)) {
+          console.warn(
+            `[punica-form] The same ${service.constructor.name} instance is used by more than one form. Pass the class to @Services instead.`
+          );
+        }
+
+        shared.usedServices.add(service);
+      }
+
       this.#services.set(service.constructor, service);
 
       await (service as Partial<IServiceInitialize<E, F>>).initialize?.(
@@ -195,9 +261,10 @@ export class FormController<
     }
 
     this.#initialItems = deepCopy(this.#form.items);
+    this.#started = true;
 
     sendToDevTools(this.#name, '@@INIT', this.#form);
-    this.#sendEntityToDevTools();
+    this.#notify();
 
     return this.#form;
   }
@@ -233,9 +300,34 @@ export class FormController<
     }
 
     this.#form = { ...this.#form, items: next };
+
+    if (this.#batching) {
+      this.#dirty = true;
+    } else {
+      this.#notify();
+    }
+  };
+
+  /** Tells everyone who follows the form that it changed. */
+  #notify(): void {
     this.#subscribers.forEach((listener) => listener());
     this.#emit('UPDATE_FORM', this.#form);
     this.#sendEntityToDevTools();
+  }
+
+  #supersede = (property?: keyof E): (() => boolean) => {
+    if (property === undefined) {
+      this.#epoch++;
+    } else {
+      this.#writes.set(property, (this.#writes.get(property) ?? 0) + 1);
+    }
+
+    const epoch = this.#epoch;
+    const write = property === undefined ? 0 : this.#writes.get(property);
+
+    return () =>
+      epoch === this.#epoch &&
+      (property === undefined || write === this.#writes.get(property));
   };
 
   #emit = <K extends keyof FormEventMap<E, F>>(
@@ -257,7 +349,7 @@ export class FormController<
 
   #createCommandItem = (item: F): CommandItem<E, F> => {
     // Features are added by calling the services, so their own state stays reachable
-    const features = (this.#form.services ?? []).reduce(
+    const features = [...this.#services.values()].reduce(
       (all, service) => ({
         ...all,
         ...(
@@ -286,12 +378,17 @@ export class FormController<
     getInitialItems: () => this.#initialItems,
     getItem: this.#getItem,
     setItems: this.#setItems,
+    supersede: this.#supersede,
     emit: this.#emit,
     createCommandItem: this.#createCommandItem
   });
 
   /** Developer tools show the entity as the `getValues` service returns it. */
   #sendEntityToDevTools(): void {
+    if (!isDevToolsEnabled()) {
+      return;
+    }
+
     const getValues = [...this.#services.values()].find(
       (service) => service.name === 'getValues'
     ) as IServiceControl | undefined;

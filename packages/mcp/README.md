@@ -10,12 +10,12 @@ and validates its answer.
 
 ## Tools
 
-| Tool | What it does |
-| --- | --- |
-| `get_guide` | The rules: what the packages provide and what your application builds, the lifecycle, services, events and a complete example |
-| `search_api` | Finds exports of `@punica/form` and `@punica/form-service` by name or documentation |
-| `get_api` | The exact TypeScript declaration and documentation of one or more exports |
-| `validate_code` | Checks code for imports that do not exist, wrong service names and service calls that do not exist; each problem with a fix |
+| Tool            | What it does                                                                                                                  |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `get_guide`     | The rules: what the packages provide and what your application builds, the lifecycle, services, events and a complete example |
+| `search_api`    | Finds exports of `@punica/form` and `@punica/form-service` by name or documentation                                           |
+| `get_api`       | The exact TypeScript declaration and documentation of one or more exports                                                     |
+| `validate_code` | Checks code for imports that do not exist, wrong service names and service calls that do not exist; each problem with a fix   |
 
 Resources: `punica-form://guide` and `punica-form://api/<name>`.
 

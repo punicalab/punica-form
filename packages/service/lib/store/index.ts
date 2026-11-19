@@ -2,7 +2,7 @@ import { IServiceCommand } from '@punica/form';
 
 /**
  * What `Store` adds to the command of the functions of form items:
- * `validation: ({ readStoreItem }: CommandItem<E, F, StoreCommand>) => …`
+ * `validation: async ({ readStoreItem }: CommandItem<E, FormItem<E>, StoreCommand>) => …`
  */
 export type StoreCommand = {
   readStoreItem: (key: string) => unknown;

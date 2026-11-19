@@ -40,10 +40,14 @@ export interface IServiceCommand extends IService {
  *   interface ServiceRegistry<E, F> { myService: MyService<E, F> }
  * }
  */
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface ServiceRegistry<
   E,
-  // @ts-expect-error The parameters are used by the declarations merged into the interface
+  // The parameters are used by the declarations merged into the interface.
+  // Until one is merged F counts as unused, hence ts-ignore and not
+  // ts-expect-error, which would fail once a package adds its services.
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   F extends FormItem<E>
 > {}

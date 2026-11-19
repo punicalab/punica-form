@@ -1,6 +1,12 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "target": "es2022"
+    "target": "es2022",
+    "baseUrl": ".",
+    // The same sources Jest loads (moduleNameMapper), not the built packages
+    "paths": {
+      "@punica/form": ["packages/form/lib"],
+      "@punica/form-service": ["packages/service/lib"]
+    }
   }
 }

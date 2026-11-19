@@ -26,7 +26,8 @@
   },
   "sideEffects": false,
   "publishConfig": {
-    "access": "public"
+    "access": "public",
+    "provenance": true
   },
   "repository": {
     "url": "git+https://github.com/punicalab/punica-form.git"
@@ -37,13 +38,11 @@
   "scripts": {
     "build": "tsup lib/index.ts --format esm,cjs --target es2020 --clean && tsc -p tsconfig.build.json --emitDeclarationOnly",
     "clean": "rimraf dist",
-    "lint": "eslint lib"
-  },
-  "dependencies": {
-    "@punica/util": "^1.0.2"
+    "lint": "eslint lib",
+    "test": "node --test test/*.test.mjs"
   },
   "peerDependencies": {
-    "@punica/form": "^2.0.0"
+    "@punica/form": "^2.1.0"
   },
   "devDependencies": {
     "@punica/form": "workspace:^"

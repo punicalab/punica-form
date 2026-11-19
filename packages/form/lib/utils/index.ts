@@ -6,3 +6,4 @@ export {
   isDevToolsEnabled
 } from './devtools';
 export * from './deepCopy';
+export * from './path';

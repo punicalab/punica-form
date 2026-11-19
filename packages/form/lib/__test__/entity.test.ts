@@ -44,6 +44,32 @@ describe('a form created from a decorated class', () => {
     expect(controller.getService(Marker).name).toEqual('marker');
   });
 
+  test('a decorated property the entity does not hold still gets an item', async () => {
+    // What a field without an initializer looks like with the legacy
+    // decorators and a compile target below ES2022
+    const entity = new UserForm();
+
+    delete (entity as Partial<UserForm>).name;
+
+    const controller = await FormController.fromEntity(entity);
+
+    expect(controller.getForm().items.map((item) => item.property)).toEqual([
+      'address',
+      'name'
+    ]);
+  });
+
+  test('every form of a class gets its own service', async () => {
+    const first = await FormController.fromEntity(new UserForm());
+    const second = await FormController.fromEntity(new UserForm());
+
+    await first.start();
+    await second.start();
+
+    expect(first.getService(Marker)).toBeInstanceOf(Marker);
+    expect(first.getService(Marker)).not.toBe(second.getService(Marker));
+  });
+
   test('a class inherits the decorators of its base class and overrides them', async () => {
     const controller = await FormController.fromEntity(new AdminForm());
     const form = await controller.start();
