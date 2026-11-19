@@ -31,11 +31,28 @@ Install built-in services (optional but recommended):
 npm install @punica/form-service
 ```
 
+## ⚙️ Requirements
+
+Punica Form relies on TypeScript decorators. Enable them in your `tsconfig.json`:
+
+```json
+{
+  "compilerOptions": {
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
+  }
+}
+```
+
 ## 🚀 Quick Start
+
+`Title`, `Layout`, `FormItemInputText` and `Reader` below are part of **your** form
+system (see [Building Your Form System](https://form.punicalab.com/docs/building-your-form/building-form-overview)).
 
 ```typescript
 import { FormController, Readers, Services } from "@punica/form";
 import { GetValues, SetValue, Validate } from "@punica/form-service";
+import { Title, Layout, FormItemInputText, Reader } from "@/commons";
 
 // Define your form class
 @Title("Create User")
@@ -43,18 +60,17 @@ import { GetValues, SetValue, Validate } from "@punica/form-service";
 @Services([new GetValues(), new SetValue(), new Validate()])
 export class UserForm {
   @Layout({ xs: 12 })
-  @FormItemInputText(name)
+  @FormItemInputText({ label: "Name", required: true })
   name: string = "";
 }
 
 // Use FormController
-const userForm = new UserForm();
-const controller = await FormController.fromEntity(userForm);
+const controller = await FormController.fromEntity(new UserForm());
 const form = await controller.start();
 
-// Access services
-const validateService = controller.getServices("Validate");
-const getValuesService = controller.getServices("GetValues");
+// Services are accessed by name and executed with run()
+const isValid = await controller.getServices<Validate<UserForm, any>>("validate").run();
+const values = await controller.getServices<GetValues<UserForm, any>>("getValues").run();
 ```
 
 ## 📚 Documentation
@@ -72,7 +88,7 @@ The documentation covers:
 - [Decorators](https://form.punicalab.com/docs/decorators/decorator)
 - [Validation](https://form.punicalab.com/docs/validation/validation-introduction)
 - [Advanced Topics](https://form.punicalab.com/docs/advanced/building-form-architecture)
-- [API Reference](https://form.punicalab.com/docs/advanced/api-reference)
+- [API Reference](https://form.punicalab.com/docs/category/api-reference)
 
 ## 🏗️ Architecture
 
@@ -145,17 +161,17 @@ export class UserForm {
 }
 
 // Initialize form
-const userForm = new UserForm();
-const controller = await FormController.fromEntity(userForm);
+const controller = await FormController.fromEntity(new UserForm());
 const form = await controller.start();
 
+// Update a value
+await form.items[0].setValue("name", "John");
+
 // Use services
-const validateService = controller.getServices("Validate");
-const isValid = await validateService.validate(form);
+const isValid = await controller.getServices("validate").run();
 
 if (isValid) {
-  const getValuesService = controller.getServices("GetValues");
-  const values = await getValuesService.getValues(form);
+  const values = await controller.getServices("getValues").run();
   // Submit values...
 }
 ```
@@ -166,27 +182,42 @@ This repository is a monorepo containing the following packages:
 
 - **[@punica/form](./packages/form)** - Core form engine
 - **[@punica/form-service](./packages/service)** - Built-in services (GetValues, SetValue, Validate, etc.)
+- **[@punica/form-mcp](./packages/mcp)** - MCP server that lets AI assistants look up the API and check their code
+
+## 🤖 AI Assistants
+
+Punica Form ships an [MCP](https://modelcontextprotocol.io) server, so an
+assistant reads the real API instead of guessing it:
+
+```bash
+claude mcp add punica-form -- npx -y @punica/form-mcp
+```
+
+See [packages/mcp](./packages/mcp) for other clients and the list of tools.
 
 ## 🛠️ Development
 
 ```bash
 # Install dependencies
-yarn install
+pnpm install
 
 # Build packages
-yarn build
+pnpm build
 
 # Run tests
-yarn test
+pnpm test
 
 # Run tests in watch mode
-yarn test-watch
+pnpm test-watch
 
 # Lint
-yarn lint
+pnpm lint
 
 # Format code
-yarn format
+pnpm format
+
+# Describe a change for the next release
+pnpm changeset
 ```
 
 ## 🤝 Contributing
@@ -213,14 +244,14 @@ This project is licensed under the MIT License - see the [LICENSE](./LICENSE) fi
 ## 🙏 Acknowledgments
 
 - Built with TypeScript
-- Uses [Lerna](https://lerna.js.org/) for monorepo management
+- Uses [pnpm](https://pnpm.io/) workspaces and [Changesets](https://github.com/changesets/changesets) for monorepo management
 - Inspired by the need for maintainable, scalable form management
 
 ## 📞 Support
 
 - 📖 [Documentation](https://form.punicalab.com)
-- 💬 [GitHub Discussions](https://github.com/uryansezginteke/punica-form/discussions)
-- 🐛 [Issue Tracker](https://github.com/uryansezginteke/punica-form/issues)
+- 💬 [GitHub Discussions](https://github.com/punicalab/punica-form/discussions)
+- 🐛 [Issue Tracker](https://github.com/punicalab/punica-form/issues)
 
 ---
 

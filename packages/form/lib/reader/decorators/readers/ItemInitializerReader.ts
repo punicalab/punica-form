@@ -7,7 +7,7 @@ class Reader<E, F extends FormItem<E>> extends BaseReader<E, F> {
    * @param items - Array of form items.
    */
   private async readItemsData(items: Array<F>) {
-    for await (const formItem of items) {
+    for (const formItem of items) {
       const { initialize } = formItem;
 
       if (initialize) {
@@ -15,7 +15,7 @@ class Reader<E, F extends FormItem<E>> extends BaseReader<E, F> {
         const items = await initialize(super.getCommand(formItem));
 
         // Write the updated items back to the form.
-        this.writeItems(items);
+        await this.writeItems(items);
       }
     }
   }
@@ -29,7 +29,7 @@ class Reader<E, F extends FormItem<E>> extends BaseReader<E, F> {
     await super.read(entity, form);
 
     // Read and initialize form items.
-    this.readItemsData(form.items);
+    await this.readItemsData(form.items);
   }
 }
 

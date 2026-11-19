@@ -12,29 +12,14 @@ import {
  */
 class Reader<E, F extends FormItem<E>> implements IReader<E, F> {
   /**
-   *
-   */
-  constructor() {}
-
-  /**
    * Reads the form data from the provided entity.
    * @param {E} entity - The entity to read form data from.
-   * @returns {Promise<Form<E, F>>} form - Resolves to the form data.
-   * @throws {Error} - If the entity is not provided.
+   * @param {Form<E, F>} form - The form to write the metadata to.
    */
-  public read(entity: E, form: Form<E, F>): Promise<void> {
-    return new Promise((resolve) => {
-      // Retrieves services metadata from the entity using reflection
-      form.services = Reflect.getMetadata(DECORATOR_SERVICES, entity);
-
-      // Retrieves starters metadata from the entity using reflection
-      form.starters = Reflect.getMetadata(DECORATOR_STARTERS, entity);
-
-      // Retrieves starters metadata from the entity using reflection
-      form.readers = Reflect.getMetadata(DECORATOR_READERS, entity);
-
-      resolve();
-    });
+  public async read(entity: E, form: Form<E, F>): Promise<void> {
+    form.services = Reflect.getMetadata(DECORATOR_SERVICES, entity);
+    form.starters = Reflect.getMetadata(DECORATOR_STARTERS, entity);
+    form.readers = Reflect.getMetadata(DECORATOR_READERS, entity);
   }
 }
 export default Reader;

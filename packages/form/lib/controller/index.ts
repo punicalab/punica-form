@@ -44,46 +44,38 @@ export class FormController<
    * Static method to initialize the FormController with form data.
    * @param form The initial form data
    */
-  public static fromForm<E, F extends FormItem<E>>(
+  public static async fromForm<E, F extends FormItem<E>>(
     form: Form<E, F>
   ): Promise<FormController<E, F>> {
-    return new Promise((resolve) => {
-      const instance = new FormController<E, F>();
+    const instance = new FormController<E, F>();
 
-      instance.#form = form;
-      instance.#initialEntity = {} as E;
+    instance.#form = form;
+    instance.#initialEntity = {} as E;
 
-      resolve(instance);
-    });
+    return instance;
   }
 
   /**
    * Static method to initialize the FormController with an entity.
    * @param entity The entity for the form
    */
-  public static fromEntity<E, F extends FormItem<E>>(
+  public static async fromEntity<E, F extends FormItem<E>>(
     entity: E
   ): Promise<FormController<E, F>> {
-    return new Promise(async (resolve) => {
-      const instance = new FormController<E, F>();
-      const initialReader: IReader<E, F> = createInitialReader();
+    const instance = new FormController<E, F>();
+    const initialReader: IReader<E, F> = createInitialReader();
 
-      instance.#initialEntity = entity;
-      instance.#form = {
-        items: null,
-        services: null,
-        starters: null,
-        readers: null
-      };
+    instance.#initialEntity = entity;
+    instance.#form = {
+      items: null,
+      services: null,
+      starters: null,
+      readers: null
+    };
 
-      await initialReader.read(
-        instance.#initialEntity,
-        instance.#form,
-        {} as any
-      );
+    await initialReader.read(instance.#initialEntity, instance.#form);
 
-      resolve(instance);
-    });
+    return instance;
   }
 
   //#endregion
@@ -113,7 +105,7 @@ export class FormController<
           devTools.sendUpdateItem(data);
           break;
         case 'REGISTER_ITEMS':
-          devTools.sendRegisterItems(Array.from(data));
+          devTools.sendRegisterItems(data);
           break;
       }
     }
@@ -128,23 +120,13 @@ export class FormController<
       return;
     }
 
-    try {
-      // Try both 'getValues' and 'GetValues' service names
-      const getValuesService =
-        this.getServices('getValues') || this.getServices('GetValues');
-      if (getValuesService && typeof getValuesService.run === 'function') {
-        getValuesService
-          .run()
-          .then((entity: E) => {
-            devTools.sendEntity(entity);
-          })
-          .catch(() => {
-            // Silently fail
-          });
-      }
-    } catch {
-      // Silently fail
-    }
+    const getValues = this.getServices<IServiceControl<E>>('getValues');
+
+    // Debugging must never break the form
+    getValues
+      ?.run()
+      .then((entity) => devTools.sendEntity(entity))
+      .catch(() => {});
   };
 
   /**
@@ -152,57 +134,59 @@ export class FormController<
    * @returns A CommandService for the form
    */
   private createCommandService = (): CommandService<E, F> => {
-    const self = this;
+    const getItem: CommandService<E, F>['getItem'] = (property) => {
+      const index = this.#itemsMap[property];
 
-    const getItem: CommandService<E, F>['getItem'] = (property: keyof E) => {
-      const { items } = self.#form;
-      const itemIndex = self.#itemsMap[property];
-      if (!Number.isInteger(itemIndex)) return null;
-      return items[itemIndex] as unknown as F;
+      return Number.isInteger(index) ? this.#form.items[index] : null;
     };
 
-    const writeItems: CommandService<E, F>['writeItems'] = async (arr) => {
-      for (const item of arr) {
-        const { items } = self.#form;
-        const index = self.#itemsMap[item.property];
-        items[index] = item as F;
+    const writeItems: CommandService<E, F>['writeItems'] = async (items) => {
+      for (const item of items) {
+        const index = this.#itemsMap[item.property];
+
+        if (Number.isInteger(index)) {
+          this.#form.items[index] = item as F;
+        }
       }
-    };
-
-    const fireEvent: CommandService<E, F>['fireEvent'] = (ev, data) => {
-      self.fireEvent(ev, data);
     };
 
     const createCommandItem: CommandService<E, F>['createCommandItem'] = async (
-      item: F
+      item
     ) => {
       let itemCustomCommand = {};
-      for await (const service of self.#form?.services ?? []) {
-        const { addCustomFeaturesForCommandItem } = service as IServiceCommand;
-        if (addCustomFeaturesForCommandItem) {
-          const command = addCustomFeaturesForCommandItem();
-          itemCustomCommand = { ...itemCustomCommand, ...command };
-        }
+
+      for (const service of this.#form.services ?? []) {
+        // Called on the service so that its own state stays reachable
+        const command = (
+          service as IServiceCommand
+        ).addCustomFeaturesForCommandItem?.();
+
+        itemCustomCommand = { ...itemCustomCommand, ...command };
       }
+
       return {
         formItem: item,
-        initialEntity: self.#initialEntity,
+        initialEntity: this.#initialEntity,
         getItem,
         writeItems,
         ...itemCustomCommand
       };
     };
 
-    return {
-      initialForm: self.#initialForm,
-      initialEntity: self.#initialEntity,
-      form: self.#form,
-      itemsMap: self.#itemsMap,
+    const command = {
+      initialEntity: this.#initialEntity,
       getItem,
       writeItems,
-      fireEvent,
+      fireEvent: this.fireEvent,
       createCommandItem
-    };
+    } as CommandService<E, F>;
+
+    // Getters keep services in sync with the current state of the controller
+    return Object.defineProperties(command, {
+      form: { enumerable: true, get: () => this.#form },
+      initialForm: { enumerable: true, get: () => this.#initialForm },
+      itemsMap: { enumerable: true, get: () => this.#itemsMap }
+    });
   };
 
   /**
@@ -211,7 +195,7 @@ export class FormController<
   private registerFormItems = (): void => {
     this.fireEvent(
       'REGISTER_ITEMS',
-      FormItemRegister.getInstance().getItemKeys()
+      Array.from(FormItemRegister.getInstance().getItemKeys())
     );
   };
 
@@ -230,16 +214,14 @@ export class FormController<
    * Initializes the services defined in the form data.
    */
   private initializeServices = async (): Promise<void> => {
-    if (this.#form.services) {
-      for await (const service of this.#form.services) {
-        const command = this.createCommandService();
-        const serviceControl = service as IServiceInitialize<E, F>;
+    for (const service of this.#form.services ?? []) {
+      const command = this.createCommandService();
+      const serviceControl = service as IServiceInitialize<E, F>;
 
-        this.#serviceMap[service.name] = service;
+      this.#serviceMap[service.name] = service;
 
-        if (serviceControl.initialize) {
-          await serviceControl.initialize(command);
-        }
+      if (serviceControl.initialize) {
+        await serviceControl.initialize(command);
       }
     }
   };
@@ -248,10 +230,8 @@ export class FormController<
    * Executes the readers defined in the form data.
    */
   private runReaders = async (): Promise<void> => {
-    if (this.#form.readers) {
-      for await (const reader of this.#form.readers) {
-        reader.read(this.#initialEntity, this.#form, this.#itemsMap);
-      }
+    for (const reader of this.#form.readers ?? []) {
+      await reader.read(this.#initialEntity, this.#form, this.#itemsMap);
     }
   };
 
@@ -259,18 +239,17 @@ export class FormController<
    * Executes the starters defined in the form data.
    */
   private runStarters = async (): Promise<void> => {
-    if (this.#form.starters) {
-      for await (const starter of this.#form.starters) {
-        this.#form = await starter.run(this.#form, this.#initialEntity);
-      }
+    for (const starter of this.#form.starters ?? []) {
+      this.#form = await starter.run(this.#form, this.#initialEntity);
     }
   };
 
   /**
-   * Creates a deep copy of the form data for the initial state.
+   * Keeps a deep copy of the form items for the initial state.
+   * Services, readers and starters are shared, not copied.
    */
   private deepCopyForm = (): void => {
-    this.#initialForm = deepCopy(this.#form);
+    this.#initialForm = { ...this.#form, items: deepCopy(this.#form.items) };
   };
 
   /**
@@ -301,29 +280,24 @@ export class FormController<
    * @returns A promise that resolves when the form is fully initialized.
    */
   public async start(): Promise<Form<E, F>> {
-    try {
-      this.registerFormItems();
-      this.mapFormItems();
+    this.registerFormItems();
+    this.mapFormItems();
 
-      await this.initializeServices();
-      await this.runReaders();
-      await this.runStarters();
+    await this.runReaders();
+    await this.runStarters();
 
-      this.mapFormItems();
-      this.deepCopyForm();
+    // Services are initialized against the final form produced by starters
+    this.mapFormItems();
+    await this.initializeServices();
+    this.deepCopyForm();
 
-      // Send initialization event to DevTools
-      const devTools = getDevToolsBridge();
-      if (devTools.isEnabled()) {
-        devTools.sendInit(this.#form);
-        this.sendEntityToDevTools();
-      }
+    const devTools = getDevToolsBridge();
 
-      // Trigger an update event after the form is fully initialized
-      return this.#form;
-    } catch (error) {
-      console.error('Error starting the form controller:', error);
-      throw error;
+    if (devTools.isEnabled()) {
+      devTools.sendInit(this.#form);
+      this.sendEntityToDevTools();
     }
+
+    return this.#form;
   }
 }

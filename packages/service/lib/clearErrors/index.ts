@@ -36,21 +36,16 @@ export class ClearErrors<E, F extends FormItem<E>>
    * Clears errors on form items.
    * @returns {Promise<boolean>} - Resolves when the operation is complete.
    */
-  public run(): Promise<boolean> {
-    return new Promise<boolean>(async (resolve) => {
-      const { fireEvent, form } = this.#command;
-      const { items } = form;
+  public async run(): Promise<boolean> {
+    const { fireEvent, form } = this.#command;
 
-      // Iterate through form items and clear errors
-      for await (const item of items) {
-        item.error = false;
-        item.errorMessages = null;
-      }
+    for (const item of form.items) {
+      item.error = false;
+      item.errorMessages = null;
+    }
 
-      // Trigger form update event
-      fireEvent('UPDATE_FORM', form);
+    fireEvent('UPDATE_FORM', form);
 
-      resolve(true);
-    });
+    return true;
   }
 }

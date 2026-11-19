@@ -1,10 +1,11 @@
 **/tests/fixtures/**/*
 **/dist
+**/bundled
 **/coverage
 **/.vscode
 .github
 package.json 
-lerna.json
+pnpm-lock.yaml
 .prettierrc.json
 *.html
 *.xml

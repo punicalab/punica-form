@@ -12,7 +12,6 @@
   "rules": {
     "@typescript-eslint/no-empty-function": 0,
     "@typescript-eslint/no-explicit-any": 0,
-    "@typescript-eslint/ban-types": 0,
-    "no-async-promise-executor": 0
+    "@typescript-eslint/ban-types": 0
   }
 }
