@@ -2,11 +2,17 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "target": "es2022",
+    "jsx": "react-jsx",
     "baseUrl": ".",
     // The same sources Jest loads (moduleNameMapper), not the built packages
     "paths": {
       "@punica/form": ["packages/form/lib"],
-      "@punica/form-service": ["packages/service/lib"]
+      "@punica/form-service": ["packages/service/lib"],
+      "@punica/form-react": ["packages/react/lib"],
+      "@punica/form-kit": ["packages/kit/lib"],
+      "@punica/components/react": [
+        "packages/kit/node_modules/@punica/components/dist/types/react.d.ts"
+      ]
     }
   }
 }

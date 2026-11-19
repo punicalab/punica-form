@@ -7,3 +7,6 @@ packages:
 allowBuilds:
   '@parcel/watcher': false
   esbuild: true
+
+minimumReleaseAgeExclude:
+  - '@punica/components@2.1.0'
