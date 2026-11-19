@@ -218,6 +218,46 @@ importers:
         specifier: ^8.73.0
         version: 8.73.0(eslint@10.15.0(supports-color@8.1.1))(supports-color@8.1.1)(typescript@5.9.3)
 
+  examples/kit:
+    dependencies:
+      '@punica/components':
+        specifier: ^2.1.0
+        version: 2.1.0(@types/react@19.3.0)
+      '@punica/form':
+        specifier: workspace:^
+        version: link:../../packages/form
+      '@punica/form-kit':
+        specifier: workspace:^
+        version: link:../../packages/kit
+      '@punica/form-react':
+        specifier: workspace:^
+        version: link:../../packages/react
+      '@punica/form-service':
+        specifier: workspace:^
+        version: link:../../packages/service
+      react:
+        specifier: ^19.0.0
+        version: 19.3.1
+      react-dom:
+        specifier: ^19.0.0
+        version: 19.3.1(react@19.3.1)
+    devDependencies:
+      '@playwright/test':
+        specifier: ^1.65.1
+        version: 1.65.1
+      '@types/react':
+        specifier: ^19.0.0
+        version: 19.3.0
+      '@types/react-dom':
+        specifier: ^19.0.0
+        version: 19.3.0(@types/react@19.3.0)
+      '@vitejs/plugin-react':
+        specifier: ^6.3.0
+        version: 6.3.0(vite@8.3.8(@types/node@20.6.1)(esbuild@0.28.2)(yaml@2.9.1))
+      vite:
+        specifier: ^8.3.8
+        version: 8.3.8(@types/node@20.6.1)(esbuild@0.28.2)(yaml@2.9.1)
+
   examples/react:
     dependencies:
       '@punica/form':
@@ -253,6 +293,39 @@ importers:
         version: 8.3.8(@types/node@20.6.1)(esbuild@0.28.2)(yaml@2.9.1)
 
   packages/form: {}
+
+  packages/kit:
+    devDependencies:
+      '@punica/components':
+        specifier: ^2.1.0
+        version: 2.1.0(@types/react@19.3.0)
+      '@punica/form':
+        specifier: workspace:^
+        version: link:../form
+      '@punica/form-react':
+        specifier: workspace:^
+        version: link:../react
+      '@punica/form-service':
+        specifier: workspace:^
+        version: link:../service
+      '@testing-library/dom':
+        specifier: ^10.4.0
+        version: 10.4.2
+      '@testing-library/react':
+        specifier: ^16.0.0
+        version: 16.3.3(@testing-library/dom@10.4.2)(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      '@types/react':
+        specifier: ^19.0.0
+        version: 19.3.0
+      '@types/react-dom':
+        specifier: ^19.0.0
+        version: 19.3.0(@types/react@19.3.0)
+      react:
+        specifier: ^19.0.0
+        version: 19.3.1
+      react-dom:
+        specifier: ^19.0.0
+        version: 19.3.1(react@19.3.1)
 
   packages/mcp:
     dependencies:
@@ -1233,6 +1306,16 @@ packages:
   '@pnpm/deps.graph-sequencer@1100.0.1':
     resolution: {integrity: sha512-pOr5+q1fLYKwFN3LAJuGZEnfXDcQ73zqgDHMtGy+K+uIoUqyY+6MeDCWFwfu+4EFuq76I5EPFofoNAI+Bmmq4A==}
     engines: {node: '>=22.13'}
+
+  '@punica/components@2.1.0':
+    resolution: {integrity: sha512-k1ZP+mqs9R1Ux5/vdDIO4Yx+6xq1xX8ofSxopz6l3R8zxhdetkcB84OomqwN0yUgyhJoVm7mB/rmw5eVjE2X6A==}
+    engines: {node: '>=18'}
+    hasBin: true
+    peerDependencies:
+      '@types/react': '>=18'
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
 
   '@rolldown/binding-android-arm-eabi@1.2.19':
     resolution: {integrity: sha512-e+Ebe0WT+9tbXmNKPIiC8YrWAHYwug3m6i4p3rZGGulfZri1jtI4HslT+OZnFf/OIHowWF71DTlHwXBP2SiA7A==}
@@ -5268,6 +5351,10 @@ snapshots:
 
   '@pnpm/deps.graph-sequencer@1100.0.1': {}
 
+  '@punica/components@2.1.0(@types/react@19.3.0)':
+    optionalDependencies:
+      '@types/react': 19.3.0
+
   '@rolldown/binding-android-arm-eabi@1.2.19':
     optional: true
 
@@ -5415,7 +5502,7 @@ snapshots:
 
   '@testing-library/dom@10.4.2':
     dependencies:
-      '@babel/code-frame': 7.22.13
+      '@babel/code-frame': 7.29.7
       '@babel/runtime': 7.22.15
       '@types/aria-query': 5.0.4
       aria-query: 5.3.0

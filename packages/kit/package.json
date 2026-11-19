@@ -1,0 +1,67 @@
+{
+  "name": "@punica/form-kit",
+  "version": "0.0.0",
+  "description": "A ready-made form system for Punica Form: decorators, validation and React components built on @punica/components",
+  "keywords": [
+    "form",
+    "react",
+    "decorators",
+    "punica"
+  ],
+  "homepage": "https://form.punicalab.com",
+  "license": "MIT",
+  "author": "PunicaLab",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./react": {
+      "types": "./dist/react/index.d.ts",
+      "import": "./dist/react/index.mjs",
+      "require": "./dist/react/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "sideEffects": false,
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/punicalab/punica-form.git",
+    "directory": "packages/kit"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup lib/index.ts lib/react/index.tsx --format esm,cjs --target es2020 --clean && tsc -p tsconfig.build.json --emitDeclarationOnly",
+    "clean": "rimraf dist",
+    "lint": "eslint lib"
+  },
+  "peerDependencies": {
+    "@punica/components": "^2.1.0",
+    "@punica/form": "^2.1.0",
+    "@punica/form-react": "^0.1.0",
+    "@punica/form-service": "^2.1.0",
+    "react": ">=19"
+  },
+  "devDependencies": {
+    "@punica/components": "^2.1.0",
+    "@punica/form": "workspace:^",
+    "@punica/form-react": "workspace:^",
+    "@punica/form-service": "workspace:^",
+    "@testing-library/dom": "^10.4.0",
+    "@testing-library/react": "^16.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  }
+}

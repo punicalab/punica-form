@@ -22,6 +22,17 @@ Punica Form is a headless form engine. `@punica/form` holds the engine,
   (`"experimentalDecorators": true`) and the standard one. There is no
   `reflect-metadata`: never call `Reflect.getMetadata`.
 
+## The ready-made form system
+
+`@punica/form-kit` provides what the application would otherwise build:
+`@FormKit({ title, columns })` on the class, the field decorators `TextField`,
+`NumberField`, `TextAreaField`, `SelectField`, `CheckboxField` and
+`SwitchField` with the rules `required`, `minLength`, `maxLength`, `pattern`,
+`min` and `max`, and from `@punica/form-kit/react` the component
+`<KitForm entity={() => new UserForm()} onSubmit={…} />`, which renders the
+form with `@punica/components`. Use it when the project has it installed;
+otherwise build the form system as described below.
+
 ## Lifecycle
 
 ```ts
