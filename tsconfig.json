@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "lib": ["es2018", "es2019", "DOM"],
+    "lib": ["es2018", "es2019", "DOM", "DOM.Iterable"],
     "module": "commonjs",
     "target": "es2018",
     "moduleResolution": "node",

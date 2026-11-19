@@ -4,14 +4,18 @@ const project = (displayName, tsconfig) => ({
   displayName,
   roots: ['<rootDir>/packages'],
   transform: {
-    '^.+\\.ts$': ['ts-jest', { tsconfig }]
+    '^.+\\.tsx?$': ['ts-jest', { tsconfig }]
   },
   testEnvironment: 'jsdom',
-  testRegex: '/__test__/.*\\.test\\.ts$',
-  moduleFileExtensions: ['ts', 'js', 'json', 'node'],
+  testRegex: '/__test__/.*\\.test\\.tsx?$',
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'json', 'node'],
   moduleNameMapper: {
     '^@punica/form$': '<rootDir>/packages/form/lib',
-    '^@punica/form-service$': '<rootDir>/packages/service/lib'
+    '^@punica/form-service$': '<rootDir>/packages/service/lib',
+    '^@punica/form-react$': '<rootDir>/packages/react/lib',
+    // The custom elements are not loaded in unit tests
+    '^@punica/components/components/.*$':
+      '<rootDir>/packages/kit/lib/__test__/elements.ts'
   },
   clearMocks: true,
   coveragePathIgnorePatterns: ['/node_modules/', '/__example__/', '/dist/']

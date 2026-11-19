@@ -10,8 +10,8 @@
     "clean": "pnpm -r run clean",
     "test": "jest --coverage && pnpm -r run test",
     "typecheck": "pnpm typecheck:legacy && pnpm typecheck:standard",
-    "typecheck:legacy": "tsc --noEmit -p packages/form && tsc --noEmit -p packages/service && tsc --noEmit -p packages/react && tsc --noEmit -p examples/react",
-    "typecheck:standard": "tsc --noEmit -p packages/form --experimentalDecorators false && tsc --noEmit -p packages/service --experimentalDecorators false && tsc --noEmit -p packages/react --experimentalDecorators false",
+    "typecheck:legacy": "tsc --noEmit -p packages/form && tsc --noEmit -p packages/service && tsc --noEmit -p packages/react && tsc --noEmit -p packages/kit && tsc --noEmit -p examples/react && tsc --noEmit -p examples/kit",
+    "typecheck:standard": "tsc --noEmit -p packages/form --experimentalDecorators false && tsc --noEmit -p packages/service --experimentalDecorators false && tsc --noEmit -p packages/react --experimentalDecorators false && tsc --noEmit -p packages/kit --experimentalDecorators false",
     "test-watch": "jest --watch",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
@@ -22,7 +22,7 @@
     "version-packages": "changeset version",
     "release": "pnpm build && changeset publish",
     "prepare": "husky",
-    "e2e": "pnpm --filter @punica/example-react e2e"
+    "e2e": "pnpm --filter \"@punica/example-*\" e2e"
   },
   "devDependencies": {
     "@changesets/changelog-github": "^1.0.1",

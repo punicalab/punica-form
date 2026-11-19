@@ -146,6 +146,7 @@ This repository is a monorepo containing the following packages:
 
 - **[@punica/form](./packages/form)** - Core form engine
 - **[@punica/form-service](./packages/service)** - Built-in services (GetValues, SetValue, Validate, etc.)
+- **[@punica/form-kit](./packages/kit)** - A ready-made form system: field decorators, validation rules and React components built on `@punica/components`
 - **[@punica/form-react](./packages/react)** - React hooks: `useFormController` and `useForm`
 - **[@punica/form-mcp](./packages/mcp)** - MCP server that lets AI assistants look up the API and check their code
 
