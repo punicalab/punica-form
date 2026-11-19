@@ -46,3 +46,32 @@ jobs:
 
       - name: Test
         run: pnpm test
+
+  # The example application, built for production and driven in a browser
+  e2e:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: pnpm
+
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+
+      - name: Install Browser
+        run: pnpm --filter @punica/example-react exec playwright install --with-deps chromium
+
+      - name: End-to-end Tests
+        run: pnpm e2e

@@ -10,7 +10,7 @@
     "clean": "pnpm -r run clean",
     "test": "jest --coverage && pnpm -r run test",
     "typecheck": "pnpm typecheck:legacy && pnpm typecheck:standard",
-    "typecheck:legacy": "tsc --noEmit -p packages/form && tsc --noEmit -p packages/service && tsc --noEmit -p packages/react",
+    "typecheck:legacy": "tsc --noEmit -p packages/form && tsc --noEmit -p packages/service && tsc --noEmit -p packages/react && tsc --noEmit -p examples/react",
     "typecheck:standard": "tsc --noEmit -p packages/form --experimentalDecorators false && tsc --noEmit -p packages/service --experimentalDecorators false && tsc --noEmit -p packages/react --experimentalDecorators false",
     "test-watch": "jest --watch",
     "lint": "eslint .",
@@ -21,7 +21,8 @@
     "changeset": "changeset",
     "version-packages": "changeset version",
     "release": "pnpm build && changeset publish",
-    "prepare": "husky"
+    "prepare": "husky",
+    "e2e": "pnpm --filter @punica/example-react e2e"
   },
   "devDependencies": {
     "@changesets/changelog-github": "^1.0.1",
