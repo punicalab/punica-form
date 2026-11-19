@@ -7,7 +7,7 @@ series
 ## Project setup
 
 1.  `Fork` and `Clone` the repo
-2.  Run `yarn install` to install dependencies
+2.  Run `pnpm install` to install dependencies
 3.  Create a branch for your pull request (see
     [PULL_REQUEST_TEMPLATE](https://github.com/punicalab/punica-form/blob/HEAD/.github/PULL_REQUEST_TEMPLATE.md))
 
@@ -15,7 +15,7 @@ series
 > requests from branches on your fork. To do this, run:
 >
 > ```
-> git remote add upstream https://github.com/punicalab/punica-request.git
+> git remote add upstream https://github.com/punicalab/punica-form.git
 > git fetch upstream
 > git branch --set-upstream-to=upstream/main main
 > ```
@@ -29,7 +29,14 @@ series
 ## Committing and Pushing changes
 
 Please make sure to run the tests before you commit your changes. You can run
-`yarn test`
+`pnpm test`
+
+## Describing your change
+
+Every pull request that changes a package needs a changeset. Run `pnpm changeset`,
+pick the bump type (`patch`, `minor` or `major`) and describe the change. The
+generated file in `.changeset/` is committed with your pull request and becomes
+the changelog entry of the next release.
 
 ## Help needed
 

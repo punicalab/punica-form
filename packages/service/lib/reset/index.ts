@@ -37,17 +37,13 @@ export class Reset<E, F extends FormItem<E>>
    * Resets the form to its initial state.
    * @returns {Promise<void>} - Resolves when the operation is complete.
    */
-  public run(): Promise<void> {
-    return new Promise<void>((resolve) => {
-      const { fireEvent, initialForm } = this.#command;
+  public async run(): Promise<void> {
+    const { fireEvent, form, initialForm } = this.#command;
 
-      // Create a deep copy of the initial form data
-      const formCopy = deepCopy(initialForm);
+    // Restore the items from a fresh copy so the initial state stays intact
+    form.items = deepCopy(initialForm.items);
 
-      // Trigger an update event to reset the form
-      fireEvent('UPDATE_FORM', formCopy);
-
-      resolve();
-    });
+    fireEvent('RESET', form);
+    fireEvent('UPDATE_FORM', form);
   }
 }

@@ -6,6 +6,8 @@
 # Node artifact files
 node_modules/
 dist/
+# Type declarations copied into the MCP server by its build
+packages/mcp/bundled/
 
 # Compiled Java class files
 *.class

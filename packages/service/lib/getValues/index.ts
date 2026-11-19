@@ -3,7 +3,8 @@ import {
   CommandService,
   FormItem,
   IServiceControl,
-  IServiceInitialize
+  IServiceInitialize,
+  deepCopy
 } from '@punica/form';
 
 /**
@@ -37,27 +38,22 @@ export class GetValues<E, F extends FormItem<E>>
    * Retrieves form values and returns them as an entity.
    * @returns {Promise<E>} - Resolves with the entity containing form values.
    */
-  public run(): Promise<E> {
-    return new Promise<E>(async (resolve) => {
-      const { form, initialEntity } = this.#command;
+  public async run(): Promise<E> {
+    const { form, initialEntity } = this.#command;
 
-      // Create a copy of the initial entity
-      const entity = { ...initialEntity };
+    // Deep copy so nested values of the initial entity are never mutated
+    const entity = deepCopy(initialEntity);
 
-      // Iterate through form items to extract values
-      for await (const item of form.items) {
-        const { property, value, path } = item;
+    for (const item of form.items) {
+      const { property, value, path } = item;
 
-        // Assign the form value to the corresponding entity property
-        if (path) {
-          writeToPropertyPath(entity, path, value);
-        } else {
-          entity[property] = value;
-        }
+      if (path) {
+        writeToPropertyPath(entity, path, value);
+      } else {
+        entity[property] = value;
       }
+    }
 
-      // Resolve the entity with form values
-      resolve(entity);
-    });
+    return entity;
   }
 }

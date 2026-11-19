@@ -1,0 +1,49 @@
+{
+  "name": "@punica/form-mcp",
+  "version": "0.0.0",
+  "description": "MCP server for Punica Form: look up the exact API, read the rules and check code that uses it.",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "form",
+    "punica"
+  ],
+  "homepage": "https://form.punicalab.com",
+  "bugs": {
+    "url": "https://github.com/punicalab/punica-form/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/punicalab/punica-form.git",
+    "directory": "packages/mcp"
+  },
+  "license": "MIT",
+  "author": "PunicaLab",
+  "type": "module",
+  "bin": {
+    "punica-form-mcp": "src/main.mjs"
+  },
+  "files": [
+    "src",
+    "bundled"
+  ],
+  "scripts": {
+    "build": "node build.mjs",
+    "clean": "rimraf bundled",
+    "test": "node --test test/*.test.mjs"
+  },
+  "engines": {
+    "node": ">=20.12"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.2",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@punica/form": "workspace:^",
+    "@punica/form-service": "workspace:^"
+  }
+}
