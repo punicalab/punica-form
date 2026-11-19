@@ -69,7 +69,9 @@ export function createValidator(knowledge) {
 
   // The rules name what 2.0 removed; for a project that still has 1.x
   // installed that API is correct, so only its imports are checked
-  const isLegacy = knowledge.packages.some((pkg) => parseInt(pkg.version) < 2);
+  const isLegacy = knowledge.packages.some(
+    (pkg) => pkg.name === '@punica/form' && parseInt(pkg.version) < 2
+  );
 
   /**
    * @param {string} code
