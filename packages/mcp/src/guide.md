@@ -47,7 +47,15 @@ controller.getForm();                               // the current form
 const unsubscribe = controller.subscribe(() => {}); // after every change
 ```
 
-In React: `useSyncExternalStore(controller.subscribe, controller.getForm)`.
+In React use `@punica/form-react`:
+
+```tsx
+const { controller, error } = useFormController(() => new UserForm());
+// controller is undefined while the form is being started
+const form = useForm(controller); // in a component that has the controller
+```
+
+Without that package: `useSyncExternalStore(controller.subscribe, controller.getForm)`.
 `start()` publishes the started form the same way (since 2.1).
 Never change a form or an item in place; use the services.
 

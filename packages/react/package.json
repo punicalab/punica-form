@@ -1,0 +1,56 @@
+{
+  "name": "@punica/form-react",
+  "version": "0.0.0",
+  "description": "React hooks for Punica Form",
+  "keywords": [
+    "form",
+    "react",
+    "hooks",
+    "punica"
+  ],
+  "homepage": "https://form.punicalab.com",
+  "license": "MIT",
+  "author": "PunicaLab",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "sideEffects": false,
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/punicalab/punica-form.git",
+    "directory": "packages/react"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup lib/index.ts --format esm,cjs --target es2020 --clean && tsc -p tsconfig.build.json --emitDeclarationOnly",
+    "clean": "rimraf dist",
+    "lint": "eslint lib"
+  },
+  "peerDependencies": {
+    "@punica/form": "^2.1.0",
+    "react": ">=18"
+  },
+  "devDependencies": {
+    "@punica/form": "workspace:^",
+    "@punica/form-service": "workspace:^",
+    "@testing-library/dom": "^10.4.2",
+    "@testing-library/react": "^16.0.0",
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.7",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  }
+}
