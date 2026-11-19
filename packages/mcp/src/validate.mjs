@@ -67,6 +67,10 @@ export function createValidator(knowledge) {
     }
   ];
 
+  // The rules name what 2.0 removed; for a project that still has 1.x
+  // installed that API is correct, so only its imports are checked
+  const isLegacy = knowledge.packages.some((pkg) => parseInt(pkg.version) < 2);
+
   /**
    * @param {string} code
    * @returns {Array<{ line: number, rule: string, message: string, fix: string }>}
@@ -98,7 +102,7 @@ export function createValidator(knowledge) {
       }
     }
 
-    for (const { rule, pattern, message, fix } of rules) {
+    for (const { rule, pattern, message, fix } of isLegacy ? [] : rules) {
       for (const match of code.matchAll(pattern)) {
         add(match.index, rule, typeof message === 'string' ? message : message(match), fix(match));
       }

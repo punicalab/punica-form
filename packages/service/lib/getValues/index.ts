@@ -3,9 +3,9 @@ import {
   FormItem,
   IServiceControl,
   IServiceInitialize,
-  deepCopy
+  deepCopy,
+  writeToPropertyPath
 } from '@punica/form';
-import { writeToPropertyPath } from '@punica/util';
 
 /**
  * Returns the entity with the values of the form.
@@ -32,7 +32,7 @@ export class GetValues<E, F extends FormItem<E> = FormItem<E>>
 
     for (const { property, value, path } of this.#command.getForm().items) {
       if (path) {
-        writeToPropertyPath(entity as Record<string, unknown>, path, value);
+        writeToPropertyPath(entity as object, path, value);
       } else {
         entity[property] = value;
       }

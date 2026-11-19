@@ -48,6 +48,7 @@ const unsubscribe = controller.subscribe(() => {}); // after every change
 ```
 
 In React: `useSyncExternalStore(controller.subscribe, controller.getForm)`.
+`start()` publishes the started form the same way (since 2.1).
 Never change a form or an item in place; use the services.
 
 ## Services
@@ -79,7 +80,12 @@ if (await controller.getService(Validate).run()) {
 ```
 
 - A service works only when it is listed in `@Services([...])`;
-  `getService` throws for a class that is not.
+  `getService` throws for a class that is not, and before `start()`.
+- List service classes (`@Services([GetValues, SetValue])`, since 2.1): every
+  form then gets its own services. With 2.0 pass instances
+  (`new GetValues()`); instances are shared by all forms of the class.
+- `controller.batch(() => { … })` notifies subscribers once for several
+  changes (since 2.1).
 - There is no `getServices('name')`, no `validate(form)`, no
   `item.setValue(…)` and no `validateItem(…)`.
 - `Validate.run()` returns `false` when the form is invalid. Other failures
@@ -152,7 +158,7 @@ import { FormItemInputText, Reader, Title } from "./formSystem";
 
 @Title("Create User")
 @Readers([new Reader()])
-@Services([new GetValues(), new SetValue(), new Validate(), new Trigger()])
+@Services([GetValues, SetValue, Validate, Trigger])
 export class UserForm {
   @FormItemInputText({
     label: "Name",

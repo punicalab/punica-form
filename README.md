@@ -51,7 +51,7 @@ import { Title, FormItemInputText, Reader } from "@/commons";
 // Define your form class
 @Title("Create User")
 @Readers([new Reader()])
-@Services([new GetValues(), new SetValue(), new Validate()])
+@Services([GetValues, SetValue, Validate])
 export class UserForm {
   @FormItemInputText({ label: "Name", required: true })
   name: string = "";

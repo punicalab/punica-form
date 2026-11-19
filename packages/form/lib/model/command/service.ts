@@ -23,6 +23,13 @@ export type CommandService<E, F extends FormItem<E>> = {
    */
   setItems: (items: Array<FormItem<E>>) => void;
 
+  /**
+   * Marks the pending asynchronous writes of a property, or of the whole
+   * form when no property is given, as superseded by a newer one.
+   * @returns A function that tells whether this write is still the newest
+   */
+  supersede: (property?: keyof E) => () => boolean;
+
   /** Fires an event of the controller. */
   emit: <K extends keyof FormEventMap<E, F>>(
     event: K,

@@ -40,8 +40,5 @@
     "build": "tsup lib/index.ts --format esm,cjs --target es2020 --clean && tsc -p tsconfig.build.json --emitDeclarationOnly",
     "clean": "rimraf dist",
     "lint": "eslint lib"
-  },
-  "dependencies": {
-    "@punica/util": "^1.0.2"
   }
 }

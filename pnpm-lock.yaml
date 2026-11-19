@@ -227,11 +227,7 @@ importers:
         specifier: ^5.2.2
         version: 5.2.2
 
-  packages/form:
-    dependencies:
-      '@punica/util':
-        specifier: ^1.0.2
-        version: 1.0.2
+  packages/form: {}
 
   packages/mcp:
     dependencies:
@@ -250,10 +246,6 @@ importers:
         version: link:../service
 
   packages/service:
-    dependencies:
-      '@punica/util':
-        specifier: ^1.0.2
-        version: 1.0.2
     devDependencies:
       '@punica/form':
         specifier: workspace:^
@@ -1302,9 +1294,6 @@ packages:
   '@pnpm/deps.graph-sequencer@1100.0.1':
     resolution: {integrity: sha512-pOr5+q1fLYKwFN3LAJuGZEnfXDcQ73zqgDHMtGy+K+uIoUqyY+6MeDCWFwfu+4EFuq76I5EPFofoNAI+Bmmq4A==}
     engines: {node: '>=22.13'}
-
-  '@punica/util@1.0.2':
-    resolution: {integrity: sha512-dRY8wdK0ByF2FMNNHm3a/nfEFqAN9lFpFuzTurKInaOkZf3La/liefgwDF4GCrTHRordBYrjDJXpJY23Tf9o2w==}
 
   '@rollup/rollup-android-arm-eabi@4.68.7':
     resolution: {integrity: sha512-ZL7MgOeMUiBum1bjzzyBotE3DuHVz+UUxcDVlLL7gpdhDM4RpjG4bZOIly7ensIcXw9jhWl7HTIIQ9KsgjykGQ==}
@@ -5111,8 +5100,6 @@ snapshots:
     optional: true
 
   '@pnpm/deps.graph-sequencer@1100.0.1': {}
-
-  '@punica/util@1.0.2': {}
 
   '@rollup/rollup-android-arm-eabi@4.68.7':
     optional: true

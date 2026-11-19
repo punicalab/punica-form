@@ -118,6 +118,118 @@ describe('form controller', () => {
     expect(command.getItem('age')).toBe(controller.getForm().items[0]);
   });
 
+  test('start publishes the started form and leaves the earlier one untouched', async () => {
+    const controller = await FormController.fromForm(
+      createForm({
+        readers: [{ read: (_entity, form) => void (form.title = 'read') }]
+      })
+    );
+    const before = controller.getForm();
+    const subscriber = jest.fn();
+    const listener = jest.fn();
+
+    controller.subscribe(subscriber);
+    controller.on('UPDATE_FORM', listener);
+
+    const started = await controller.start();
+
+    expect(started).not.toBe(before);
+    expect(before.title).toBeUndefined();
+    expect(started.title).toEqual('read');
+    expect(subscriber).toHaveBeenCalledTimes(1);
+    expect(listener).toHaveBeenCalledWith(started);
+  });
+
+  test('batch notifies once for several changes', async () => {
+    const { controller, form, command } = await start();
+    const subscriber = jest.fn();
+
+    controller.subscribe(subscriber);
+
+    controller.batch(() => {
+      command.setItems([{ ...form.items[0], value: 'b' }]);
+      command.setItems([{ ...form.items[1], value: 2 }]);
+    });
+
+    expect(subscriber).toHaveBeenCalledTimes(1);
+    expect(controller.getForm().items.map((item) => item.value)).toEqual([
+      'b',
+      2
+    ]);
+
+    await controller.batch(async () => {
+      command.setItems([{ ...form.items[0], value: 'c' }]);
+      await Promise.resolve();
+      command.setItems([{ ...form.items[1], value: 3 }]);
+    });
+
+    expect(subscriber).toHaveBeenCalledTimes(2);
+
+    // Nothing changed: nobody is notified
+    controller.batch(() => undefined);
+
+    expect(subscriber).toHaveBeenCalledTimes(2);
+  });
+
+  test('supersede tells an older write of a property, or of the form, that it is stale', async () => {
+    const { command } = await start();
+    const first = command.supersede('name');
+    const other = command.supersede('age');
+
+    expect(first()).toBe(true);
+
+    const second = command.supersede('name');
+
+    expect(first()).toBe(false);
+    expect(second()).toBe(true);
+    expect(other()).toBe(true);
+
+    command.supersede();
+
+    expect(second()).toBe(false);
+    expect(other()).toBe(false);
+  });
+
+  test('getService finds a service by its base class', async () => {
+    class Special extends Capture {}
+
+    const controller = await FormController.fromForm(
+      createForm({ services: [Special] })
+    );
+
+    await controller.start();
+
+    expect(controller.getService(Capture)).toBeInstanceOf(Special);
+  });
+
+  test('getService says so when the form is not started yet', async () => {
+    const controller = await FormController.fromForm(createForm());
+
+    expect(() => controller.getService(Capture)).toThrow(
+      'Services are available after start()'
+    );
+  });
+
+  test('a service instance used by a second form is reported', async () => {
+    const warn = jest.spyOn(console, 'warn').mockImplementation();
+    const service = new Capture();
+
+    await (
+      await FormController.fromForm(createForm({ services: [service] }))
+    ).start();
+
+    expect(warn).not.toHaveBeenCalled();
+
+    await (
+      await FormController.fromForm(createForm({ services: [service] }))
+    ).start();
+
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining('Capture instance')
+    );
+    warn.mockRestore();
+  });
+
   test('getService throws for a service the form does not have', async () => {
     const controller = await FormController.fromForm(
       createForm({ services: [] })

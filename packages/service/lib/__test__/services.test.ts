@@ -43,17 +43,25 @@ const createForm = (): Form<Entity, Item> => ({
     { property: 'address', label: 'City', path: 'address/city', value: 'x' }
   ],
   services: [
-    new GetValues(),
-    new SetValue(),
-    new Validate(),
-    new Trigger(),
-    new Reset(),
-    new ResetItem(),
-    new ClearError(),
-    new ClearErrors(),
-    new Store()
+    GetValues,
+    SetValue,
+    Validate,
+    Trigger,
+    Reset,
+    ResetItem,
+    ClearError,
+    ClearErrors,
+    Store
   ]
 });
+
+/** A promise and the function that resolves it. */
+const gate = () => {
+  let open: () => void = () => undefined;
+  const closed = new Promise<void>((resolve) => (open = resolve));
+
+  return { closed, open };
+};
 
 describe('services', () => {
   let controller: FormController<Entity, Item>;
@@ -142,6 +150,101 @@ describe('services', () => {
     expect(slow.getForm().items[1].value).toEqual(42);
   });
 
+  test('a value set after its item was validated, while others still are, is kept', async () => {
+    const form = createForm();
+    const { closed, open } = gate();
+
+    // name is validated first and at once, age is still being validated
+    form.items[1].validation = async () => {
+      await closed;
+
+      return { error: false };
+    };
+
+    const slow = await FormController.fromForm(form);
+
+    await slow.start();
+
+    const validation = slow.getService(Validate).run();
+
+    await Promise.resolve();
+    await slow.getService(SetValue).run('address', 'typed');
+    open();
+    await validation;
+
+    expect(slow.getForm().items[2].value).toEqual('typed');
+  });
+
+  test('a slow control function does not revert a newer value', async () => {
+    const form = createForm();
+    const { closed, open } = gate();
+
+    form.items[0].control = async ({ formItem }) => {
+      if (formItem.value === 'x') await closed;
+
+      return [{ ...formItem, label: `Name (${formItem.value})` }];
+    };
+
+    const slow = await FormController.fromForm(form);
+
+    await slow.start();
+
+    const first = slow.getService(SetValue).run('name', 'x');
+
+    await slow.getService(SetValue).run('name', 'xy');
+    open();
+    await first;
+
+    expect(slow.getForm().items[0]).toMatchObject({
+      value: 'xy',
+      label: 'Name (xy)'
+    });
+  });
+
+  test('a reset drops the result of a control function that is still running', async () => {
+    const form = createForm();
+    const { closed, open } = gate();
+
+    form.items[0].control = async ({ formItem }) => {
+      await closed;
+
+      return [formItem];
+    };
+
+    const slow = await FormController.fromForm(form);
+
+    await slow.start();
+
+    const pending = slow.getService(SetValue).run('name', 'x');
+
+    await slow.getService(Reset).run();
+    open();
+    await pending;
+
+    expect(slow.getForm().items[0].value).toEqual('a');
+  });
+
+  test('forms created with service classes do not share their services', async () => {
+    const first = await FormController.fromForm(createForm());
+    const second = await FormController.fromForm(createForm());
+
+    await first.start();
+    await second.start();
+    await first.getService(SetValue).run('age', 42);
+
+    expect(first.getForm().items[1].value).toEqual(42);
+    expect(second.getForm().items[1].value).toEqual(1);
+  });
+
+  test('GetValues only runs for developer tools when they are enabled', async () => {
+    const run = jest.spyOn(GetValues.prototype, 'run');
+
+    await controller.getService(SetValue).run('name', 'abc');
+
+    expect(run).not.toHaveBeenCalled();
+    run.mockRestore();
+  });
+
   test('Trigger validates one item; ClearError and ClearErrors clear the result', async () => {
     await controller.getService(SetValue).run('name', '');
     await controller.getService(Trigger).run('name');
@@ -195,7 +298,7 @@ describe('services', () => {
         { property: 'name', label: 'Name', value: 'b' },
         { property: 'address', label: 'City', path: 'address/city', value: 'y' }
       ],
-      services: [new GetValues()]
+      services: [GetValues]
     });
 
     await withEntity.start();
