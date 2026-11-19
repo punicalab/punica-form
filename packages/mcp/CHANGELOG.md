@@ -1,5 +1,11 @@
 # @punica/form-mcp
 
+## 0.3.0
+
+### Minor Changes
+
+- [#78](https://github.com/punicalab/punica-form/pull/78) [`8e515cc`](https://github.com/punicalab/punica-form/commit/8e515ccad3614795c4ac97df054446e80f2b5786) Thanks [@punicalab](https://github.com/punicalab)! - The server now knows `@punica/form-react` and `@punica/form-kit` (including `@punica/form-kit/react`): `search_api`, `get_api` and the import check of `validate_code` cover them, and the guide describes the ready-made form system.
+
 ## 0.2.1
 
 ### Patch Changes
