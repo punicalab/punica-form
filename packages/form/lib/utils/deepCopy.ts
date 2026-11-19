@@ -5,13 +5,16 @@
  * @param value - The value to copy
  * @returns The copied value
  */
-export const deepCopy = <T>(value: T, seen = new WeakMap<object, any>()): T => {
+export const deepCopy = <T>(
+  value: T,
+  seen = new WeakMap<object, unknown>()
+): T => {
   if (typeof value !== 'object' || value === null) {
     return value;
   }
 
   if (seen.has(value)) {
-    return seen.get(value);
+    return seen.get(value) as T;
   }
 
   if (value instanceof Date) {
@@ -40,15 +43,15 @@ export const deepCopy = <T>(value: T, seen = new WeakMap<object, any>()): T => {
     return copy as T;
   }
 
-  const copy: any = Array.isArray(value)
+  const copy: Record<string, unknown> = Array.isArray(value)
     ? []
     : Object.create(Object.getPrototypeOf(value));
 
   seen.set(value, copy);
 
   for (const key of Object.keys(value)) {
-    copy[key] = deepCopy((value as any)[key], seen);
+    copy[key] = deepCopy((value as Record<string, unknown>)[key], seen);
   }
 
-  return copy;
+  return copy as T;
 };

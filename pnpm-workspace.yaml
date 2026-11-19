@@ -1,2 +1,6 @@
 packages:
   - 'packages/*'
+
+# Packages whose install scripts may run (esbuild fetches its binary)
+allowBuilds:
+  esbuild: true

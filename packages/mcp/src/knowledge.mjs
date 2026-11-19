@@ -69,8 +69,8 @@ function exportsOf(files, path, seen = new Set()) {
     for (const [name, value] of target) found.set(name, value);
   }
 
-  // export { a, default as b } from './x';
-  for (const match of source.matchAll(/^export \{([^}]+)\} from ['"](.+?)['"];/gm)) {
+  // export { a, default as b } from './x';  export type { a } from './x';
+  for (const match of source.matchAll(/^export (?:type )?\{([^}]+)\} from ['"](.+?)['"];/gm)) {
     const targetPath = resolve(files, path, match[2]);
     const target = exportsOf(files, targetPath, new Set(seen));
     const targetSource = files.get(targetPath) || '';

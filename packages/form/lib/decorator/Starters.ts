@@ -1,4 +1,4 @@
-import { FormItem, IStarter, defineFormProperty } from '..';
+import { FormClassDecorator, FormItem, IStarter, defineFormProperty } from '..';
 
 /**
  * Constant for identifying form starters decorator.
@@ -10,6 +10,6 @@ export const DECORATOR_STARTERS = 'form-starters';
  */
 export const Starters = <E, F extends FormItem<E>>(
   data: Array<IStarter<E, F>>
-): ClassDecorator => {
+): FormClassDecorator => {
   return defineFormProperty<Array<IStarter<E, F>>>(DECORATOR_STARTERS)(data);
 };

@@ -1,25 +1,18 @@
-import { IPropertyDecorator } from '@punica/common';
+import { setFormItemProperty } from '../metadata';
+import { FormPropertyDecorator, propertyDecorator } from './decorator';
 
 /**
- * Defines a form item with the specified type and renderer.
- * @param {string} type - Type of the form item.
- * @returns {IPropertyDecorator<T>} - Decorator function.
+ * Defines a property decorator that stores data for a property of a form
+ * class. Read it back in a reader with `getFormItemProperties(entity, key)`.
+ * @param key - Identifies the data
  */
-const defineFormItemProperty = <T>(type: string): IPropertyDecorator<T> => {
-  return (data: T) => {
-    return (target: any, propertyKey: string) => {
-      const allMetadata = Reflect.getMetadata(type, target) || {};
-
-      allMetadata[propertyKey] = allMetadata[propertyKey] || {};
-
-      // Copy properties from data to metadata
-      for (const key of Reflect.ownKeys(data as object)) {
-        allMetadata[propertyKey][key] = data[key as keyof typeof data];
-      }
-
-      Reflect.defineMetadata(type, allMetadata, target);
-    };
-  };
+const defineFormItemProperty = <T>(
+  key: string
+): ((data: T) => FormPropertyDecorator) => {
+  return (data) =>
+    propertyDecorator((target, property) =>
+      setFormItemProperty(target, key, property, data)
+    );
 };
 
 export default defineFormItemProperty;

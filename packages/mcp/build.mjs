@@ -12,7 +12,7 @@ for (const [name, path] of Object.entries(packages)) {
   await mkdir(`bundled/${name}`, { recursive: true });
   await cp(`${path}/dist`, `bundled/${name}`, {
     recursive: true,
-    filter: (source) => !/\.js$/.test(source)
+    filter: (source) => !/\.m?js$/.test(source)
   });
   await writeFile(`bundled/${name}/package.json`, JSON.stringify({ version }) + '\n');
   console.log(`bundled @punica/${name} ${version}`);

@@ -1,31 +1,49 @@
-import { CommandService, Form, FormItem } from '..';
+import { CommandService, FormItem } from '..';
 
-// Interface for defining a service.
+/**
+ * A service of a form. Register it with `@Services` and read it back with
+ * `controller.getService(Class)`.
+ */
 export interface IService {
-  // Returns the name of the service.
+  /** A label for the service, shown by developer tools. */
   get name(): string;
 }
 
-// Interface for services that require initialization.
+/**
+ * A service that reads or changes the form.
+ */
 export interface IServiceInitialize<E, F extends FormItem<E>> extends IService {
-  // Initializes the service with a command.
-  initialize: (command: CommandService<E, F>) => Promise<void>;
+  /** Called once when the form is started. */
+  initialize: (command: CommandService<E, F>) => void | Promise<void>;
 }
 
-// Interface for services that can be controlled or triggered.
-export interface IServiceControl<T = any> extends IService {
-  // Executes the service's main functionality.
+/**
+ * A service that is executed.
+ */
+export interface IServiceControl<T = unknown> extends IService {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   run: (...args: any[]) => Promise<T>;
 }
 
-// Interface for services that can add custom features to command items.
+/**
+ * A service that adds features to what the functions of form items receive.
+ */
 export interface IServiceCommand extends IService {
-  // Returns custom features for a command item.
-  addCustomFeaturesForCommandItem: () => { [key: string]: any };
+  addCustomFeaturesForCommandItem: () => Record<string, unknown>;
 }
 
-// Interface for services that require startup actions.
-export interface IServiceStartup<E, F extends FormItem<E>> extends IService {
-  // Starts the service with initial entity and form data.
-  start: (entity: E, form: Form<E, F>) => { [key: string]: any };
-}
+/**
+ * The services `controller.getService` knows the types of. Packages add
+ * theirs by declaration merging, which binds them to the entity of the form:
+ *
+ * declare module '@punica/form' {
+ *   interface ServiceRegistry<E, F> { myService: MyService<E, F> }
+ * }
+ */
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+export interface ServiceRegistry<
+  E,
+  // @ts-expect-error The parameters are used by the declarations merged into the interface
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  F extends FormItem<E>
+> {}

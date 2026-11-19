@@ -1,16 +1,20 @@
 import { FormItem } from '..';
 
-// Defines a structure for a CommandItem, which represents a form item and associated data.
-export interface CommandItem<E, F extends FormItem<E>> {
-  // The form item that this command item relates to.
+/**
+ * What the functions of a form item (initialize, control, validation) receive.
+ * `C` holds the features services add, such as the functions of `Store`.
+ */
+export type CommandItem<
+  E,
+  F extends FormItem<E>,
+  C = Record<string, unknown>
+> = {
+  /** A copy of the item the function belongs to. */
   formItem: F;
 
-  // The initial entity data before any modifications (optional).
-  initialEntity?: E;
+  /** The entity the form was created from. */
+  initialEntity: E;
 
-  // A function to retrieve a form item by its property name (optional).
-  getItem?: (property: keyof E) => F;
-
-  // Additional properties can be added here if needed
-  [key: string]: any; // Allows for any additional custom properties to be attached.
-}
+  /** A copy of another item of the form. */
+  getItem: (property: keyof E) => F | undefined;
+} & C;

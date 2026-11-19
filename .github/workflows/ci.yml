@@ -40,5 +40,9 @@ jobs:
       - name: Build
         run: pnpm build
 
+      # Type tests, with the legacy and the standard decorators
+      - name: Typecheck
+        run: pnpm typecheck
+
       - name: Test
         run: pnpm test
