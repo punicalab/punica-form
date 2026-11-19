@@ -1,6 +1,6 @@
 {
   "name": "@punica/form-mcp",
-  "version": "0.2.1-next.0",
+  "version": "0.2.1",
   "description": "MCP server for Punica Form: look up the exact API, read the rules and check code that uses it.",
   "keywords": [
     "mcp",
