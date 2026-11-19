@@ -1,6 +1,6 @@
 {
   "name": "@punica/form-kit",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "A ready-made form system for Punica Form: decorators, validation and React components built on @punica/components",
   "keywords": [
     "form",
