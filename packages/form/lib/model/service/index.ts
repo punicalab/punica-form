@@ -40,7 +40,7 @@ export interface IServiceCommand extends IService {
  *   interface ServiceRegistry<E, F> { myService: MyService<E, F> }
  * }
  */
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface ServiceRegistry<
   E,
   // The parameters are used by the declarations merged into the interface.

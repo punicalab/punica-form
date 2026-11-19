@@ -38,6 +38,26 @@ pick the bump type (`patch`, `minor` or `major`) and describe the change. The
 generated file in `.changeset/` is committed with your pull request and becomes
 the changelog entry of the next release.
 
+## Releases
+
+Releases are made by the release workflow, never from a local machine.
+
+1. Pull requests carry changesets. When they reach `main`, the workflow opens
+   a **Version Packages** pull request.
+2. Merging that pull request publishes the packages to npm.
+
+Release candidates come first. While `.changeset/pre.json` exists the
+repository is in pre-release mode: versions look like `2.1.0-next.0` and are
+published under the `next` tag (`npm install @punica/form@next`). After the
+candidate has been tried in a real application, leave the mode with
+`pnpm changeset pre exit` and merge the next Version Packages pull request to
+publish the stable version.
+
+## Commit hooks
+
+`pnpm install` sets up the hooks: commit messages are checked for the
+`type: description` format and `pnpm lint` runs before a commit.
+
 ## Help needed
 
 Please checkout the [open issues][issues]

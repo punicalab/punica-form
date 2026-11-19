@@ -5,8 +5,7 @@
 
 /** A class decorator. Both implementations pass the class first. */
 export type FormClassDecorator = (
-  // eslint-disable-next-line @typescript-eslint/ban-types
-  target: Function,
+  target: object,
   context?: ClassDecoratorContext
 ) => void;
 

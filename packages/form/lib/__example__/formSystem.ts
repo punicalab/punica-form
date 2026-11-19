@@ -29,9 +29,10 @@ export const FormItemText = defineFormItem<Omit<AppItem<any>, 'property'>>(
 );
 
 /** Reads the title of the form and the layout of its items. */
-export class Reader<E extends object, F extends AppItem<E>>
-  implements IReader<E, F>
-{
+export class Reader<E extends object, F extends AppItem<E>> implements IReader<
+  E,
+  F
+> {
   public read(entity: E, form: Form<E, F>): void {
     const layouts = getFormItemProperties<Layout>(entity, 'app:layout');
 
