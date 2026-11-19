@@ -1,5 +1,11 @@
 # @punica/form-mcp
 
+## 0.2.1-next.0
+
+### Patch Changes
+
+- [#62](https://github.com/punicalab/punica-form/pull/62) [`e0c0542`](https://github.com/punicalab/punica-form/commit/e0c0542615c40f952caa77bc76ffb074937a1122) Thanks [@punicalab](https://github.com/punicalab)! - Do not steer projects that still have Punica Form 1.x installed into the 2.x API: the removed-API rules are skipped and the guide says which version it describes.
+
 ## 0.2.0
 
 ### Minor Changes
