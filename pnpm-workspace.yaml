@@ -1,5 +1,6 @@
 packages:
   - 'packages/*'
+  - 'examples/*'
 
 # Whether the install script of a dependency may run. esbuild fetches its
 # binary; the native file watcher is not used by this repository.
