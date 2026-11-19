@@ -1,34 +1,32 @@
-import { IPropertyDecorator } from '@punica/common';
-import { FormItemRegister } from '..';
+import { setFormItemProperty } from '../metadata';
+import {
+  defaultFormItemRegister,
+  FormItemRegister,
+  Renderer
+} from '../register';
+import { FormPropertyDecorator, propertyDecorator } from './decorator';
+
+/** The key the form items of a class are stored under. */
+export const FORM_ITEMS = 'form-items';
 
 /**
- * Defines a form item with the specified type and renderer.
- * @param {string} type - Type of the form item.
- * @param {Function} renderer - Renderer function for the form item.
- * @returns {IPropertyDecorator<T>} - Decorator function.
+ * Defines a form item type: registers its renderer and returns the property
+ * decorator that turns a property of a form class into an item of that type.
+ * @param type - The form item type
+ * @param renderer - What renders items of the type; Punica Form only stores it
+ * @param options.register - The register to use instead of the default one
  */
-const defineFormItem = <T>(
+const defineFormItem = <T extends object>(
   type: string,
-  renderer: (props: T) => any
-): IPropertyDecorator<T> => {
-  // Register the form item type and renderer
-  FormItemRegister.getInstance().register(type, renderer);
+  renderer: Renderer,
+  options: { register?: FormItemRegister } = {}
+): ((data: T) => FormPropertyDecorator) => {
+  (options.register ?? defaultFormItemRegister).register(type, renderer);
 
-  return (data: T) => {
-    return (target: any, propertyKey: string) => {
-      const allMetadata = Reflect.getMetadata(type, target) || {};
-
-      allMetadata[propertyKey] = allMetadata[propertyKey] || {};
-      allMetadata[propertyKey]['type'] = type;
-
-      // Copy properties from data to metadata
-      for (const key of Reflect.ownKeys(data as object)) {
-        allMetadata[propertyKey][key] = data[key as keyof typeof data];
-      }
-
-      Reflect.defineMetadata(type, allMetadata, target);
-    };
-  };
+  return (data) =>
+    propertyDecorator((target, property) =>
+      setFormItemProperty(target, FORM_ITEMS, property, { ...data, type })
+    );
 };
 
 export default defineFormItem;

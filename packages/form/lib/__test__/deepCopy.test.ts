@@ -32,7 +32,7 @@ describe('deepCopy', () => {
   });
 
   test('supports circular references', () => {
-    const source: Record<string, any> = { name: 'a' };
+    const source: Record<string, unknown> = { name: 'a' };
     source.self = source;
 
     const copy = deepCopy(source);

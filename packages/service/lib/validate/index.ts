@@ -4,70 +4,38 @@ import {
   IServiceControl,
   IServiceInitialize
 } from '@punica/form';
+import { validateItem } from '../validateItem';
 
 /**
- * Service for validating form items.
+ * Validates every item of the form.
  */
-export class Validate<E, F extends FormItem<E>>
-  implements IServiceInitialize<E, F>, IServiceControl<boolean>
+export class Validate<E, F extends FormItem<E> = FormItem<E>>
+  implements IServiceInitialize<E, F>, IServiceControl
 {
-  #command: CommandService<E, F> = null;
-  #name: string = 'validate';
-  #hasError: boolean = false;
+  #command!: CommandService<E, F>;
 
-  /**
-   * Validates a form item.
-   * @param {F} item - The form item to be validated.
-   */
-  private async validateFormItem(item: F) {
-    const { validation, hidden } = item;
-
-    if (validation && !hidden) {
-      const commandItem = await this.#command.createCommandItem(item);
-      const { error, errorMessages } = await validation(commandItem);
-
-      if (error) {
-        this.#hasError = true;
-      }
-
-      item.error = error;
-      item.errorMessages = errorMessages;
-    }
-  }
-
-  /**
-   * Returns the name of the service.
-   * @returns {string} - Service name
-   */
   public get name(): string {
-    return this.#name;
+    return 'validate';
   }
 
-  /**
-   * Initializes the service with a command.
-   * @param command - The command service to be used.
-   */
-  public initialize(command: CommandService<E, F>): Promise<void> {
+  public initialize(command: CommandService<E, F>): void {
     this.#command = command;
-
-    return Promise.resolve();
   }
 
   /**
-   * Runs validation checks on all form items.
-   * @returns {Promise<boolean>} - Resolves to true if all validations pass, otherwise resolves to false.
+   * @returns Whether every validated item is valid
    */
   public async run(): Promise<boolean> {
-    const { fireEvent, form } = this.#command;
+    const validated: F[] = [];
 
-    this.#hasError = false;
+    for (const item of this.#command.getForm().items) {
+      const result = await validateItem(this.#command, item);
 
-    for (const item of form.items) {
-      await this.validateFormItem(item);
+      if (result) validated.push(result);
     }
 
-    fireEvent('UPDATE_FORM', form);
+    this.#command.setItems(validated);
 
-    return !this.#hasError;
+    return validated.every((item) => !item.error);
   }
 }

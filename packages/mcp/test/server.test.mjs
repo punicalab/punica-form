@@ -46,12 +46,12 @@ test('search_api lists exactly the public exports', async () => {
   const all = await call('search_api');
 
   // Reached through index.d.ts
-  for (const name of ['FormController', 'defineFormItem', 'IReader', 'Validate', 'Store']) {
+  for (const name of ['FormController', 'defineFormItem', 'IReader', 'FormPropertyDecorator', 'Validate', 'Store']) {
     assert.match(all, new RegExp(`^${name} \\(`, 'm'));
   }
 
   // Declared in the packages but not exported from them
-  for (const name of ['BaseReader', 'Reader', 'FormItemsReader', 'DevToolsBridge']) {
+  for (const name of ['setFormProperty', 'sendToDevTools', 'propertyDecorator', 'validateItem']) {
     assert.doesNotMatch(all, new RegExp(`^${name} \\(`, 'm'));
   }
 
@@ -65,7 +65,7 @@ test('get_api returns the declaration with its documentation', async () => {
 
   assert.match(api, /## Validate \(class, @punica\/form-service\)/);
   assert.match(api, /run\(\): Promise<boolean>;/);
-  assert.match(api, /declare const defineFormItem: <T>\(type: string/);
+  assert.match(api, /declare const defineFormItem: <T extends object>\(type: string/);
   assert.match(api, /Title is not exported by @punica\/form or @punica\/form-service/);
 });
 
@@ -74,32 +74,38 @@ test('validate_code finds the common mistakes', async () => {
   const report = await call('validate_code', {
     code: [
       'import { FormController, Title, Validate } from "@punica/form";',
-      'const validate = controller.getServices("Validate");',
+      'const validate = controller.getServices("validate");',
       'await validate.validate(form);',
       'await service.validateItem(form, "name");',
-      'await setValueService.setValue(form, "name", 1);',
-      'FormItemRegister.getInstance().getRenderer(type);'
+      'await item.setValue("name", 1);',
+      'FormItemRegister.getInstance().getRenderer(type);',
+      'form.title = Reflect.getMetadata("title", entity);',
+      'controller.off("UPDATE_FORM", handler);'
     ].join('\n')
   });
 
-  assert.match(report, /^7 problems:/);
+  assert.match(report, /^10 problems:/);
   assert.match(report, /line 1 unknown-export: @punica\/form does not export Title/);
   assert.match(report, /does not export Validate\. \[fix: import it from "@punica\/form-service"\]/);
-  assert.match(report, /line 2 service-name: .*\[fix: getServices\('validate'\)\]/);
-  assert.match(report, /line 3 service-call: There is no validate\(form, …\) method/);
+  assert.match(report, /line 2 service-access: .*\[fix: controller\.getService\(Validate\)/);
+  assert.match(report, /line 3 service-call: .*\[fix: await controller\.getService\(Validate\)\.run/);
   assert.match(report, /line 4 service-call: There is no validateItem method/);
-  assert.match(report, /line 5 service-call: .*item\.setValue/);
-  assert.match(report, /line 6 register: /);
+  assert.match(report, /line 5 service-call: Form items have no setValue method/);
+  assert.match(report, /line 6 register: FormItemRegister is not a singleton/);
+  assert.match(report, /line 6 register: A register has no getRenderer method/);
+  assert.match(report, /line 7 metadata: /);
+  assert.match(report, /line 8 events: /);
 });
 
 test('validate_code accepts correct code', async () => {
   const { call } = await connect();
   const report = await call('validate_code', {
     code: [
-      'import { FormController, Services, type FormItem } from "@punica/form";',
-      'import { Validate } from "@punica/form-service";',
-      'const isValid = await controller.getServices("validate").run();',
-      'await item.setValue(item.property, value);'
+      'import { FormController, Services, getFormProperty, type FormItem } from "@punica/form";',
+      'import { SetValue, Validate } from "@punica/form-service";',
+      'const isValid = await controller.getService(Validate).run();',
+      'await controller.getService(SetValue).run("name", value);',
+      'const off = controller.on("UPDATE_FORM", handler);'
     ].join('\n')
   });
 
@@ -109,7 +115,7 @@ test('validate_code accepts correct code', async () => {
 test('the guide and the resources', async () => {
   const { client, call } = await connect();
 
-  assert.match(await call('get_guide'), /Services are fetched by name/);
+  assert.match(await call('get_guide'), /Services are read by class/);
 
   const { resources } = await client.listResources();
   assert.ok(resources.some((resource) => resource.uri === 'punica-form://api/FormController'));

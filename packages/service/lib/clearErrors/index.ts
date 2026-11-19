@@ -6,46 +6,30 @@ import {
 } from '@punica/form';
 
 /**
- * Service for clearing errors on form items.
+ * Clears the validation errors of every item.
  */
-export class ClearErrors<E, F extends FormItem<E>>
-  implements IServiceInitialize<E, F>, IServiceControl<boolean>
+export class ClearErrors<E, F extends FormItem<E> = FormItem<E>>
+  implements IServiceInitialize<E, F>, IServiceControl
 {
-  #command: CommandService<E, F> = null;
-  #name: string = 'clearErrors';
+  #command!: CommandService<E, F>;
 
-  /**
-   * Returns the name of the service.
-   * @returns {string} - Service name
-   */
   public get name(): string {
-    return this.#name;
+    return 'clearErrors';
   }
 
-  /**
-   * Initializes the service with a command.
-   * @param command - The command service to be used.
-   */
-  public initialize(command: CommandService<E, F>): Promise<void> {
+  public initialize(command: CommandService<E, F>): void {
     this.#command = command;
-
-    return Promise.resolve();
   }
 
-  /**
-   * Clears errors on form items.
-   * @returns {Promise<boolean>} - Resolves when the operation is complete.
-   */
-  public async run(): Promise<boolean> {
-    const { fireEvent, form } = this.#command;
+  public async run(): Promise<void> {
+    const { getForm, setItems } = this.#command;
 
-    for (const item of form.items) {
-      item.error = false;
-      item.errorMessages = null;
-    }
-
-    fireEvent('UPDATE_FORM', form);
-
-    return true;
+    setItems(
+      getForm().items.map((item) => ({
+        ...item,
+        error: false,
+        errorMessages: []
+      }))
+    );
   }
 }

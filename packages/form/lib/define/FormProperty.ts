@@ -1,14 +1,15 @@
+import { setFormProperty } from '../metadata';
+import { FormClassDecorator } from './decorator';
+
 /**
- * Defines a form property with the specified type.
- * @param {string} type - Type of the form property.
- * @returns {ClassDecorator<T>} - Decorator function.
+ * Defines a class decorator that stores data on a form class. Read it back
+ * in a reader with `getFormProperty(entity, key)`.
+ * @param key - Identifies the data
  */
-const defineFormProperty = <T>(type: string): ((data: T) => ClassDecorator) => {
-  return (data: T) => {
-    return (target: Function): void => {
-      Reflect.defineMetadata(type, data, target.prototype);
-    };
-  };
+const defineFormProperty = <T>(
+  key: string
+): ((data: T) => FormClassDecorator) => {
+  return (data) => (target) => setFormProperty(target, key, data);
 };
 
 export default defineFormProperty;

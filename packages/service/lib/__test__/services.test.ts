@@ -1,8 +1,31 @@
-import { Form, FormController, FormItem } from '@punica/form';
-import { Reset, ResetItem, SetValue, Trigger } from '..';
+import {
+  CommandItem,
+  Form,
+  FormController,
+  FormItem,
+  disableDevTools,
+  enableDevTools
+} from '@punica/form';
+import {
+  ClearError,
+  ClearErrors,
+  GetValues,
+  Reset,
+  ResetItem,
+  SetValue,
+  Store,
+  StoreCommand,
+  Trigger,
+  Validate
+} from '..';
 
-type Entity = { name: string; age: number };
+type Entity = { name: string; age: number; address: { city: string } };
 type Item = FormItem<Entity>;
+
+const required: Item['validation'] = async ({ formItem }) => ({
+  error: !formItem.value,
+  errorMessages: formItem.value ? [] : ['is required']
+});
 
 const createForm = (): Form<Entity, Item> => ({
   items: [
@@ -10,84 +33,224 @@ const createForm = (): Form<Entity, Item> => ({
       property: 'name',
       label: 'Name',
       value: 'a',
+      validation: required,
       // Mirrors the length of the name into the age item
       control: async ({ formItem, getItem }) => [
-        { ...getItem('age'), value: formItem.value.length }
-      ],
-      validation: async ({ formItem }) => ({
-        error: !formItem.value,
-        errorMessages: formItem.value ? [] : ['is required']
-      })
+        { ...(getItem('age') as Item), value: formItem.value.length }
+      ]
     },
-    { property: 'age', label: 'Age', value: 1 }
+    { property: 'age', label: 'Age', value: 1 },
+    { property: 'address', label: 'City', path: 'address/city', value: 'x' }
   ],
-  services: [new SetValue(), new Reset(), new ResetItem(), new Trigger()]
+  services: [
+    new GetValues(),
+    new SetValue(),
+    new Validate(),
+    new Trigger(),
+    new Reset(),
+    new ResetItem(),
+    new ClearError(),
+    new ClearErrors(),
+    new Store()
+  ]
 });
 
 describe('services', () => {
   let controller: FormController<Entity, Item>;
-  let form: Form<Entity, Item>;
+
+  const values = () => controller.getForm().items.map((item) => item.value);
 
   beforeEach(async () => {
     controller = await FormController.fromForm(createForm());
-    form = await controller.start();
+    await controller.start();
   });
 
-  test('SetValue updates the item and the items returned by control', async () => {
+  test('SetValue sets the value and writes the items its control returns', async () => {
     const listener = jest.fn();
 
     controller.on('UPDATE_ITEM', listener);
-    await form.items[0].setValue('name', 'abc');
+    await controller.getService(SetValue).run('name', 'abc');
 
-    expect(form.items[0].value).toEqual('abc');
-    expect(form.items[1].value).toEqual(3);
+    expect(values()).toEqual(['abc', 3, 'x']);
     expect(listener).toHaveBeenCalledTimes(1);
+    expect(
+      listener.mock.calls[0][0].map((item: Item) => item.property)
+    ).toEqual(['name', 'age']);
   });
 
-  test('SetValue rejects for an unknown property', async () => {
-    await expect(
-      form.items[0].setValue('unknown' as keyof Entity, 1)
-    ).rejects.toThrow('Item not found: unknown');
+  test('services reject for an unknown property', async () => {
+    const unknown = 'unknown' as keyof Entity;
+
+    for (const run of [
+      () => controller.getService(SetValue).run(unknown, 1),
+      () => controller.getService(Trigger).run(unknown),
+      () => controller.getService(ResetItem).run(unknown),
+      () => controller.getService(ClearError).run(unknown)
+    ]) {
+      await expect(run()).rejects.toThrow('Item not found: unknown');
+    }
   });
 
-  test('Reset restores the initial items and keeps them usable', async () => {
-    const listener = jest.fn();
-    const reset = controller.getServices<Reset<Entity, Item>>('reset');
+  test('Validate validates every item and reports the result', async () => {
+    expect(await controller.getService(Validate).run()).toBe(true);
 
-    controller.on('RESET', listener);
-    await form.items[0].setValue('name', 'abc');
-    await reset.run();
+    await controller.getService(SetValue).run('name', '');
 
-    expect(form.items.map((item) => item.value)).toEqual(['a', 1]);
-    expect(listener).toHaveBeenCalledWith(form);
-
-    // The initial state must survive a change made after a reset
-    await form.items[0].setValue('name', 'abcd');
-    await reset.run();
-
-    expect(form.items.map((item) => item.value)).toEqual(['a', 1]);
+    expect(await controller.getService(Validate).run()).toBe(false);
+    expect(controller.getForm().items[0]).toMatchObject({
+      error: true,
+      errorMessages: ['is required']
+    });
   });
 
-  test('ResetItem restores a single item', async () => {
-    const resetItem =
-      controller.getServices<ResetItem<Entity, Item>>('resetItem');
+  test('Validate rejects when a validation function throws', async () => {
+    const form = createForm();
 
-    await form.items[0].setValue('name', 'abc');
-    await resetItem.run('name');
+    form.items[0].validation = async () => {
+      throw new Error('validation failed');
+    };
 
-    expect(form.items.map((item) => item.value)).toEqual(['a', 3]);
-    await expect(resetItem.run('unknown' as keyof Entity)).rejects.toThrow(
-      'Item not found: unknown'
+    const failing = await FormController.fromForm(form);
+
+    await failing.start();
+
+    await expect(failing.getService(Validate).run()).rejects.toThrow(
+      'validation failed'
     );
   });
 
-  test('Trigger validates a single item', async () => {
-    const trigger = controller.getServices<Trigger<Entity, Item>>('trigger');
+  test('a value set while the form is validated is kept', async () => {
+    const form = createForm();
+    let release: () => void = () => undefined;
 
-    await form.items[0].setValue('name', '');
-    await trigger.run('name');
+    form.items[0].validation = async (command) => {
+      await new Promise<void>((resolve) => (release = resolve));
 
-    expect(form.items[0].error).toEqual(true);
-    expect(form.items[0].errorMessages).toEqual(['is required']);
+      return (required as NonNullable<Item['validation']>)(command);
+    };
+
+    const slow = await FormController.fromForm(form);
+
+    await slow.start();
+
+    const validation = slow.getService(Validate).run();
+
+    await slow.getService(SetValue).run('age', 42);
+    release();
+    await validation;
+
+    expect(slow.getForm().items[1].value).toEqual(42);
+  });
+
+  test('Trigger validates one item; ClearError and ClearErrors clear the result', async () => {
+    await controller.getService(SetValue).run('name', '');
+    await controller.getService(Trigger).run('name');
+
+    expect(controller.getForm().items[0].error).toBe(true);
+
+    await controller.getService(ClearError).run('name');
+
+    expect(controller.getForm().items[0]).toMatchObject({
+      error: false,
+      errorMessages: []
+    });
+
+    await controller.getService(Trigger).run('name');
+    await controller.getService(ClearErrors).run();
+
+    expect(controller.getForm().items.some((item) => item.error)).toBe(false);
+  });
+
+  test('Reset restores the initial items, repeatedly, and fires RESET', async () => {
+    const listener = jest.fn();
+
+    controller.on('RESET', listener);
+
+    for (const value of ['abc', 'abcd']) {
+      await controller.getService(SetValue).run('name', value);
+      await controller.getService(Reset).run();
+
+      expect(values()).toEqual(['a', 1, 'x']);
+    }
+
+    expect(listener).toHaveBeenLastCalledWith(controller.getForm());
+  });
+
+  test('ResetItem restores a single item', async () => {
+    await controller.getService(SetValue).run('name', 'abc');
+    await controller.getService(ResetItem).run('name');
+
+    expect(values()).toEqual(['a', 3, 'x']);
+  });
+
+  test('GetValues fills a copy of the entity, nested values by their path', async () => {
+    class User {
+      public name = 'a';
+      public address = { city: 'x' };
+    }
+
+    const entity = new User();
+    const withEntity = await FormController.fromForm<User>({
+      items: [
+        { property: 'name', label: 'Name', value: 'b' },
+        { property: 'address', label: 'City', path: 'address/city', value: 'y' }
+      ],
+      services: [new GetValues()]
+    });
+
+    await withEntity.start();
+
+    // fromForm has no entity: the values are written to an empty object
+    expect(await withEntity.getService(GetValues).run()).toEqual({
+      name: 'b',
+      address: { city: 'y' }
+    });
+    expect(entity.address.city).toEqual('x');
+  });
+
+  test('developer tools receive the entity as GetValues returns it', async () => {
+    const postMessage = jest.spyOn(window, 'postMessage').mockImplementation();
+
+    enableDevTools();
+    await controller.getService(SetValue).run('name', 'abc');
+    await Promise.resolve();
+    disableDevTools();
+
+    const entities = postMessage.mock.calls
+      .map(([message]) => message)
+      .filter((message) => message.type === 'ENTITY');
+
+    expect(JSON.parse(entities[entities.length - 1].data)).toMatchObject({
+      name: 'abc',
+      age: 3
+    });
+    expect(
+      postMessage.mock.calls.some(([message]) => message.formItemKey === 'name')
+    ).toBe(true);
+
+    postMessage.mockRestore();
+  });
+
+  test('Store shares values between the functions of the items', async () => {
+    const form = createForm();
+
+    form.items[0].validation = async (command) => {
+      const { writeStoreItem, readStoreItem } = command as CommandItem<
+        Entity,
+        Item,
+        StoreCommand
+      >;
+
+      writeStoreItem('calls', ((readStoreItem('calls') as number) ?? 0) + 1);
+
+      return { error: readStoreItem('calls') !== 2 };
+    };
+
+    const stored = await FormController.fromForm(form);
+
+    await stored.start();
+
+    expect(await stored.getService(Validate).run()).toBe(false);
+    expect(await stored.getService(Validate).run()).toBe(true);
   });
 });

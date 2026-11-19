@@ -21,7 +21,7 @@ export function createPunicaFormServer({ packages, guide }) {
     .join(', ');
 
   const server = new McpServer(
-    { name: 'punica-form', version: '0.1.0' },
+    { name: 'punica-form', version: '0.2.0' },
     {
       instructions: `${versions}. Punica Form is a headless form engine and is rarely in training data: never write an import, a service name or a method from memory. Read get_guide first, look names up with search_api and get_api, and check the code with validate_code before handing it over.`
     }
@@ -32,7 +32,7 @@ export function createPunicaFormServer({ packages, guide }) {
     {
       title: 'How to use Punica Form',
       description:
-        'The rules of Punica Form: what the packages provide and what the application builds itself, the lifecycle, the services and how to call them, events, and a complete working example.',
+        'The rules of Punica Form: what the packages provide and what the application builds itself, the lifecycle, the immutable state, the services and how to call them, events, and a complete working example.',
       inputSchema: {},
       annotations: { readOnlyHint: true }
     },
@@ -80,7 +80,7 @@ export function createPunicaFormServer({ packages, guide }) {
     {
       title: 'Check code that uses Punica Form',
       description:
-        'Checks TypeScript or JavaScript that uses Punica Form: imports the packages do not export, wrong service names and service calls that do not exist. Returns each problem with its line and a fix.',
+        'Checks TypeScript or JavaScript that uses Punica Form: imports the packages do not export and calls that do not exist, such as the 1.x API. Returns each problem with its line and a fix.',
       inputSchema: { code: z.string().describe('The code to check') },
       annotations: { readOnlyHint: true }
     },
@@ -88,7 +88,7 @@ export function createPunicaFormServer({ packages, guide }) {
       const findings = validate(code);
 
       if (!findings.length) {
-        return text('No problems: every import exists and the services are called correctly.');
+        return text('No problems: every import exists and no removed API is used.');
       }
 
       return text(

@@ -14,7 +14,8 @@
 - 🎨 **Custom Form Architecture** - Build your own FormItems, decorators, readers, and starters
 - ⚡ **Dynamic Form Creation** - Generate and modify forms at runtime based on metadata
 - 🛠️ **Modular Services** - Extensible service layer for validation, data handling, and state management
-- 📦 **TypeScript Support** - Full TypeScript support with comprehensive type definitions
+- 📦 **Type Safe** - Services, events and items are typed against your form class
+- 🧊 **Immutable State** - Every change is a new form object; subscribe to it from any UI library
 - 🚀 **Performance Focused** - Lightweight and efficient, activating only necessary components
 
 ## 📦 Installation
@@ -33,45 +34,46 @@ npm install @punica/form-service
 
 ## ⚙️ Requirements
 
-Punica Form relies on TypeScript decorators. Enable them in your `tsconfig.json`:
-
-```json
-{
-  "compilerOptions": {
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true
-  }
-}
-```
+Punica Form uses TypeScript decorators. Both implementations work: the legacy
+one (`"experimentalDecorators": true`) and the standard one of TypeScript 5.
+No reflection polyfill is needed.
 
 ## 🚀 Quick Start
 
-`Title`, `Layout`, `FormItemInputText` and `Reader` below are part of **your** form
+`Title`, `FormItemInputText` and `Reader` below are part of **your** form
 system (see [Building Your Form System](https://form.punicalab.com/docs/building-your-form/building-form-overview)).
 
 ```typescript
 import { FormController, Readers, Services } from "@punica/form";
 import { GetValues, SetValue, Validate } from "@punica/form-service";
-import { Title, Layout, FormItemInputText, Reader } from "@/commons";
+import { Title, FormItemInputText, Reader } from "@/commons";
 
 // Define your form class
 @Title("Create User")
 @Readers([new Reader()])
 @Services([new GetValues(), new SetValue(), new Validate()])
 export class UserForm {
-  @Layout({ xs: 12 })
   @FormItemInputText({ label: "Name", required: true })
   name: string = "";
 }
 
 // Use FormController
 const controller = await FormController.fromEntity(new UserForm());
-const form = await controller.start();
 
-// Services are accessed by name and executed with run()
-const isValid = await controller.getServices<Validate<UserForm, any>>("validate").run();
-const values = await controller.getServices<GetValues<UserForm, any>>("getValues").run();
+controller.subscribe(() => render(controller.getForm()));
+await controller.start();
+
+// Services are read by class and are bound to UserForm
+await controller.getService(SetValue).run("name", "John");
+
+if (await controller.getService(Validate).run()) {
+  const values = await controller.getService(GetValues).run(); // UserForm
+}
 ```
+
+The form is immutable: every change produces a new form object, so it plugs
+into `useSyncExternalStore(controller.subscribe, controller.getForm)` and
+other stores directly.
 
 ## 📚 Documentation
 
@@ -137,44 +139,6 @@ Punica Form operates on a foundation of modularity and flexibility:
 - 🚀 Starters (dynamically modify forms)
 - 📐 Layout System (Grid, CSS, your choice)
 - 🎭 Form Renderer (your UI implementation)
-
-## 📖 Example
-
-```typescript
-import { FormController, Readers, Services } from "@punica/form";
-import { GetValues, SetValue, Validate } from "@punica/form-service";
-import { Title, FormItemInputText, Layout, Reader } from "@/commons";
-
-@Title("Create User")
-@Readers([new Reader()])
-@Services([new GetValues(), new SetValue(), new Validate()])
-export class UserForm {
-  @Layout({ xs: 12 })
-  @FormItemInputText({
-    property: "name",
-    label: "Name",
-    required: true,
-    minLength: 4,
-    maxLength: 30
-  })
-  name: string = "";
-}
-
-// Initialize form
-const controller = await FormController.fromEntity(new UserForm());
-const form = await controller.start();
-
-// Update a value
-await form.items[0].setValue("name", "John");
-
-// Use services
-const isValid = await controller.getServices("validate").run();
-
-if (isValid) {
-  const values = await controller.getServices("getValues").run();
-  // Submit values...
-}
-```
 
 ## 🔧 Packages
 

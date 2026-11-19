@@ -7,43 +7,29 @@ import {
 } from '@punica/form';
 
 /**
- * Service for resetting the form to its initial state.
+ * Resets the form to the state it was started with.
  */
-export class Reset<E, F extends FormItem<E>>
+export class Reset<E, F extends FormItem<E> = FormItem<E>>
   implements IServiceInitialize<E, F>, IServiceControl
 {
-  #command: CommandService<E, F> = null;
-  #name: string = 'reset';
+  #command!: CommandService<E, F>;
 
-  /**
-   * Returns the name of the service.
-   * @returns {string} - Service name
-   */
   public get name(): string {
-    return this.#name;
+    return 'reset';
   }
 
-  /**
-   * Initializes the service with a command.
-   * @param command - The command service to be used.
-   */
-  public initialize(command: CommandService<E, F>): Promise<void> {
+  public initialize(command: CommandService<E, F>): void {
     this.#command = command;
-
-    return Promise.resolve();
   }
 
   /**
-   * Resets the form to its initial state.
-   * @returns {Promise<void>} - Resolves when the operation is complete.
+   * Fires RESET after the form was updated.
    */
   public async run(): Promise<void> {
-    const { fireEvent, form, initialForm } = this.#command;
+    const { getForm, getInitialItems, setItems, emit } = this.#command;
 
-    // Restore the items from a fresh copy so the initial state stays intact
-    form.items = deepCopy(initialForm.items);
-
-    fireEvent('RESET', form);
-    fireEvent('UPDATE_FORM', form);
+    // A fresh copy, so the initial state stays intact
+    setItems(deepCopy(getInitialItems()));
+    emit('RESET', getForm());
   }
 }

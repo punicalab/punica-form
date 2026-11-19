@@ -4,56 +4,36 @@ import {
   IServiceControl,
   IServiceInitialize
 } from '@punica/form';
+import { validateItem } from '../validateItem';
 
 /**
- * Trigger service is triggered when the value of a form item is changed.
+ * Validates one item of the form.
  */
-export class Trigger<E, F extends FormItem<E>>
+export class Trigger<E, F extends FormItem<E> = FormItem<E>>
   implements IServiceInitialize<E, F>, IServiceControl
 {
-  #command: CommandService<E, F> = null;
-  #name: string = 'trigger';
+  #command!: CommandService<E, F>;
 
-  /**
-   * Returns the name of the service.
-   * @returns {string} - Service name
-   */
   public get name(): string {
-    return this.#name;
+    return 'trigger';
   }
 
-  /**
-   * Initializes the service with a command.
-   * @param command - The command service to be used.
-   */
-  public initialize(command: CommandService<E, F>): Promise<void> {
+  public initialize(command: CommandService<E, F>): void {
     this.#command = command;
-
-    return Promise.resolve();
   }
 
   /**
-   * Called when the value of a form item is changed.
-   * @param property - Property of the changed item.
+   * @throws When the form has no item for the property
    */
   public async run(property: keyof E): Promise<void> {
-    const { fireEvent, getItem, form, createCommandItem } = this.#command;
-    const item = getItem(property);
+    const item = this.#command.getItem(property);
 
     if (!item) {
       throw new Error(`Item not found: ${String(property)}`);
     }
 
-    const { validation, hidden } = item;
+    const result = await validateItem(this.#command, item);
 
-    if (validation && !hidden) {
-      const commandItem = await createCommandItem(item);
-      const { error, errorMessages } = await validation(commandItem);
-
-      item.error = error;
-      item.errorMessages = errorMessages;
-    }
-
-    fireEvent('UPDATE_FORM', form);
+    if (result) this.#command.setItems([result]);
   }
 }

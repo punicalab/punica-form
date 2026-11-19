@@ -1,58 +1,47 @@
-import { CommandService, FormItem, IServiceInitialize } from '@punica/form';
+import {
+  CommandService,
+  FormItem,
+  IServiceControl,
+  IServiceInitialize
+} from '@punica/form';
 
 /**
- * Service for setting values of form items.
+ * Sets the value of an item and runs its control function.
  */
-export class SetValue<E, F extends FormItem<E>>
-  implements IServiceInitialize<E, F>
+export class SetValue<E, F extends FormItem<E> = FormItem<E>>
+  implements IServiceInitialize<E, F>, IServiceControl
 {
-  #command: CommandService<E, F> = null;
-  #name: string = 'setValue';
+  #command!: CommandService<E, F>;
 
-  /**
-   * Returns the name of the service.
-   * @returns {string} - Service name
-   */
   public get name(): string {
-    return this.#name;
+    return 'setValue';
+  }
+
+  public initialize(command: CommandService<E, F>): void {
+    this.#command = command;
   }
 
   /**
-   * Sets the value of a form item.
-   * @param {keyof E} property  - Property of the form item
-   * @param value - Value to be set
+   * Fires UPDATE_ITEM with the changed item and the items its control returned.
+   * @throws When the form has no item for the property
    */
-  private setValue = async (property: keyof E, value: any): Promise<void> => {
-    const { form, getItem, writeItems, fireEvent, createCommandItem } =
-      this.#command;
-    const formItem = getItem(property);
+  public async run(property: keyof E, value: unknown): Promise<void> {
+    const { getItem, setItems, emit, createCommandItem } = this.#command;
+    const item = getItem(property);
 
-    if (!formItem) {
+    if (!item) {
       throw new Error(`Item not found: ${String(property)}`);
     }
 
-    formItem.value = value;
+    const changed: F = { ...item, value };
 
-    // Items changed by the control function of the form item, if any
-    const controlledItems = formItem.control
-      ? await formItem.control(await createCommandItem(formItem))
+    setItems([changed]);
+
+    const controlled = changed.control
+      ? ((await changed.control(createCommandItem(changed))) as F[])
       : [];
 
-    await writeItems(controlledItems);
-
-    fireEvent('UPDATE_ITEM', [formItem, ...controlledItems]);
-    fireEvent('UPDATE_FORM', form);
-  };
-
-  /**
-   * Initializes the service with a command.
-   * @param command - The command service to be used.
-   */
-  public async initialize(command: CommandService<E, F>): Promise<void> {
-    this.#command = command;
-
-    for (const item of command.form.items) {
-      item.setValue = this.setValue;
-    }
+    setItems(controlled);
+    emit('UPDATE_ITEM', [getItem(property) ?? changed, ...controlled]);
   }
 }

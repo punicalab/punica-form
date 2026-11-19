@@ -1,12 +1,16 @@
-import {
-  disableDevTools,
-  enableDevTools,
-  FormItem,
-  getDevToolsBridge
-} from '..';
+import { FormController, disableDevTools, enableDevTools } from '..';
 
 describe('devtools bridge', () => {
   let postMessage: jest.SpyInstance;
+
+  const startForm = async (value: unknown = 'a') => {
+    const controller = await FormController.fromForm<{ name: unknown }>(
+      { items: [{ property: 'name', label: 'Name', value }] },
+      { name: 'Demo' }
+    );
+
+    await controller.start();
+  };
 
   beforeEach(() => {
     postMessage = jest.spyOn(window, 'postMessage').mockImplementation();
@@ -17,39 +21,35 @@ describe('devtools bridge', () => {
     postMessage.mockRestore();
   });
 
-  test('sends nothing while disabled', () => {
-    getDevToolsBridge().sendEntity({ name: 'a' });
+  test('sends nothing while disabled', async () => {
+    await startForm();
 
     expect(postMessage).not.toHaveBeenCalled();
   });
 
-  test('sends marked messages only to the page origin', () => {
-    const item: FormItem<any> = {
-      property: 'name',
-      label: 'Name'
-    };
-
+  test('sends marked, versioned messages only to the page origin', async () => {
     enableDevTools();
-    getDevToolsBridge().sendUpdateItem(item);
+    await startForm();
 
-    expect(postMessage).toHaveBeenCalledWith(
-      {
-        source: 'punica-form-devtools',
-        type: 'UPDATE_ITEM',
-        data: JSON.stringify(item),
-        formItemKey: 'name'
-      },
-      window.location.origin
+    const [message, origin] = postMessage.mock.calls.find(
+      ([sent]) => sent.type === '@@INIT'
     );
+
+    expect(origin).toEqual(window.location.origin);
+    expect(message).toMatchObject({
+      source: 'punica-form-devtools',
+      version: 2
+    });
+    expect(message.formId).toMatch(/^Demo#\d+$/);
+    expect(JSON.parse(message.data).items[0].value).toEqual('a');
   });
 
-  test('does not throw on non-serializable data', () => {
-    const circular: Record<string, any> = {};
+  test('does not throw on non-serializable data', async () => {
+    const circular: Record<string, unknown> = {};
     circular.self = circular;
 
     enableDevTools();
 
-    expect(() => getDevToolsBridge().sendEntity(circular)).not.toThrow();
-    expect(postMessage).not.toHaveBeenCalled();
+    await expect(startForm(circular)).resolves.toBeUndefined();
   });
 });

@@ -1,12 +1,9 @@
 import { Form, FormItem } from '..';
 
-// Defines a reader interface for reading data into a form.
+/**
+ * Reads metadata of the entity into the form while the form is started.
+ * A reader changes the form it is given.
+ */
 export interface IReader<E, F extends FormItem<E>> {
-  // Reads the entity data and returns a form object.
-  // If form is provided, it will be used as a starting point for the form.
-  read(
-    entity: E,
-    form: Form<E, F>,
-    itemsMap?: Record<keyof E, number>
-  ): Promise<void>;
+  read(entity: E, form: Form<E, F>): void | Promise<void>;
 }
