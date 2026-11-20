@@ -1,5 +1,11 @@
 # @punica/form-mcp
 
+## 0.3.1
+
+### Patch Changes
+
+- [#81](https://github.com/punicalab/punica-form/pull/81) [`bac4bbe`](https://github.com/punicalab/punica-form/commit/bac4bbe3405b974d4a314c6bd024e281c7199486) Thanks [@punicalab](https://github.com/punicalab)! - The server knows the types the kit exports (`KitItem`, `FieldProps`, `Option`, …): `validate_code` reported them as not exported.
+
 ## 0.3.0
 
 ### Minor Changes
