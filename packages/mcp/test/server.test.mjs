@@ -125,6 +125,13 @@ test('the React hooks and the form kit are part of the API', async () => {
   assert.match(await call('get_api', { names: ['FormKit'] }), /FormKitOptions/);
   assert.match(await call('get_guide'), /@punica\/form-kit/);
 
+  // Types the kit re-exports with `export type *`
+  assert.match(all, /^KitItem \(type, @punica\/form-kit\)/m);
+  assert.match(
+    await call('validate_code', { code: 'import { FormKit, type KitItem } from "@punica/form-kit";' }),
+    /^No problems/
+  );
+
   // The components live in the second entry point of the kit
   assert.match(
     await call('validate_code', { code: 'import { KitForm, TextField } from "@punica/form-kit";' }),

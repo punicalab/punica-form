@@ -23,21 +23,36 @@ export const useFormController = <
 ): FormControllerState<E, F> => {
   const [state, setState] = useState<FormControllerState<E, F>>({});
   const create = useRef({ createEntity, options });
+  const started = useRef<Promise<FormController<E, F>>>(undefined);
 
   useEffect(() => {
-    // An unmounted component, or the first run in StrictMode, is ignored
+    // An unmounted component is ignored
     let active = true;
-    const { createEntity, options } = create.current;
 
-    FormController.fromEntity<E, F>(createEntity(), options)
-      .then(async (controller) => {
-        await controller.start();
+    // The effect runs again in StrictMode and when a hidden <Activity> is
+    // shown again: the form that was started first is kept
+    started.current ??= Promise.resolve().then(async () => {
+      const { createEntity, options } = create.current;
+      const controller = await FormController.fromEntity<E, F>(
+        createEntity(),
+        options
+      );
 
+      await controller.start();
+
+      return controller;
+    });
+
+    started.current.then(
+      (controller) => {
         if (active) setState({ controller });
-      })
-      .catch((error: unknown) => {
-        if (active) setState({ error });
-      });
+      },
+      (error: unknown) => {
+        if (active) {
+          setState({ error: error ?? new Error('The form did not start.') });
+        }
+      }
+    );
 
     return () => {
       active = false;

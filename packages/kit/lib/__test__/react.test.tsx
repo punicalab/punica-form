@@ -125,6 +125,51 @@ describe('KitForm', () => {
     expect(field(0).getAttribute('error')).toEqual('');
   });
 
+  test('a form that is being submitted is not submitted again', async () => {
+    let finish: () => void = () => undefined;
+    const onSubmit = jest.fn(
+      () => new Promise<void>((resolve) => (finish = resolve))
+    );
+    const { field, form } = await renderForm({ onSubmit });
+
+    await fire(
+      field(0).querySelector('punica-input') as Element,
+      'punica-input',
+      { value: 'Jane' }
+    );
+    await submit(form);
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
+    await submit(form);
+    await act(async () => finish());
+
+    expect(onSubmit).toHaveBeenCalledTimes(1);
+
+    await submit(form);
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(2));
+    await act(async () => finish());
+  });
+
+  test('what onSubmit throws is given to onError', async () => {
+    const onError = jest.fn();
+    const { field, form } = await renderForm({
+      onError,
+      onSubmit: async () => {
+        throw new Error('server is down');
+      }
+    });
+
+    await fire(
+      field(0).querySelector('punica-input') as Element,
+      'punica-input',
+      { value: 'Jane' }
+    );
+    await submit(form);
+
+    await waitFor(() =>
+      expect(onError).toHaveBeenCalledWith(new Error('server is down'))
+    );
+  });
+
   test('your own component replaces the one of a type', async () => {
     const { field } = await renderForm({
       components: {
