@@ -47,6 +47,10 @@ import { KitForm } from '@punica/form-kit/react';
 />;
 ```
 
+`onError` receives what a validation, a control function or `onSubmit` threw;
+without it the error is logged to the console. Disabled and hidden fields are
+not validated.
+
 It needs React 19 or later: React 18 does not pass properties and custom
 events to custom elements.
 

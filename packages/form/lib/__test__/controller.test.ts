@@ -171,6 +171,26 @@ describe('form controller', () => {
     expect(subscriber).toHaveBeenCalledTimes(2);
   });
 
+  test('a subscriber that throws in a batch does not stop later notifications', async () => {
+    const { controller, form, command } = await start();
+    const subscriber = jest.fn();
+    const remove = controller.subscribe(() => {
+      throw new Error('subscriber failed');
+    });
+
+    expect(() =>
+      controller.batch(() => {
+        command.setItems([{ ...form.items[0], value: 'b' }]);
+      })
+    ).toThrow('subscriber failed');
+
+    remove();
+    controller.subscribe(subscriber);
+    command.setItems([{ ...form.items[0], value: 'c' }]);
+
+    expect(subscriber).toHaveBeenCalledTimes(1);
+  });
+
   test('supersede tells an older write of a property, or of the form, that it is stale', async () => {
     const { command } = await start();
     const first = command.supersede('name');

@@ -62,8 +62,8 @@ function exportsOf(files, path, seen = new Set()) {
     found.set(match[2], entry(source, match.index, match[1], match[2]));
   }
 
-  // export * from './x';
-  for (const match of source.matchAll(/^export \* from ['"](.+?)['"];/gm)) {
+  // export * from './x';  export type * from './x';
+  for (const match of source.matchAll(/^export (?:type )?\* from ['"](.+?)['"];/gm)) {
     const target = exportsOf(files, resolve(files, path, match[1]), seen);
 
     for (const [name, value] of target) found.set(name, value);

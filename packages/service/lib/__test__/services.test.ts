@@ -175,6 +175,75 @@ describe('services', () => {
     expect(slow.getForm().items[2].value).toEqual('typed');
   });
 
+  test('a slow validation does not write its result onto a newer value', async () => {
+    const form = createForm();
+    const { closed, open } = gate();
+
+    // Only the validation of the empty value is slow
+    form.items[0].validation = async (command) => {
+      if (!command.formItem.value) await closed;
+
+      return (required as NonNullable<Item['validation']>)(command);
+    };
+
+    const slow = await FormController.fromForm(form);
+
+    await slow.start();
+    await slow.getService(SetValue).run('name', '');
+
+    const stale = slow.getService(Trigger).run('name');
+
+    await slow.getService(SetValue).run('name', 'good');
+    await slow.getService(Trigger).run('name');
+    open();
+    await stale;
+
+    expect(slow.getForm().items[0]).toMatchObject({
+      value: 'good',
+      error: false
+    });
+  });
+
+  test('a reset drops the result of a validation that is still running', async () => {
+    const form = createForm();
+    const { closed, open } = gate();
+
+    form.items[0].validation = async () => {
+      await closed;
+
+      return { error: true, errorMessages: ['late'] };
+    };
+
+    const slow = await FormController.fromForm(form);
+
+    await slow.start();
+
+    const whole = slow.getService(Trigger).run('name');
+
+    await slow.getService(Reset).run();
+
+    const single = slow.getService(Trigger).run('name');
+
+    await slow.getService(ResetItem).run('name');
+    open();
+    await Promise.all([whole, single]);
+
+    expect(slow.getForm().items[0].error).toBeFalsy();
+  });
+
+  test('a disabled item is not validated', async () => {
+    const form = createForm();
+
+    form.items[0] = { ...form.items[0], value: '', disabled: true };
+
+    const disabled = await FormController.fromForm(form);
+
+    await disabled.start();
+
+    expect(await disabled.getService(Validate).run()).toBe(true);
+    expect(disabled.getForm().items[0].error).toBeFalsy();
+  });
+
   test('a slow control function does not revert a newer value', async () => {
     const form = createForm();
     const { closed, open } = gate();

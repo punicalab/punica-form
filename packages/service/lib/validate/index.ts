@@ -1,11 +1,10 @@
 import {
   CommandService,
-  ErrorDetail,
   FormItem,
   IServiceControl,
   IServiceInitialize
 } from '@punica/form';
-import { validateItem, writeResults } from '../validateItem';
+import { validateItems } from '../validateItem';
 
 /**
  * Validates every item of the form.
@@ -27,15 +26,10 @@ export class Validate<E, F extends FormItem<E> = FormItem<E>>
    * @returns Whether every validated item is valid
    */
   public async run(): Promise<boolean> {
-    const results = new Map<keyof E, ErrorDetail>();
-
-    for (const item of this.#command.getForm().items) {
-      const result = await validateItem(this.#command, item);
-
-      if (result) results.set(item.property, result);
-    }
-
-    writeResults(this.#command, results);
+    const results = await validateItems(
+      this.#command,
+      this.#command.getForm().items
+    );
 
     return [...results.values()].every((result) => !result.error);
   }

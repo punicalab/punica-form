@@ -56,8 +56,28 @@ describe('useFormController', () => {
     rerender();
 
     expect(result.current.controller).toBe(controller);
-    // StrictMode mounts twice; the first form is discarded
-    expect(create.mock.calls.length).toBeLessThanOrEqual(2);
+    // StrictMode runs the effect twice; the form is created once
+    expect(create).toHaveBeenCalledTimes(1);
+  });
+
+  test('reports an entity that cannot be created, and a failure without a reason', async () => {
+    const thrown = renderHook(() =>
+      useFormController<UserForm>(() => {
+        throw new Error('cannot create');
+      })
+    );
+
+    await waitFor(() =>
+      expect(thrown.result.current.error).toEqual(new Error('cannot create'))
+    );
+
+    const silent = renderHook(() =>
+      useFormController<UserForm>(() => {
+        throw undefined;
+      })
+    );
+
+    await waitFor(() => expect(silent.result.current.error).toBeDefined());
   });
 
   test('reports what failed while the form was started', async () => {
