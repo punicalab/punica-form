@@ -72,7 +72,7 @@ Without that package: `useSyncExternalStore(controller.subscribe, controller.get
 
 Since 2.2 every item has `dirty` (its value differs from the initial one) and
 `touched` (set by the `Touch` service), and a started form has
-`form.state`: `{ dirty, touched, valid, submitting, submitCount, errors }`.
+`form.state`: `{ dirty, touched, valid, validating, submitting, submitCount, errors }`.
 `dirty`, `touched` and `valid` follow from the items; `errors` are the errors
 of the form as a whole, such as a rejected submit. In React
 `useFormState(controller)` returns it and only renders again when it changes.
@@ -127,7 +127,7 @@ if (await controller.getService(Validate).run()) {
 
 A form item is a plain object: `property`, `label`, `type`, `value`,
 `required`, `disabled`, `hidden`, `error`, `errorMessages`, `dirty`,
-`touched`. Add the
+`touched`, `validating`. Add the
 properties of your form system with a type of your own:
 `type AppItem<E> = FormItem<E> & { layout?: Layout }`, then use
 `FormController<UserForm, AppItem<UserForm>>`.
@@ -135,7 +135,15 @@ properties of your form system with a type of your own:
 The functions of an item receive a command `{ formItem, initialEntity,
 getItem }` holding copies, and return items instead of changing them:
 
-- `validation(command): Promise<{ error: boolean, errorMessages?: string[] }>`
+- `validation(command, context?): Promise<{ error: boolean, errorMessages?: string[] }>`.
+  Since 2.2 the services pass `context.signal`, an `AbortSignal` that is
+  aborted when the item is validated again, changed or reset: give it to
+  `fetch(url, { signal: context?.signal })`. A validation that rejects after
+  it was aborted is ignored. The item is `validating` meanwhile.
+- `validateDebounce: 300` on an item makes `Trigger` wait that many
+  milliseconds and validate once after the last trigger (since 2.2). Use it
+  for validations that ask a server while the user types; do not write your
+  own debounce around `Trigger`. `Validate` and `Submit` do not wait.
 - `control(command): Promise<FormItem[]>`, run after its value is set; the
   returned items are written to the form
 - `initialize(command): Promise<FormItem[]>`, run once while the form is created

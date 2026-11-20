@@ -48,9 +48,7 @@ export class Submit<E, F extends FormItem<E> = FormItem<E>>
     let values: E;
 
     try {
-      const results = await validateItems(this.#command, getForm().items);
-
-      if ([...results.values()].some((result) => result.error)) {
+      if (!(await validateItems(this.#command, getForm().items))) {
         return false;
       }
 

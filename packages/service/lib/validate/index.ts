@@ -26,11 +26,6 @@ export class Validate<E, F extends FormItem<E> = FormItem<E>>
    * @returns Whether every validated item is valid
    */
   public async run(): Promise<boolean> {
-    const results = await validateItems(
-      this.#command,
-      this.#command.getForm().items
-    );
-
-    return [...results.values()].every((result) => !result.error);
+    return validateItems(this.#command, this.#command.getForm().items);
   }
 }

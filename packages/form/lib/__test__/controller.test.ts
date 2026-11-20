@@ -315,6 +315,7 @@ describe('form controller', () => {
       dirty: false,
       touched: false,
       valid: true,
+      validating: false,
       submitting: false,
       submitCount: 0,
       errors: []

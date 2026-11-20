@@ -13,6 +13,9 @@ export type FormState = {
   /** Whether no item is in error. */
   valid: boolean;
 
+  /** Whether an item is being validated. */
+  validating: boolean;
+
   /** Whether the form is being submitted. */
   submitting: boolean;
 
