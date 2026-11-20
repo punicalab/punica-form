@@ -54,6 +54,8 @@ type BoundService<S, E, F extends FormItem<E>> = [RegistryKey<S>] extends [
   ? S
   : ServiceRegistry<E, F>[RegistryKey<S>];
 
+const DOCS_URL = 'https://form.punicalab.com';
+
 let formCount = 0;
 
 const INITIAL_STATE: FormState = {
@@ -130,6 +132,13 @@ export class FormController<
     const form: Form<E, F> = { items: [] };
 
     await createInitialReader<E, F>().read(entity, form);
+
+    // Readers and starters may still add items when the form is started
+    if (!form.items.length && !form.readers?.length && !form.starters?.length) {
+      console.warn(
+        `[punica-form] ${options.name ?? entity.constructor?.name ?? 'The form'} has no form items. Its properties need a form item decorator. If they have one, the build of the project does not apply decorators: see ${DOCS_URL}/docs/installation, or define the form with defineForm, which needs no decorator syntax.`
+      );
+    }
 
     return new FormController<E, F>(form, entity, options);
   }

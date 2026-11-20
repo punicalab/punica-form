@@ -19,6 +19,7 @@
   "updateInternalDependencies": "patch",
   "ignore": [
     "@punica/example-react",
-    "@punica/example-kit"
+    "@punica/example-kit",
+    "@punica/example-plain"
   ]
 }
