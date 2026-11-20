@@ -194,20 +194,23 @@ export class FormController<
 
     this.#batching++;
 
+    let result: T;
+
     try {
-      const result = change();
-
-      if (result instanceof Promise) {
-        return result.finally(done) as T;
-      }
-
-      done();
-
-      return result;
+      result = change();
     } catch (error) {
       done();
       throw error;
     }
+
+    // Outside the try: a subscriber that throws must not end the batch twice
+    if (result instanceof Promise) {
+      return result.finally(done) as T;
+    }
+
+    done();
+
+    return result;
   };
 
   /**

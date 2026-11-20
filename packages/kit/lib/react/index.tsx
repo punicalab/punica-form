@@ -1,4 +1,5 @@
 import {
+  useRef,
   useState,
   type FocusEvent,
   type FormEvent,
@@ -30,6 +31,12 @@ type ViewProps<E extends object> = {
     controller: FormController<E, KitItem<E>>
   ) => void | Promise<void>;
 
+  /**
+   * Called with what a validation, a control function or `onSubmit` threw.
+   * Without it the error is logged to the console.
+   */
+  onError?: (error: unknown) => void;
+
   /** The text of the submit button, `Submit` by default. */
   submitLabel?: string;
 
@@ -50,16 +57,23 @@ export type FormViewProps<E extends object> = ViewProps<E> & {
 export function FormView<E extends object>({
   controller,
   onSubmit,
+  onError = (error) => console.error(error),
   submitLabel = 'Submit',
   resetLabel,
   components
 }: FormViewProps<E>): ReactNode {
   const form = useForm(controller);
   const [submitting, setSubmitting] = useState(false);
+  const busy = useRef(false);
   const fields = { ...fieldComponents, ...components };
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
+
+    // Enter in a field submits again while the button is already loading
+    if (busy.current) return;
+
+    busy.current = true;
     setSubmitting(true);
 
     try {
@@ -69,7 +83,10 @@ export function FormView<E extends object>({
           controller
         );
       }
+    } catch (error) {
+      onError(error);
     } finally {
+      busy.current = false;
       setSubmitting(false);
     }
   };
@@ -81,7 +98,7 @@ export function FormView<E extends object>({
     const next = event.relatedTarget as Element | null;
 
     if (!next?.closest('[slot="actions"]')) {
-      controller.getService(Trigger).run(property);
+      controller.getService(Trigger).run(property).catch(onError);
     }
   };
 
@@ -115,7 +132,10 @@ export function FormView<E extends object>({
                   <Field
                     item={item}
                     onChange={(value) =>
-                      controller.getService(SetValue).run(item.property, value)
+                      controller
+                        .getService(SetValue)
+                        .run(item.property, value)
+                        .catch(onError)
                     }
                   />
                 </punica-field>
@@ -131,7 +151,7 @@ export function FormView<E extends object>({
             <punica-button
               type="button"
               variant="outlined"
-              onClick={() => controller.getService(Reset).run()}
+              onClick={() => controller.getService(Reset).run().catch(onError)}
             >
               {resetLabel}
             </punica-button>

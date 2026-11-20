@@ -47,8 +47,11 @@ const check = (props: FieldProps, value: unknown): string | undefined => {
       return text.maxLength(label, maxLength);
     }
 
-    if (pattern && !pattern.test(value)) {
-      return text.pattern(label);
+    if (pattern) {
+      // A pattern with the g or y flag remembers where its last match ended
+      pattern.lastIndex = 0;
+
+      if (!pattern.test(value)) return text.pattern(label);
     }
   }
 
@@ -74,8 +77,15 @@ export const createValidation = (props: FieldProps): Validation => {
       return { error: true, errorMessages: [message] };
     }
 
-    return (
-      (await props.validation?.(command)) ?? { error: false, errorMessages: [] }
-    );
+    const result = await props.validation?.(command);
+
+    // An error always has a message: a field must not block the form silently
+    if (result?.error && !result.errorMessages?.length) {
+      const text = { ...messages, ...item.messages };
+
+      return { error: true, errorMessages: [text.pattern(item.label)] };
+    }
+
+    return result ?? { error: false, errorMessages: [] };
   };
 };

@@ -153,3 +153,39 @@ describe('form kit', () => {
     });
   });
 });
+
+describe('validation of a field', () => {
+  @FormKit()
+  class CodeForm {
+    @TextField({ label: 'Zip', pattern: /^\d{5}$/g })
+    public zip = '12345';
+
+    @TextField({ label: 'Code', validation: async () => ({ error: true }) })
+    public code = 'x';
+  }
+
+  const errorOf = async (property: keyof CodeForm) => {
+    const controller = await FormController.fromEntity<
+      CodeForm,
+      KitItem<CodeForm>
+    >(new CodeForm());
+
+    await controller.start();
+    await controller.getService(Trigger).run(property);
+    await controller.getService(Trigger).run(property);
+
+    const item = controller
+      .getForm()
+      .items.find((i) => i.property === property);
+
+    return item?.error ? item.errorMessages : undefined;
+  };
+
+  test('a pattern with the g flag gives the same result every time', async () => {
+    expect(await errorOf('zip')).toBeUndefined();
+  });
+
+  test('an error without a message gets the message of an invalid value', async () => {
+    expect(await errorOf('code')).toEqual(['Code is not valid']);
+  });
+});
