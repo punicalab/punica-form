@@ -21,6 +21,30 @@ Punica Form is a headless form engine. `@punica/form` holds the engine,
 - Decorators work with both the legacy implementation of TypeScript
   (`"experimentalDecorators": true`) and the standard one. There is no
   `reflect-metadata`: never call `Reflect.getMetadata`.
+- Before writing a decorated class, check that the build compiles decorator
+  syntax: `"experimentalDecorators": true` in `tsconfig.json` is enough for
+  Vite and esbuild. When it does not and you should not change it, define the
+  form with `defineForm` (since 2.2), which needs no decorator syntax. Every
+  decorator (`Services`, the kit's `TextField`, your own) is then a function
+  call:
+
+  ```ts
+  import { defineForm, field, Services } from "@punica/form";
+
+  const UserForm = defineForm(
+    {
+      name: field("", Text({ label: "Name" })),
+      age: field<number | undefined>(undefined, NumberInput({ label: "Age" })),
+    },
+    Services([GetValues, SetValue]) // or FormKit({ title: "User" })
+  );
+  type User = InstanceType<typeof UserForm>;
+
+  const controller = await FormController.fromEntity(new UserForm({ name: "Jane" }));
+  ```
+
+  The result is a form class like a decorated one; do not mix both styles in
+  one class. `fromEntity` warns when a class ends up without form items.
 
 ## The ready-made form system
 
