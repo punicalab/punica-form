@@ -5,6 +5,8 @@ import type { GetValues } from './getValues';
 import type { Reset } from './reset';
 import type { ResetItem } from './resetItem';
 import type { SetValue } from './setValue';
+import type { Submit } from './submit';
+import type { Touch } from './touch';
 import type { Trigger } from './trigger';
 import type { Validate } from './validate';
 
@@ -15,6 +17,8 @@ export * from './reset';
 export * from './resetItem';
 export * from './setValue';
 export * from './store';
+export * from './submit';
+export * from './touch';
 export * from './trigger';
 export * from './validate';
 
@@ -28,6 +32,8 @@ declare module '@punica/form' {
     reset: Reset<E, F>;
     resetItem: ResetItem<E, F>;
     setValue: SetValue<E, F>;
+    submit: Submit<E, F>;
+    touch: Touch<E, F>;
     trigger: Trigger<E, F>;
     validate: Validate<E, F>;
   }

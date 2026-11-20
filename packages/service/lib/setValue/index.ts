@@ -49,7 +49,18 @@ export class SetValue<E, F extends FormItem<E> = FormItem<E>>
       return;
     }
 
-    setItems(controlled);
-    emit('UPDATE_ITEM', [getItem(property) ?? changed, ...controlled]);
+    // The control worked on copies from before it ran: a field the user
+    // left meanwhile stays touched
+    setItems(
+      controlled.map((item) =>
+        getItem(item.property)?.touched ? { ...item, touched: true } : item
+      )
+    );
+
+    // Listeners get the items as the form holds them now
+    emit(
+      'UPDATE_ITEM',
+      [changed, ...controlled].map((item) => getItem(item.property) ?? item)
+    );
   }
 }

@@ -28,6 +28,12 @@ export type FormItem<E> = {
   disabled?: boolean;
   hidden?: boolean;
 
+  /** Whether the value differs from the one the form was started with. */
+  dirty?: boolean;
+
+  /** Whether the user has left the field. Set by the `Touch` service. */
+  touched?: boolean;
+
   /** Whether the last validation of the item failed. */
   error?: boolean;
 

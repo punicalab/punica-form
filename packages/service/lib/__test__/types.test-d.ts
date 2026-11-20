@@ -145,3 +145,27 @@ export const items = (): void => {
   void layout;
   void item;
 };
+
+export const state = async (): Promise<void> => {
+  const { Submit, Touch } = await import('..');
+
+  await controller.getService(Touch).run('name');
+  await controller.getService(Submit).run((values) => {
+    const typed: Entity = values;
+
+    void typed;
+  });
+
+  // @ts-expect-error 'email' is not a property of the entity
+  await controller.getService(Touch).run('email');
+
+  controller.on('SUBMIT', (values) => {
+    const typed: Entity = values;
+
+    void typed;
+  });
+
+  const dirty: boolean | undefined = controller.getForm().state?.dirty;
+
+  void dirty;
+};
