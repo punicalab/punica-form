@@ -11,6 +11,7 @@ Punica Form is a headless form engine. `@punica/form` holds the engine,
   `getFormProperty` and `getFormItemProperties`, the form item register,
   `deepCopy`, the DevTools switches and the types. Use `search_api` for the
   exact list.
+- `@punica/form-json`: forms as data; see "Forms as data" below.
 - `@punica/form-service`: `Validate`, `GetValues`, `SetValue`, `Reset`,
   `ResetItem`, `Trigger`, `ClearError`, `ClearErrors`, `Store`.
 - NOT provided: `@Title`, `@Description`, `@Layout`, `@FormItemInputText` or
@@ -57,6 +58,29 @@ Punica Form is a headless form engine. `@punica/form` holds the engine,
 form with `@punica/components`, shows what `onSubmit` throws above the
 fields and reports it to `onError`. Use it when the project has it installed;
 otherwise build the form system as described below.
+
+## Forms as data, written at run time
+
+Everything above is for code. When the form itself has to be produced at run
+time (an agent asking the user for information, a form sent by a server),
+write a form definition instead: JSON, no code. `@punica/form-json` checks
+and runs it.
+
+- Read `get_form_schema` for the format and check every definition with
+  `validate_form` before handing it over.
+- Render it with `<JsonForm definition={definition} onSubmit={…} />` from
+  `@punica/form-kit/json`, or create the controller with
+  `fromSchema(definition, { types, rules })` from `@punica/form-json`. Both
+  refuse a definition that is not valid with a `FormDefinitionError` whose
+  `problems` have a `path` and a `message`.
+- Types with the kit: `text`, `textarea`, `number`, `select`, `checkbox`,
+  `switch`. Kit options such as `inputType`, `rows` and `span` go into `props`.
+- Never put functions, expressions or HTML into a definition, and never
+  build one by string concatenation: produce the object and validate it.
+- In React a definition is read when the component mounts; give `JsonForm` a
+  `key` to show another one.
+- `fromJsonSchema(schema)` turns a flat JSON Schema (string, number, integer,
+  boolean and enum properties) into a definition.
 
 ## Lifecycle
 

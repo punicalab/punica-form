@@ -2,11 +2,21 @@
 // its rules and the code validator. Transport-free, so tests connect it to
 // an in-memory client.
 import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { fromJsonSchema, formDefinitionSchema, validateDefinition } from '@punica/form-json/definition';
 import { z } from 'zod';
+import { readFileSync } from 'node:fs';
 import { createKnowledge } from './knowledge.mjs';
 import { createValidator } from './validate.mjs';
 
+const { version } = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
+
 const text = (value) => ({ content: [{ type: 'text', text: value }] });
+
+/** The types a form definition may use when the form kit renders it. */
+const KIT_TYPES = ['text', 'textarea', 'number', 'select', 'checkbox', 'switch'];
+
+/** A tool argument that is JSON: given as an object, or as its text. */
+const parse = (value) => (typeof value === 'string' ? JSON.parse(value) : value);
 
 /**
  * @param {{ packages: Array<Parameters<typeof createKnowledge>[0][number] & { installed?: boolean }>, guide: string }} options
@@ -29,9 +39,9 @@ export function createPunicaFormServer({ packages, guide }) {
     : '';
 
   const server = new McpServer(
-    { name: 'punica-form', version: '0.3.0' },
+    { name: 'punica-form', version },
     {
-      instructions: `${legacyNote}${versions}. Punica Form is a headless form engine and is rarely in training data: never write an import, a service name or a method from memory. Read get_guide first, look names up with search_api and get_api, and check the code with validate_code before handing it over.`
+      instructions: `${legacyNote}${versions}. Punica Form is a headless form engine and is rarely in training data: never write an import, a service name or a method from memory. Read get_guide first, look names up with search_api and get_api, and check the code with validate_code before handing it over. To produce a form at run time as data instead of code, read get_form_schema and check the definition with validate_form.`
     }
   );
 
@@ -52,7 +62,7 @@ export function createPunicaFormServer({ packages, guide }) {
     {
       title: 'Find Punica Form exports',
       description:
-        'Finds exports of the Punica Form packages (@punica/form, @punica/form-service, @punica/form-react, @punica/form-kit) by name or by words in their documentation ("validate", "reader", "field"). Without a query: every export.',
+        'Finds exports of the Punica Form packages (@punica/form, @punica/form-service, @punica/form-react, @punica/form-kit, @punica/form-json) by name or by words in their documentation ("validate", "reader", "field"). Without a query: every export.',
       inputSchema: { query: z.string().optional().describe('Words to look for') },
       annotations: { readOnlyHint: true }
     },
@@ -104,6 +114,71 @@ export function createPunicaFormServer({ packages, guide }) {
           `${findings.length} problem${findings.length === 1 ? '' : 's'}:`,
           ...findings.map((f) => `line ${f.line} ${f.rule}: ${f.message} [fix: ${f.fix}]`)
         ].join('\n')
+      );
+    }
+  );
+
+  server.registerTool(
+    'get_form_schema',
+    {
+      title: 'The format of a form described as data',
+      description:
+        'The JSON Schema of a Punica Form definition (@punica/form-json): a form as JSON that an application renders at run time, without code. Read it before writing a form definition, and use it as the schema of structured output.',
+      inputSchema: {},
+      annotations: { readOnlyHint: true }
+    },
+    async () =>
+      text(
+        [
+          `Types the form kit renders: ${KIT_TYPES.join(', ')}. An application may have its own.`,
+          'Rules: required, email, integer, min, max, minLength, maxLength, pattern; `value` holds the limit. An application may have more.',
+          'Conditions (visibleWhen, disabledWhen) compare the value of another item: { property, equals | notEquals | in }, combined with { all: [...] } and { any: [...] }.',
+          'A definition holds no code: no functions, no expressions, no HTML. Check it with validate_form.',
+          '',
+          JSON.stringify(formDefinitionSchema, null, 2)
+        ].join('\n')
+      )
+  );
+
+  server.registerTool(
+    'validate_form',
+    {
+      title: 'Check a form definition',
+      description:
+        'Checks a form definition (the JSON of @punica/form-json) before it is given to an application: its shape, unknown types and rules, conditions that point to items that do not exist, duplicate properties and anything that is not data. Returns each problem with its path. Give `json_schema` instead to turn a flat JSON Schema into a form definition.',
+      inputSchema: {
+        definition: z.unknown().optional().describe('The form definition, as an object or as JSON text'),
+        json_schema: z.unknown().optional().describe('A JSON Schema to convert into a form definition instead'),
+        types: z.array(z.string()).optional().describe('The types the application renders; the types of the form kit by default'),
+        rules: z.array(z.string()).optional().describe('Names of rules the application has besides the built-in ones')
+      },
+      annotations: { readOnlyHint: true }
+    },
+    async ({ definition, json_schema: schema, types = KIT_TYPES, rules }) => {
+      let converted = '';
+
+      try {
+        if (schema !== undefined) {
+          definition = fromJsonSchema(parse(schema));
+          converted = `\n\n${JSON.stringify(definition, null, 2)}`;
+        } else {
+          definition = parse(definition);
+        }
+      } catch (error) {
+        return text(`Not usable: ${error.message}`);
+      }
+
+      const problems = validateDefinition(definition, { types, rules });
+
+      if (!problems.length) {
+        return text(`No problems: the form definition is valid.${converted}`);
+      }
+
+      return text(
+        [
+          `${problems.length} problem${problems.length === 1 ? '' : 's'}:`,
+          ...problems.map(({ path, message }) => `${path || 'definition'} ${message}`)
+        ].join('\n') + converted
       );
     }
   );

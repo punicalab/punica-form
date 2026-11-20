@@ -1,0 +1,60 @@
+{
+  "name": "@punica/form-json",
+  "version": "0.1.0",
+  "description": "Forms as data for Punica Form: a JSON form definition an AI agent can write, checked before it is rendered",
+  "keywords": [
+    "form",
+    "json",
+    "json-schema",
+    "ai",
+    "punica"
+  ],
+  "homepage": "https://form.punicalab.com",
+  "license": "MIT",
+  "author": "PunicaLab",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./definition": {
+      "types": "./dist/definition/index.d.ts",
+      "import": "./dist/definition/index.mjs",
+      "require": "./dist/definition/index.js"
+    },
+    "./schema.json": "./schema.json",
+    "./package.json": "./package.json"
+  },
+  "sideEffects": false,
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/punicalab/punica-form.git",
+    "directory": "packages/json"
+  },
+  "files": [
+    "dist",
+    "schema.json"
+  ],
+  "scripts": {
+    "build": "tsup lib/index.ts lib/definition/index.ts --format esm,cjs --target es2020 --clean && tsc -p tsconfig.build.json --emitDeclarationOnly && node write-schema.mjs",
+    "clean": "rimraf dist schema.json",
+    "lint": "eslint lib"
+  },
+  "peerDependencies": {
+    "@punica/form": "^2.1.1",
+    "@punica/form-service": "^2.1.1"
+  },
+  "devDependencies": {
+    "@punica/form": "workspace:^",
+    "@punica/form-service": "workspace:^",
+    "ajv": "^8.17.1"
+  }
+}

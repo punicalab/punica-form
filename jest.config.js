@@ -13,6 +13,8 @@ const project = (displayName, tsconfig) => ({
     '^@punica/form$': '<rootDir>/packages/form/lib',
     '^@punica/form-service$': '<rootDir>/packages/service/lib',
     '^@punica/form-react$': '<rootDir>/packages/react/lib',
+    '^@punica/form-json$': '<rootDir>/packages/json/lib',
+    '^@punica/form-json/definition$': '<rootDir>/packages/json/lib/definition',
     // The custom elements are not loaded in unit tests
     '^@punica/components/components/.*$':
       '<rootDir>/packages/kit/lib/__test__/elements.ts'

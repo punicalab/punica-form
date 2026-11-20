@@ -56,6 +56,19 @@ not validated.
 It needs React 19 or later: React 18 does not pass properties and custom
 events to custom elements.
 
+## Forms from JSON
+
+`@punica/form-kit/json` renders a form that is described as data, such as one
+a language model wrote. It needs
+[`@punica/form-json`](https://www.npmjs.com/package/@punica/form-json), which
+checks the definition before anything is rendered:
+
+```tsx
+import { JsonForm } from '@punica/form-kit/json';
+
+<JsonForm definition={definition} onSubmit={(values) => send(values)} />;
+```
+
 ## Fields
 
 | Decorator       | Value                             | Component                                                                     |

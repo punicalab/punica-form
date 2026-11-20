@@ -1,7 +1,7 @@
 // Reads the type declarations of a Punica Form package from disk: the copy
 // installed in the project the server is started in, so the answers match
 // that version; without one, the copy bundled with this server.
-import { readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, join, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -28,7 +28,8 @@ export function readTypes(root) {
  * @param {string} [cwd] - The project to look for the package in
  * @param {string} [entry] - A second entry point of the package, such as
  *   `react` for `@punica/form-kit/react`
- * @returns {{ name: string, version: string, files: Map<string, string>, installed: boolean }}
+ * @returns {{ name: string, version: string, files: Map<string, string>, installed: boolean } | undefined}
+ *   `undefined` for an entry point the installed version does not have
  */
 export function loadPackage(name, cwd = process.cwd(), entry = '') {
   const entryName = entry ? `${name}/${entry}` : name;
@@ -38,6 +39,10 @@ export function loadPackage(name, cwd = process.cwd(), entry = '') {
     const manifestPath = require.resolve(`${name}/package.json`);
     const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
     const root = join(dirname(join(dirname(manifestPath), manifest.types)), entry);
+
+    // An installed version from before the entry point existed: the project
+    // cannot import it, so it is not part of what the server knows
+    if (entry && !existsSync(root)) return undefined;
 
     return { name: entryName, version: manifest.version, files: readTypes(root), installed: true };
   } catch {
