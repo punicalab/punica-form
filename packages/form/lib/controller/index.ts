@@ -60,6 +60,7 @@ const INITIAL_STATE: FormState = {
   dirty: false,
   touched: false,
   valid: true,
+  validating: false,
   submitting: false,
   submitCount: 0,
   errors: []
@@ -349,6 +350,7 @@ export class FormController<
       ...patch,
       dirty: items.some((item) => item.dirty),
       touched: items.some((item) => item.touched),
+      validating: items.some((item) => item.validating),
       // Like the validation, which skips items the user cannot change
       valid: items.every((item) => !item.error || item.hidden || item.disabled)
     };

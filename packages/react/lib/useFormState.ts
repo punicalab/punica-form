@@ -6,13 +6,14 @@ const NOT_STARTED: FormState = {
   dirty: false,
   touched: false,
   valid: true,
+  validating: false,
   submitting: false,
   submitCount: 0,
   errors: []
 };
 
 /**
- * The state of a form as a whole: dirty, touched, valid, submitting, its
+ * The state of a form as a whole: dirty, touched, valid, validating, submitting, its
  * submit count and its errors. Unlike `useForm`, the component only renders
  * again when this state changes, not after every change of an item.
  */

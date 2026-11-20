@@ -649,4 +649,370 @@ describe('services', () => {
       touched: true
     });
   });
+
+  test('a validation is cancelled when its item is validated again, changed or reset', async () => {
+    const form = createForm();
+    const signals: AbortSignal[] = [];
+    const { closed, open } = gate();
+
+    form.items[0].validation = async (_command, context) => {
+      signals.push(context?.signal as AbortSignal);
+      await closed;
+
+      // What fetch does with an aborted signal
+      if (context?.signal.aborted) throw new Error('aborted');
+
+      return { error: false };
+    };
+
+    const slow = await FormController.fromForm(form);
+
+    await slow.start();
+
+    const runs = [slow.getService(Trigger).run('name')];
+
+    runs.push(slow.getService(Trigger).run('name'));
+    await slow.getService(SetValue).run('name', 'b');
+    runs.push(slow.getService(Trigger).run('name'));
+    await slow.getService(Reset).run();
+    runs.push(slow.getService(Trigger).run('name'));
+    open();
+
+    // A cancelled validation that rejects does not reject the service
+    await Promise.all(runs);
+
+    expect(signals.map((signal) => signal.aborted)).toEqual([
+      true,
+      true,
+      true,
+      false
+    ]);
+    expect(slow.getForm().items[0].error).toBe(false);
+    expect(slow.getForm().items[0].validating).toBeFalsy();
+    expect(slow.getForm().state?.validating).toBe(false);
+  });
+
+  test('items are validating while they are validated, also when a validation throws', async () => {
+    const form = createForm();
+    const { closed, open } = gate();
+
+    form.items[0].validation = async () => {
+      await closed;
+
+      throw new Error('validation failed');
+    };
+    form.items[1].validation = async () => ({ error: false });
+
+    const slow = await FormController.fromForm(form);
+
+    await slow.start();
+
+    const validation = slow.getService(Validate).run();
+
+    // Shown once the validation takes a while
+    await new Promise((resolve) => setTimeout(resolve, 5));
+
+    expect(slow.getForm().items.map((item) => item.validating)).toEqual([
+      true,
+      true,
+      undefined
+    ]);
+    expect(slow.getForm().state?.validating).toBe(true);
+
+    open();
+    await expect(validation).rejects.toThrow('validation failed');
+
+    expect(slow.getForm().items.map((item) => item.validating)).toEqual([
+      false,
+      false,
+      undefined
+    ]);
+  });
+
+  test('Validate uses the result of the validation that replaced its own', async () => {
+    const form = createForm();
+    const { closed, open } = gate();
+    let calls = 0;
+
+    form.items[0].validation = async () => {
+      if (++calls === 1) await closed;
+
+      return { error: calls > 1, errorMessages: ['newer'] };
+    };
+
+    const slow = await FormController.fromForm(form);
+
+    await slow.start();
+
+    const validation = slow.getService(Validate).run();
+
+    await slow.getService(Trigger).run('name');
+    open();
+
+    expect(await validation).toBe(false);
+    expect(slow.getForm().items[0].errorMessages).toEqual(['newer']);
+  });
+
+  test('validations that do not wait for anything notify once', async () => {
+    const subscriber = jest.fn();
+
+    controller.subscribe(subscriber);
+    await controller.getService(Validate).run();
+
+    expect(subscriber).toHaveBeenCalledTimes(1);
+    expect(controller.getForm().items[0].validating).toBeUndefined();
+  });
+
+  test('an item that changes while the form is submitted is validated with its new value', async () => {
+    const form = createForm();
+    const { closed, open } = gate();
+    const handler = jest.fn();
+
+    // Slow for the first value only
+    form.items[0].validation = async (command) => {
+      if (command.formItem.value === 'a') await closed;
+
+      return (required as NonNullable<Item['validation']>)(command);
+    };
+    form.items[0].control = undefined;
+
+    const slow = await FormController.fromForm(form);
+
+    await slow.start();
+
+    const submit = slow.getService(Submit).run(handler);
+
+    await slow.getService(SetValue).run('name', '');
+    open();
+
+    expect(await submit).toBe(false);
+    expect(handler).not.toHaveBeenCalled();
+    expect(slow.getForm().items[0]).toMatchObject({
+      value: '',
+      error: true
+    });
+  });
+
+  test('an item that changes before its turn is validated as it is then', async () => {
+    const form = createForm();
+    const { closed, open } = gate();
+
+    form.items[0].control = undefined;
+    form.items[0].validation = async () => {
+      await closed;
+
+      return { error: false };
+    };
+    form.items[1].validation = required;
+
+    const slow = await FormController.fromForm(form);
+
+    await slow.start();
+    await slow.getService(SetValue).run('age', 0);
+
+    const validation = slow.getService(Validate).run();
+
+    await slow.getService(SetValue).run('age', 7);
+    open();
+
+    expect(await validation).toBe(true);
+    expect(slow.getForm().items[1].error).toBeFalsy();
+  });
+
+  test('a reset while the form is validated leaves the reset form untouched', async () => {
+    const form = createForm();
+    const { closed, open } = gate();
+
+    form.items[0].validation = async () => {
+      await closed;
+
+      return { error: false };
+    };
+    form.items[1].validation = async () => ({
+      error: true,
+      errorMessages: ['late']
+    });
+
+    const slow = await FormController.fromForm(form);
+
+    await slow.start();
+
+    const validation = slow.getService(Validate).run();
+
+    await slow.getService(Reset).run();
+    open();
+
+    expect(await validation).toBe(false);
+    expect(slow.getForm().items[1].error).toBeFalsy();
+    expect(slow.getForm().state?.validating).toBe(false);
+  });
+
+  test('a result is not written onto a value a control function changed meanwhile', async () => {
+    const form = createForm();
+    const { closed, open } = gate();
+
+    form.items[1].validation = async () => {
+      await closed;
+
+      return { error: true, errorMessages: ['for the old value'] };
+    };
+
+    const slow = await FormController.fromForm(form);
+
+    await slow.start();
+
+    const stale = slow.getService(Trigger).run('age');
+
+    // The control function of name changes the value of age
+    await slow.getService(SetValue).run('name', 'abc');
+    open();
+    await stale;
+
+    expect(slow.getForm().items[1]).toMatchObject({ value: 3 });
+    expect(slow.getForm().items[1].error).toBeFalsy();
+  });
+
+  test('items that were validated before stop validating when a validation throws', async () => {
+    const form = createForm();
+    const { closed, open } = gate();
+    let fail = false;
+
+    form.items[0].validation = async () => {
+      if (!fail) return { error: false };
+
+      await closed;
+
+      throw new Error('validation failed');
+    };
+    form.items[1].validation = async () => ({ error: false });
+
+    const slow = await FormController.fromForm(form);
+
+    await slow.start();
+    await slow.getService(Trigger).run('age');
+
+    fail = true;
+
+    const validation = slow.getService(Validate).run();
+
+    await new Promise((resolve) => setTimeout(resolve, 5));
+
+    expect(slow.getForm().state?.validating).toBe(true);
+
+    open();
+    await expect(validation).rejects.toThrow('validation failed');
+
+    expect(slow.getForm().state?.validating).toBe(false);
+  });
+
+  test('a control function does not put an ended validation back', async () => {
+    const form = createForm();
+    const { closed, open } = gate();
+    const validating = gate();
+
+    form.items[0].control = async ({ getItem }) => {
+      const age = getItem('age') as Item;
+
+      await closed;
+
+      return [{ ...age, label: 'Checked' }];
+    };
+    form.items[1].validation = async () => {
+      await validating.closed;
+
+      return { error: false };
+    };
+
+    const slow = await FormController.fromForm(form);
+
+    await slow.start();
+
+    const validation = slow.getService(Trigger).run('age');
+
+    await new Promise((resolve) => setTimeout(resolve, 5));
+
+    // The control function reads age while it is validating
+    const setting = slow.getService(SetValue).run('name', 'b');
+
+    validating.open();
+    await validation;
+    open();
+    await setting;
+
+    expect(slow.getForm().items[1]).toMatchObject({ label: 'Checked' });
+    expect(slow.getForm().items[1].validating).toBeFalsy();
+  });
+
+  describe('validateDebounce', () => {
+    const validation = jest.fn(async () => ({ error: false }));
+
+    const startDebounced = async () => {
+      const form = createForm();
+
+      form.items[0] = { ...form.items[0], validation, validateDebounce: 300 };
+
+      const debounced = await FormController.fromForm(form);
+
+      await debounced.start();
+
+      return debounced;
+    };
+
+    beforeEach(() => {
+      validation.mockClear();
+      jest.useFakeTimers();
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    test('Trigger validates once after the item was triggered several times', async () => {
+      const debounced = await startDebounced();
+      const runs = [];
+
+      for (const value of ['a', 'ab', 'abc']) {
+        await debounced.getService(SetValue).run('name', value);
+        runs.push(debounced.getService(Trigger).run('name'));
+        await jest.advanceTimersByTimeAsync(100);
+      }
+
+      expect(validation).not.toHaveBeenCalled();
+
+      await jest.advanceTimersByTimeAsync(300);
+      await Promise.all(runs);
+
+      expect(validation).toHaveBeenCalledTimes(1);
+      expect(validation).toHaveBeenCalledWith(
+        expect.objectContaining({
+          formItem: expect.objectContaining({ value: 'abc' })
+        }),
+        expect.anything()
+      );
+    });
+
+    test('Validate does not wait and takes the place of a waiting validation', async () => {
+      const debounced = await startDebounced();
+      const waiting = debounced.getService(Trigger).run('name');
+
+      expect(await debounced.getService(Validate).run()).toBe(true);
+      expect(validation).toHaveBeenCalledTimes(1);
+
+      await jest.advanceTimersByTimeAsync(300);
+      await waiting;
+
+      expect(validation).toHaveBeenCalledTimes(1);
+    });
+
+    test('a waiting validation is dropped when the form is reset', async () => {
+      const debounced = await startDebounced();
+      const waiting = debounced.getService(Trigger).run('name');
+
+      await debounced.getService(Reset).run();
+      await jest.advanceTimersByTimeAsync(300);
+      await waiting;
+
+      expect(validation).not.toHaveBeenCalled();
+    });
+  });
 });
