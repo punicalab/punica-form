@@ -1,5 +1,13 @@
 # @punica/form-react
 
+## 0.1.1
+
+### Patch Changes
+
+- [#81](https://github.com/punicalab/punica-form/pull/81) [`bac4bbe`](https://github.com/punicalab/punica-form/commit/bac4bbe3405b974d4a314c6bd024e281c7199486) Thanks [@punicalab](https://github.com/punicalab)! - `useFormController` keeps the form it started first when its effect runs again (StrictMode, a hidden `<Activity>` shown again, Fast Refresh) instead of replacing it with a new, empty one. An entity factory that throws, and a failure without a reason, now arrive in `error`.
+- Updated dependencies [[`bac4bbe`](https://github.com/punicalab/punica-form/commit/bac4bbe3405b974d4a314c6bd024e281c7199486)]:
+  - @punica/form@2.1.1
+
 ## 0.1.0
 
 ### Minor Changes

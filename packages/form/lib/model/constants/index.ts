@@ -13,6 +13,12 @@ export type FormEventMap<E, F extends FormItem<E>> = {
   /** A value was set: the changed item, then the items its control returned. */
   UPDATE_ITEM: F[];
 
+  /** The form was submitted: the values the submit handler received. */
+  SUBMIT: E;
+
+  /** A submit failed: what the validation or the submit handler threw. */
+  SUBMIT_ERROR: unknown;
+
   /** The registered form item types. Fired at the beginning of start(). */
   REGISTER_ITEMS: string[];
 };

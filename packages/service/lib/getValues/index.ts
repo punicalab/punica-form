@@ -2,10 +2,9 @@ import {
   CommandService,
   FormItem,
   IServiceControl,
-  IServiceInitialize,
-  deepCopy,
-  writeToPropertyPath
+  IServiceInitialize
 } from '@punica/form';
+import { readValues } from '../readValues';
 
 /**
  * Returns the entity with the values of the form.
@@ -28,16 +27,6 @@ export class GetValues<E, F extends FormItem<E> = FormItem<E>>
    * current values. The entity itself is never changed.
    */
   public async run(): Promise<E> {
-    const entity = deepCopy(this.#command.initialEntity);
-
-    for (const { property, value, path } of this.#command.getForm().items) {
-      if (path) {
-        writeToPropertyPath(entity as object, path, value);
-      } else {
-        entity[property] = value;
-      }
-    }
-
-    return entity;
+    return readValues(this.#command);
   }
 }

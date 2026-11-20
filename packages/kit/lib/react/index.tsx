@@ -1,23 +1,11 @@
-import {
-  useRef,
-  useState,
-  type FocusEvent,
-  type FormEvent,
-  type ReactNode
-} from 'react';
+import { type FocusEvent, type FormEvent, type ReactNode } from 'react';
 import type {} from '@punica/components/react';
 import '@punica/components/components/button/button.js';
 import '@punica/components/components/field/field.js';
 import '@punica/components/components/formLayout/formLayout.js';
 import { FormController, FormControllerOptions } from '@punica/form';
 import { useForm, useFormController } from '@punica/form-react';
-import {
-  GetValues,
-  Reset,
-  SetValue,
-  Trigger,
-  Validate
-} from '@punica/form-service';
+import { Reset, SetValue, Submit, Touch, Trigger } from '@punica/form-service';
 import { KitItem } from '../types';
 import { FieldComponent, SELF_LABELLED, fieldComponents } from './fields';
 
@@ -33,7 +21,8 @@ type ViewProps<E extends object> = {
 
   /**
    * Called with what a validation, a control function or `onSubmit` threw.
-   * Without it the error is logged to the console.
+   * Without it the error is logged to the console. What a submit throws is
+   * also shown above the fields.
    */
   onError?: (error: unknown) => void;
 
@@ -48,6 +37,7 @@ type ViewProps<E extends object> = {
 };
 
 export type FormViewProps<E extends object> = ViewProps<E> & {
+  /** A started controller of a `@FormKit` class, which brings the services the view needs. */
   controller: FormController<E, KitItem<E>>;
 };
 
@@ -63,42 +53,41 @@ export function FormView<E extends object>({
   components
 }: FormViewProps<E>): ReactNode {
   const form = useForm(controller);
-  const [submitting, setSubmitting] = useState(false);
-  const busy = useRef(false);
   const fields = { ...fieldComponents, ...components };
 
+  // The Submit service validates, keeps a second submit out (Enter in a
+  // field while the button is loading) and records what the handler throws
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
 
-    // Enter in a field submits again while the button is already loading
-    if (busy.current) return;
-
-    busy.current = true;
-    setSubmitting(true);
+    const report = (error: unknown) => onError(error);
+    const remove = controller.on('SUBMIT_ERROR', report);
 
     try {
-      if (await controller.getService(Validate).run()) {
-        await onSubmit?.(
-          await controller.getService(GetValues).run(),
-          controller
-        );
-      }
+      await controller
+        .getService(Submit)
+        .run((values) => onSubmit?.(values, controller));
     } catch (error) {
       onError(error);
     } finally {
-      busy.current = false;
-      setSubmitting(false);
+      remove();
     }
   };
 
   // Validates a field when the user leaves it. Not when they leave it for a
   // button of the form: a message that appears or disappears moves the
   // buttons, and the click would miss. Submitting validates everything anyway.
-  const handleBlur = (event: FocusEvent, property: keyof E) => {
+  const handleBlur = async (event: FocusEvent, property: keyof E) => {
     const next = event.relatedTarget as Element | null;
 
-    if (!next?.closest('[slot="actions"]')) {
-      controller.getService(Trigger).run(property).catch(onError);
+    try {
+      if (!next?.closest('[slot="actions"]')) {
+        await controller.getService(Trigger).run(property);
+      }
+
+      await controller.getService(Touch).run(property);
+    } catch (error) {
+      onError(error);
     }
   };
 
@@ -107,6 +96,11 @@ export function FormView<E extends object>({
     <form onSubmit={handleSubmit} noValidate>
       {form.title ? <h2>{String(form.title)}</h2> : null}
       {form.description ? <p>{String(form.description)}</p> : null}
+      {form.state?.errors.length ? (
+        <p role="alert" style={{ color: 'var(--punica-color-error)' }}>
+          {form.state.errors.join(' ')}
+        </p>
+      ) : null}
 
       <punica-form-layout columns={Number(form.columns ?? 1)}>
         {form.items
@@ -144,7 +138,10 @@ export function FormView<E extends object>({
           })}
 
         <div slot="actions" style={{ display: 'flex', gap: 8 }}>
-          <punica-button type="submit" loading={submitting}>
+          <punica-button
+            type="submit"
+            loading={Boolean(form.state?.submitting)}
+          >
             {submitLabel}
           </punica-button>
           {resetLabel ? (

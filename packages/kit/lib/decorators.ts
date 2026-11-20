@@ -16,6 +16,8 @@ import {
   GetValues,
   Reset,
   SetValue,
+  Submit,
+  Touch,
   Trigger,
   Validate
 } from '@punica/form-service';
@@ -34,7 +36,10 @@ export type FormKitOptions = {
   /** Columns the fields are laid out in, 1 by default. */
   columns?: 1 | 2 | 3 | 4;
 
-  /** Services in addition to GetValues, SetValue, Validate, Trigger and Reset. */
+  /**
+   * Services in addition to GetValues, SetValue, Validate, Trigger, Reset,
+   * Touch and Submit.
+   */
   services?: Array<IService | (new () => IService)>;
 
   /** Readers in addition to the kit's. */
@@ -72,6 +77,8 @@ export const FormKit = (options: FormKitOptions = {}): FormClassDecorator => {
       Validate,
       Trigger,
       Reset,
+      Touch,
+      Submit,
       ...(options.services ?? [])
     ])(target);
     Readers([new KitReader(), ...(options.readers ?? [])])(target);

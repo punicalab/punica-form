@@ -15,6 +15,8 @@ import {
   SetValue,
   Store,
   StoreCommand,
+  Submit,
+  Touch,
   Trigger,
   Validate
 } from '..';
@@ -51,7 +53,9 @@ const createForm = (): Form<Entity, Item> => ({
     ResetItem,
     ClearError,
     ClearErrors,
-    Store
+    Store,
+    Touch,
+    Submit
   ]
 });
 
@@ -424,5 +428,225 @@ describe('services', () => {
 
     expect(await stored.getService(Validate).run()).toBe(false);
     expect(await stored.getService(Validate).run()).toBe(true);
+  });
+
+  test('an item is dirty while its value differs from the initial one', async () => {
+    const state = () => controller.getForm().state;
+    const name = () => controller.getForm().items[0];
+
+    expect(state()).toMatchObject({
+      dirty: false,
+      touched: false,
+      valid: true
+    });
+
+    await controller.getService(SetValue).run('name', 'ab');
+
+    // The control function of name changed age as well
+    expect(name().dirty).toBe(true);
+    expect(controller.getForm().items[1].dirty).toBe(true);
+    expect(state()?.dirty).toBe(true);
+
+    await controller.getService(SetValue).run('name', 'a');
+
+    expect(name().dirty).toBe(false);
+    expect(state()?.dirty).toBe(false);
+
+    await controller.getService(SetValue).run('address', 'y');
+    await controller.getService(ResetItem).run('address');
+
+    expect(state()?.dirty).toBe(false);
+  });
+
+  test('Touch marks an item as touched until the form is reset', async () => {
+    await controller.getService(Touch).run('name');
+
+    expect(controller.getForm().items[0].touched).toBe(true);
+    expect(controller.getForm().state?.touched).toBe(true);
+
+    await controller.getService(Reset).run();
+
+    expect(controller.getForm().items[0].touched).toBeFalsy();
+    expect(controller.getForm().state?.touched).toBe(false);
+  });
+
+  test('the state object only changes when the state does', async () => {
+    const before = controller.getForm().state;
+
+    await controller.getService(Touch).run('name');
+
+    const touched = controller.getForm().state;
+
+    await controller.getService(Touch).run('age');
+
+    expect(touched).not.toBe(before);
+    expect(controller.getForm().state).toBe(touched);
+  });
+
+  test('Submit validates, gives the values to the handler and fires SUBMIT', async () => {
+    const handler = jest.fn();
+    const submitted = jest.fn();
+    const submit = controller.getService(Submit);
+
+    controller.on('SUBMIT', submitted);
+    await controller.getService(SetValue).run('name', '');
+
+    expect(await submit.run(handler)).toBe(false);
+    expect(handler).not.toHaveBeenCalled();
+    expect(controller.getForm().state).toMatchObject({
+      valid: false,
+      submitting: false,
+      submitCount: 1
+    });
+
+    await controller.getService(SetValue).run('name', 'Jane');
+
+    expect(await submit.run(handler)).toBe(true);
+    expect(handler).toHaveBeenCalledWith({
+      name: 'Jane',
+      age: 4,
+      address: { city: 'x' }
+    });
+    expect(submitted).toHaveBeenCalledTimes(1);
+    expect(controller.getForm().state).toMatchObject({
+      valid: true,
+      submitCount: 2
+    });
+  });
+
+  test('a form that is being submitted is not submitted again', async () => {
+    const { closed, open } = gate();
+    const handler = jest.fn(() => closed);
+    const submit = controller.getService(Submit);
+    const first = submit.run(handler);
+
+    expect(controller.getForm().state?.submitting).toBe(true);
+    expect(await submit.run(handler)).toBe(false);
+
+    open();
+
+    expect(await first).toBe(true);
+    expect(handler).toHaveBeenCalledTimes(1);
+    expect(controller.getForm().state).toMatchObject({
+      submitting: false,
+      submitCount: 1
+    });
+  });
+
+  test('what the submit handler throws becomes an error of the form', async () => {
+    const failed = jest.fn();
+    const submit = controller.getService(Submit);
+
+    controller.on('SUBMIT_ERROR', failed);
+
+    expect(
+      await submit.run(async () => {
+        throw new Error('The server is down');
+      })
+    ).toBe(false);
+    expect(controller.getForm().state).toMatchObject({
+      errors: ['The server is down'],
+      submitting: false
+    });
+    expect(failed).toHaveBeenCalledWith(new Error('The server is down'));
+
+    // The next attempt starts without the old error; so does a reset
+    expect(await submit.run()).toBe(true);
+    expect(controller.getForm().state?.errors).toEqual([]);
+  });
+
+  test('a SUBMIT listener that throws does not turn a submit into a failed one', async () => {
+    const handler = jest.fn();
+
+    controller.on('SUBMIT', () => {
+      throw new Error('listener failed');
+    });
+
+    await expect(controller.getService(Submit).run(handler)).rejects.toThrow(
+      'listener failed'
+    );
+    expect(handler).toHaveBeenCalledTimes(1);
+    expect(controller.getForm().state).toMatchObject({
+      errors: [],
+      submitting: false,
+      submitCount: 1
+    });
+  });
+
+  test('something thrown without a message gets a general one', async () => {
+    await controller.getService(Submit).run(async () => {
+      throw { status: 500 };
+    });
+
+    expect(controller.getForm().state?.errors).toEqual([
+      'The form could not be submitted.'
+    ]);
+  });
+
+  test('Reset forgets the submit attempts', async () => {
+    await controller.getService(Submit).run();
+    await controller.getService(Reset).run();
+
+    expect(controller.getForm().state?.submitCount).toBe(0);
+  });
+
+  test('an item in error that is hidden does not make the form invalid', async () => {
+    const form = createForm();
+
+    form.items[0] = {
+      ...form.items[0],
+      value: '',
+      control: async ({ formItem }) => [{ ...formItem, hidden: true }]
+    };
+
+    const hiding = await FormController.fromForm(form);
+
+    await hiding.start();
+    await hiding.getService(Trigger).run('name');
+
+    expect(hiding.getForm().state?.valid).toBe(false);
+
+    await hiding.getService(SetValue).run('name', '');
+
+    expect(hiding.getForm().state?.valid).toBe(true);
+  });
+
+  test('UPDATE_ITEM carries the items as the form holds them', async () => {
+    const updated = jest.fn();
+
+    controller.on('UPDATE_ITEM', updated);
+    await controller.getService(SetValue).run('name', 'abc');
+
+    expect(updated.mock.calls[0][0]).toEqual([
+      controller.getForm().items[0],
+      controller.getForm().items[1]
+    ]);
+    expect(updated.mock.calls[0][0][1].dirty).toBe(true);
+  });
+
+  test('a field left while its control function runs stays touched', async () => {
+    const form = createForm();
+    const { closed, open } = gate();
+
+    form.items[0].control = async ({ formItem }) => {
+      await closed;
+
+      return [{ ...formItem, label: 'Checked' }];
+    };
+
+    const slow = await FormController.fromForm(form);
+
+    await slow.start();
+
+    const setting = slow.getService(SetValue).run('name', 'b');
+
+    await slow.getService(Touch).run('name');
+    open();
+    await setting;
+
+    expect(slow.getForm().items[0]).toMatchObject({
+      label: 'Checked',
+      touched: true
+    });
   });
 });

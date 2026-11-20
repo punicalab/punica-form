@@ -18,7 +18,15 @@ function App() {
     >
       <KitForm
         entity={() => new UserForm()}
-        onSubmit={setValues}
+        onSubmit={(user) => {
+          // Stands in for a request the server rejects
+          if (user.name === 'Taken') {
+            throw new Error('That name is taken');
+          }
+
+          setValues(user);
+        }}
+        onError={() => undefined}
         submitLabel="Save"
         resetLabel="Reset"
       />

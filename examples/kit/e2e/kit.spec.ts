@@ -80,3 +80,22 @@ test('reset restores the form', async ({ page }) => {
   await expect(control(page, 0, 'input')).toHaveValue('');
   await expect(page.locator('punica-checkbox input')).not.toBeChecked();
 });
+
+test('what the submit handler throws is shown as an error of the form', async ({
+  page
+}) => {
+  await control(page, 0, 'input').fill('Taken');
+  await control(page, 1, 'input').fill('jane@example.com');
+  await control(page, 2, 'input').fill('30');
+  await page.locator('punica-checkbox').click();
+  await page.getByRole('button', { name: 'Save' }).click();
+
+  await expect(page.getByRole('alert')).toHaveText('That name is taken');
+  await expect(page.getByTestId('values')).toHaveCount(0);
+
+  await control(page, 0, 'input').fill('Jane');
+  await page.getByRole('button', { name: 'Save' }).click();
+
+  await expect(page.getByTestId('values')).toBeVisible();
+  await expect(page.getByRole('alert')).toHaveCount(0);
+});

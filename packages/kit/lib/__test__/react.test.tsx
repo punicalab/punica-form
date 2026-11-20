@@ -168,6 +168,7 @@ describe('KitForm', () => {
     await waitFor(() =>
       expect(onError).toHaveBeenCalledWith(new Error('server is down'))
     );
+    expect(screen.getByRole('alert').textContent).toEqual('server is down');
   });
 
   test('your own component replaces the one of a type', async () => {
