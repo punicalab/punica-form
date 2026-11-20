@@ -53,7 +53,7 @@
   "peerDependencies": {
     "@punica/components": "^2.1.0",
     "@punica/form": "^2.1.1",
-    "@punica/form-json": "^0.1.0",
+    "@punica/form-json": "^0.0.0",
     "@punica/form-react": "^0.1.1",
     "@punica/form-service": "^2.1.1",
     "react": ">=19"
