@@ -10,8 +10,10 @@ const packages = [
   loadPackage('@punica/form-service'),
   loadPackage('@punica/form-react'),
   loadPackage('@punica/form-kit'),
-  loadPackage('@punica/form-kit', process.cwd(), 'react')
-];
+  loadPackage('@punica/form-kit', process.cwd(), 'react'),
+  loadPackage('@punica/form-kit', process.cwd(), 'json'),
+  loadPackage('@punica/form-json')
+].filter(Boolean);
 const guide = readFileSync(new URL('./guide.md', import.meta.url), 'utf8');
 
 const server = createPunicaFormServer({ packages, guide });

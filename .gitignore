@@ -8,6 +8,8 @@ node_modules/
 dist/
 # Type declarations copied into the MCP server by its build
 packages/mcp/bundled/
+# Written by the build of the package from its sources
+packages/json/schema.json
 
 # Compiled Java class files
 *.class

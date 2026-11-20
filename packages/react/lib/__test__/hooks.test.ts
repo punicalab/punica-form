@@ -2,7 +2,7 @@ import { StrictMode } from 'react';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { FormController, Services, defineFormItem } from '@punica/form';
 import { SetValue, Touch } from '@punica/form-service';
-import { useForm, useFormController, useFormState } from '..';
+import { useController, useForm, useFormController, useFormState } from '..';
 
 const Text = defineFormItem<{ label: string }>('react:text', () => null);
 
@@ -160,5 +160,21 @@ describe('useFormState', () => {
     await act(() => controller.getService(Touch).run('name'));
 
     expect(result.current.touched).toBe(true);
+  });
+});
+
+describe('useController', () => {
+  test('starts the controller it is given, also one of a form described as data', async () => {
+    const { result } = renderHook(() =>
+      useController(() =>
+        FormController.fromForm<{ name: string }>({
+          items: [{ property: 'name', label: 'Name', value: 'Jane' }]
+        })
+      )
+    );
+
+    await waitFor(() => expect(result.current.controller).toBeDefined());
+
+    expect(result.current.controller?.getForm().state?.valid).toBe(true);
   });
 });

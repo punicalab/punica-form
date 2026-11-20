@@ -14,7 +14,9 @@ const packages = [
   { name: '@punica/form-service', version: '2.0.0', files: types('../../service/dist/') },
   { name: '@punica/form-react', version: '0.1.0', files: types('../../react/dist/') },
   { name: '@punica/form-kit', version: '0.1.0', files: types('../../kit/dist/') },
-  { name: '@punica/form-kit/react', version: '0.1.0', files: types('../../kit/dist/react/') }
+  { name: '@punica/form-kit/react', version: '0.1.0', files: types('../../kit/dist/react/') },
+  { name: '@punica/form-kit/json', version: '0.1.0', files: types('../../kit/dist/json/') },
+  { name: '@punica/form-json', version: '0.1.0', files: types('../../json/dist/') }
 ];
 const guide = readFileSync(new URL('../src/guide.md', import.meta.url), 'utf8');
 
@@ -35,12 +37,7 @@ test('lists the tools and says to look things up', async () => {
   const { client } = await connect();
   const { tools } = await client.listTools();
 
-  assert.deepEqual(tools.map((tool) => tool.name).sort(), [
-    'get_api',
-    'get_guide',
-    'search_api',
-    'validate_code'
-  ]);
+  assert.deepEqual(tools.map((tool) => tool.name).sort(), ['get_api', 'get_form_schema', 'get_guide', 'search_api', 'validate_code', 'validate_form']);
   assert.match(client.getInstructions(), /never write an import/);
 });
 
@@ -174,9 +171,81 @@ test('the guide and the resources', async () => {
   assert.match(contents[0].text, /## Reset \(class/);
 });
 
+test('forms as data: the schema, the check and the conversion', async () => {
+  const { call } = await connect();
+  const schema = await call('get_form_schema');
+
+  assert.match(schema, /Types the form kit renders: text, textarea/);
+  assert.equal(JSON.parse(schema.slice(schema.indexOf('{\n'))).title, 'Punica Form definition');
+
+  const item = { property: 'email', type: 'text', label: 'Email' };
+
+  assert.match(
+    await call('validate_form', { definition: { version: 1, items: [item] } }),
+    /^No problems/
+  );
+  // As JSON text as well
+  assert.match(
+    await call('validate_form', { definition: JSON.stringify({ version: 1, items: [item] }) }),
+    /^No problems/
+  );
+
+  const report = await call('validate_form', {
+    definition: {
+      version: 1,
+      items: [
+        { ...item, type: 'slider', rules: [{ rule: 'unique' }], onChange: 'alert(1)' },
+        { ...item, visibleWhen: { property: 'missing', equals: 1 } }
+      ]
+    }
+  });
+
+  assert.match(report, /^5 problems:/);
+  assert.match(report, /items\[1\]\.property "email" is used twice/);
+  assert.match(report, /items\[0\]\.onChange is not a known key/);
+  assert.match(report, /items\[0\]\.type "slider" is not a known type\. Known: text, textarea/);
+  assert.match(report, /items\[0\]\.rules\[0\]\.rule "unique" is not a known rule/);
+  assert.match(report, /items\[1\]\.visibleWhen\.property "missing" is not a property of an item/);
+
+  // The application's own types and rules
+  assert.match(
+    await call('validate_form', {
+      definition: { version: 1, items: [{ ...item, type: 'slider', rules: [{ rule: 'unique' }] }] },
+      types: ['slider'],
+      rules: ['unique']
+    }),
+    /^No problems/
+  );
+
+  const converted = await call('validate_form', {
+    json_schema: { type: 'object', required: ['name'], properties: { name: { type: 'string', title: 'Name' } } }
+  });
+
+  assert.match(converted, /^No problems/);
+  assert.deepEqual(JSON.parse(converted.slice(converted.indexOf('{'))), {
+    version: 1,
+    items: [{ property: 'name', type: 'text', label: 'Name', rules: [{ rule: 'required' }] }]
+  });
+  assert.match(await call('validate_form', { definition: '{' }), /^Not usable: /);
+  assert.match(await call('validate_form', { json_schema: { type: 'array' } }), /^Not usable: .*object schema/);
+
+  // The package and the component are part of the API
+  const all = await call('search_api');
+
+  assert.match(all, /^fromSchema \(const, @punica\/form-json\)/m);
+  assert.match(all, /^validateDefinition \(const, @punica\/form-json\)/m);
+  assert.match(all, /^JsonForm \(function, @punica\/form-kit\/json\)/m);
+});
+
 test('loadPackage falls back to the bundled copy', () => {
   const pkg = loadPackage('@punica/form', '/');
 
   assert.equal(pkg.installed, false);
   assert.ok(pkg.files.has('index.d.ts'));
+});
+
+test('an entry point the installed version does not have is left out', () => {
+  // The kit of this repository is installed; it has no such entry point
+  assert.equal(loadPackage('@punica/form-kit', process.cwd(), 'missing'), undefined);
+  assert.ok(loadPackage('@punica/form-kit', process.cwd(), 'json').files.size > 0);
 });
