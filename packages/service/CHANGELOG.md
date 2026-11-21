@@ -1,5 +1,38 @@
 # @punica/form-service
 
+## 2.2.0-next.0
+
+### Minor Changes
+
+- [#85](https://github.com/punicalab/punica-form/pull/85) [`4866c54`](https://github.com/punicalab/punica-form/commit/4866c544a2401d9913afc42733326395b42d89a0) Thanks [@punicalab](https://github.com/punicalab)! - Asynchronous validations can be cancelled and delayed.
+  
+  - Validation functions receive a second argument, `{ signal }`. The signal is aborted when the item is validated again, changed or reset, so `fetch(url, { signal: context?.signal })` cancels the request. A validation that rejects after it was aborted no longer rejects the service.
+  - `validateDebounce` on an item makes `Trigger` wait and validate once after the last trigger. `Validate` and `Submit` do not wait and take the place of a waiting validation.
+  - Items whose validation takes a while are `validating`, and so is `state.validating` of the form. Validations that do not wait for anything still notify once.
+  - `Validate` and `Submit` validate every item as it is when its turn comes, validate an item again when it changes meanwhile, and return `false` when the form is reset meanwhile. A result is never written onto a value it was not made for.
+  
+  Validation functions with one parameter keep working.
+
+- [#86](https://github.com/punicalab/punica-form/pull/86) [`b806d2f`](https://github.com/punicalab/punica-form/commit/b806d2f86d39d2ee3c68f32ceac0acee5d7fd550) Thanks [@punicalab](https://github.com/punicalab)! - Forms without decorator syntax.
+  
+  - New `defineForm(fields, ...classDecorators)` and `field(value, ...propertyDecorators)` define a form class in projects whose build does not compile decorators. Every existing decorator (`Services`, the field decorators of the kit, your own) is used as a function call; the class takes initial values in its constructor and its instance type follows from the fields.
+  - `FormController.fromEntity` warns when a class has no form items, the usual sign of a build that does not apply decorators.
+
+- [#84](https://github.com/punicalab/punica-form/pull/84) [`5eadc29`](https://github.com/punicalab/punica-form/commit/5eadc29df7b37ea45c9f80e248d3c4273c3ad628) Thanks [@punicalab](https://github.com/punicalab)! - The form knows its own state.
+  
+  - Items have `dirty` (the value differs from the one the form was started with, compared deeply) and `touched` (set by the new `Touch` service). `Reset` and `ResetItem` clear both.
+  - A started form has `state`: `{ dirty, touched, valid, submitting, submitCount, errors }`. The first three follow from the items; the object keeps its identity while nothing in it changes.
+  - New `Submit` service: `run(handler)` validates the form, calls the handler with its values, ignores a second submit while one is running and turns what the handler throws into `state.errors`.
+  - New events `SUBMIT` and `SUBMIT_ERROR`.
+  - `CommandService.setState` for services that write `submitting`, `submitCount` or `errors`; `isEqual` is exported.
+  
+  The new fields are optional and the new services are opt-in. One thing to check: `state` on a form and `dirty` / `touched` on an item are now written by the library, so a form system that used these names for data of its own has to rename it.
+
+### Patch Changes
+
+- Updated dependencies [[`4866c54`](https://github.com/punicalab/punica-form/commit/4866c544a2401d9913afc42733326395b42d89a0), [`b806d2f`](https://github.com/punicalab/punica-form/commit/b806d2f86d39d2ee3c68f32ceac0acee5d7fd550), [`5eadc29`](https://github.com/punicalab/punica-form/commit/5eadc29df7b37ea45c9f80e248d3c4273c3ad628)]:
+  - @punica/form@2.2.0-next.0
+
 ## 2.1.1
 
 ### Patch Changes

@@ -1,6 +1,6 @@
 {
   "name": "@punica/form",
-  "version": "2.1.1",
+  "version": "2.2.0-next.0",
   "description": "Headless, framework-agnostic form engine",
   "author": {
     "name": "Uryan Sezgin TEKE",
