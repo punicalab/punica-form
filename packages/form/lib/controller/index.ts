@@ -91,6 +91,8 @@ export class FormController<
   #started = false;
   #batching = 0;
   #pending = false;
+  /** Whether a validation of the form as a whole found something. */
+  #invalid = false;
   #epoch = 0;
   #writes = new Map<keyof E, number>();
   #subscribers = new Set<() => void>();
@@ -361,7 +363,9 @@ export class FormController<
     }
   };
 
-  #setState = (patch: FormStatePatch): void => {
+  #setState = ({ invalid, ...patch }: FormStatePatch): void => {
+    this.#invalid = invalid ?? this.#invalid;
+
     const state = this.#deriveState(this.#form.items, patch);
 
     if (state !== this.#form.state) {
@@ -373,7 +377,10 @@ export class FormController<
    * The state of the form for its items. The current state object is
    * returned when nothing changed, so it can be compared by reference.
    */
-  #deriveState(items: F[], patch: FormStatePatch = {}): FormState {
+  #deriveState(
+    items: F[],
+    patch: Omit<FormStatePatch, 'invalid'> = {}
+  ): FormState {
     // A form may have used the name for data of its own before 2.2
     const known = Array.isArray(this.#form.state?.errors);
     const current = known ? (this.#form.state as FormState) : INITIAL_STATE;
@@ -384,7 +391,9 @@ export class FormController<
       touched: items.some((item) => item.touched),
       validating: items.some((item) => item.validating),
       // Like the validation, which skips items the user cannot change
-      valid: items.every((item) => !item.error || item.hidden || item.disabled)
+      valid:
+        !this.#invalid &&
+        items.every((item) => !item.error || item.hidden || item.disabled)
     };
     const same = (Object.keys(next) as Array<keyof FormState>).every((key) =>
       isEqual(next[key], current[key])

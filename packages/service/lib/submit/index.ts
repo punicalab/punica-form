@@ -4,6 +4,7 @@ import {
   IServiceControl,
   IServiceInitialize
 } from '@punica/form';
+import { formEpoch, validateForm } from '../formValidation';
 import { messageOf } from '../message';
 import { readValues } from '../readValues';
 import { validateItems } from '../validateItem';
@@ -48,7 +49,12 @@ export class Submit<E, F extends FormItem<E> = FormItem<E>>
     let values: E;
 
     try {
-      if (!(await validateItems(this.#command, getForm().items))) {
+      const epoch = formEpoch(this.#command);
+      const items = await validateItems(this.#command, getForm().items);
+      // What is wrong with the form as a whole is shown besides its items
+      const form = await validateForm(this.#command, epoch);
+
+      if (!items || !form) {
         return false;
       }
 

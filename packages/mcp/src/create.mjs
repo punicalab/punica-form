@@ -62,7 +62,7 @@ export function createPunicaFormServer({ packages, guide }) {
     {
       title: 'Find Punica Form exports',
       description:
-        'Finds exports of the Punica Form packages (@punica/form, @punica/form-service, @punica/form-react, @punica/form-kit, @punica/form-json) by name or by words in their documentation ("validate", "reader", "field"). Without a query: every export.',
+        'Finds exports of the Punica Form packages (@punica/form, @punica/form-service, @punica/form-react, @punica/form-kit, @punica/form-json, @punica/form-schema) by name or by words in their documentation ("validate", "reader", "field"). Without a query: every export.',
       inputSchema: { query: z.string().optional().describe('Words to look for') },
       annotations: { readOnlyHint: true }
     },

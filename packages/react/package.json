@@ -41,8 +41,8 @@
     "lint": "eslint lib"
   },
   "peerDependencies": {
-    "@punica/form": "^2.2.0-next.0",
-    "@punica/form-service": "^2.2.0-next.0",
+    "@punica/form": "^2.2.0-next.1",
+    "@punica/form-service": "^2.2.0-next.1",
     "react": ">=18"
   },
   "devDependencies": {

@@ -7,7 +7,8 @@ const packages = {
   'form-service': '../service',
   'form-react': '../react',
   'form-kit': '../kit',
-  'form-json': '../json'
+  'form-json': '../json',
+  'form-schema': '../schema'
 };
 
 await rm('bundled', { recursive: true, force: true });
