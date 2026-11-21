@@ -1,5 +1,22 @@
 # @punica/form-kit
 
+## 0.3.0-next.1
+
+### Minor Changes
+
+- [#94](https://github.com/punicalab/punica-form/pull/94) [`a1f2274`](https://github.com/punicalab/punica-form/commit/a1f227425f8f06bdaa37b10a5f1c7363d053d761) Thanks [@punicalab](https://github.com/punicalab)! - More fields: `RadioGroupField`, `MultiSelectField`, `DateField`, `PasswordField`, `FileField` and `ArrayField`, a list of rows that renders a form for every row with buttons to add and remove. New rules go with them: `minDate`, `maxDate`, `minItems`, `maxItems` and `maxFileSize`; a file field checks `accept` and a date field reports a text that is no date. In a form definition these rules are set with `props`. Form definitions of `@punica/form-json` may use the types `radio`, `date`, `multiselect`, `password` and `file`.
+  
+  `options` of a select, a multi-select or a radio group may be a function that loads the choices; the field shows that it is loading.
+  
+  A value that is chosen (a select, a radio group, a date, a file, a checkbox, a switch) is validated when it is chosen; what is typed is still validated when the field is left. `@FormKit` lists the `FieldArray` service, once also when you list it yourself. Text and password fields take `autocomplete`. Components receive the `controller` of their form, the `components` it is rendered with and `onError`.
+
+### Patch Changes
+
+- Updated dependencies [[`c6aafbd`](https://github.com/punicalab/punica-form/commit/c6aafbdcea7b438f7ecd275e6eb8d403673fb95c), [`c6aafbd`](https://github.com/punicalab/punica-form/commit/c6aafbdcea7b438f7ecd275e6eb8d403673fb95c), [`dc61d18`](https://github.com/punicalab/punica-form/commit/dc61d1839b0155e883e7b383f9f16dd587e24441), [`a1f2274`](https://github.com/punicalab/punica-form/commit/a1f227425f8f06bdaa37b10a5f1c7363d053d761)]:
+  - @punica/form-react@0.2.0-next.1
+  - @punica/form@2.2.0-next.1
+  - @punica/form-service@2.2.0-next.1
+
 ## 0.3.0-next.0
 
 ### Minor Changes

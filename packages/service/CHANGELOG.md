@@ -1,5 +1,25 @@
 # @punica/form-service
 
+## 2.2.0-next.1
+
+### Minor Changes
+
+- [#92](https://github.com/punicalab/punica-form/pull/92) [`c6aafbd`](https://github.com/punicalab/punica-form/commit/c6aafbdcea7b438f7ecd275e6eb8d403673fb95c) Thanks [@punicalab](https://github.com/punicalab)! - Lists of rows, such as the lines of an invoice. A form item with a `row` function is a list: the new `FieldArray` service creates a form of its own for every row, from the entity `row` returns, and offers `rows`, `append`, `insert`, `remove`, `move` and `replace`. The value of the item is the array of the values of its rows.
+  
+  The list takes part in the form: `Validate` and `Submit` validate its rows, the item is dirty, touched and in error when a row is, `Reset` and `ResetItem` bring back the rows the form was started with, `SetValue` replaces them, and `ClearErrors` clears their errors. A row class without `@Services` gets the services of the form around it, through the new `services` option of `FormController.fromEntity`.
+
+- [#93](https://github.com/punicalab/punica-form/pull/93) [`dc61d18`](https://github.com/punicalab/punica-form/commit/dc61d1839b0155e883e7b383f9f16dd587e24441) Thanks [@punicalab](https://github.com/punicalab)! - Validations of a form as a whole: a service adds one with `addFormValidation(command, () => messages)`. `Validate` and `Submit` run them after the items; their messages are added to the errors of the form (`state.errors`), and a form that has some is not valid (`state.valid`) and not submitted. `Reset` and `ClearErrors` remove them.
+  
+  `wrapValidation(command, wrap)` lets a service add a validation of its own to the items of a form, lists included. A service class with `static forRows = false` is not given to the rows of a list.
+  
+  `defineForm` accepts class decorators that ask for the entity they are made for, as `Schema` of `@punica/form-schema` does.
+
+### Patch Changes
+
+- [#94](https://github.com/punicalab/punica-form/pull/94) [`a1f2274`](https://github.com/punicalab/punica-form/commit/a1f227425f8f06bdaa37b10a5f1c7363d053d761) Thanks [@punicalab](https://github.com/punicalab)! - `deepCopy` keeps files (`File`, `Blob`) by reference, so a form that holds one can be reset and its rows copied. When rows are added, removed or moved, the validation of the list item itself is asked again, without validating the rows: what it found was about other rows. A list is created once, also when `FieldArray` is listed twice. The MCP server knows the new fields of the form kit.
+- Updated dependencies [[`c6aafbd`](https://github.com/punicalab/punica-form/commit/c6aafbdcea7b438f7ecd275e6eb8d403673fb95c), [`dc61d18`](https://github.com/punicalab/punica-form/commit/dc61d1839b0155e883e7b383f9f16dd587e24441), [`a1f2274`](https://github.com/punicalab/punica-form/commit/a1f227425f8f06bdaa37b10a5f1c7363d053d761)]:
+  - @punica/form@2.2.0-next.1
+
 ## 2.2.0-next.0
 
 ### Minor Changes
