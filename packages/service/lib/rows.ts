@@ -41,6 +41,12 @@ type List = {
   /** A new array whenever a row is added, removed or moved. */
   rows: readonly AnyRow[];
 
+  /**
+   * The rows the form was last told about. Whoever follows the form reads
+   * the rows when it changes, so other rows are a change of the form.
+   */
+  told?: readonly AnyRow[];
+
   /** Rows that changed since the item of the list was written. */
   stale: Set<AnyRow>;
 
@@ -192,6 +198,7 @@ const write = <E, F extends FormItem<E>>(
 
   if (
     same &&
+    list.told === list.rows &&
     next.error === Boolean(item.error) &&
     next.touched === Boolean(item.touched) &&
     next.validating === Boolean(item.validating)
@@ -199,6 +206,7 @@ const write = <E, F extends FormItem<E>>(
     return;
   }
 
+  list.told = list.rows;
   command.setItems([
     {
       ...item,
@@ -353,7 +361,7 @@ export const createLists = async <E, F extends FormItem<E>>(
       {
         ...item,
         // What the rows hold, so the item and its rows start out the same
-        value: list.rows.map((row) => detailOf(row).value),
+        value: (list.told = list.rows).map((row) => detailOf(row).value),
         validation: async (commandItem, context) => {
           list.validating++;
 

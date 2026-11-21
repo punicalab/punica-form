@@ -314,6 +314,9 @@ describe('FieldArray', () => {
       valid: false
     });
 
+    let seen: unknown;
+
+    controller.subscribe(() => (seen = rows()));
     await controller.getService(Reset).run();
 
     expect(names()).toEqual(['Paper', 'Ink']);
@@ -326,6 +329,9 @@ describe('FieldArray', () => {
       dirty: false,
       valid: true
     });
+
+    // Whoever follows the form saw the new rows
+    expect(seen).toBe(rows());
 
     // The new rows are followed
     await setName(1, 'Pen');

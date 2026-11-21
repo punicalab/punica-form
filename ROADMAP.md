@@ -4,7 +4,7 @@ Durum (2026-11-21): Faz 1 yayınlandı (`@punica/form` ve `@punica/form-service`
 `@punica/form-kit` 0.2.0, `@punica/form-mcp` 0.3.1). Faz 2, 3, 4 ve 5 aday sürüm olarak `next` etiketiyle yayında:
 `@punica/form` ve `@punica/form-service` 2.2.0-next.0, `@punica/form-react` 0.2.0-next.0, `@punica/form-kit` 0.3.0-next.0,
 `@punica/form-json` 0.1.0-next.0, `@punica/form-mcp` 0.4.0-next.0. Depo aday sürüm modunda; kararlı 2.2.0 için
-`changeset pre exit` gerekir. Dizi alanları (Faz 6) 2.3.0'a kaldı. Doküman sitesi 2.2 için henüz güncellenmedi.
+`changeset pre exit` gerekir. Dizi alanları (Faz 6) `develop`'ta; kit'te `ArrayField` ve JSON tanımında liste desteği sonraya kaldı. Doküman sitesi 2.2 için henüz güncellenmedi.
 
 ## Konum
 
@@ -33,7 +33,7 @@ Aynı motor, aynı servisler, aynı DevTools; yalnızca formun nereden geldiği 
 | 3   | Asenkron doğrulama: gecikme ve iptal                       | Temel özellik eksikleri               | 2.2.0                                           | Claude    | Aday sürümde       |
 | 4   | Decorator sürtünmesi (decorator'sız yol)                   | İlk kurulumda takılma                 | 2.2.0 + doküman                                 | Claude    | Aday sürümde       |
 | 5   | AI için form motoru (veri olarak form)                     | Konum: rakiplerden ayrışma            | `@punica/form-json` 0.1.0, kit 0.3.0, mcp 0.4.0 | Claude    | Aday sürümde       |
-| 6   | Dizi alanları                                              | Temel özellik eksikleri               | 2.3.0                                           | Claude    | Bekliyor           |
+| 6   | Dizi alanları                                              | Temel özellik eksikleri               | 2.2.0                                           | Claude    | develop'ta         |
 | 7   | Şema bağlantısı (Zod, Valibot, ArkType)                    | Temel özellik eksikleri               | `@punica/form-schema` 0.1.0                     | Claude    | Bekliyor           |
 | 8   | Kit: yeni alan tipleri                                     | Kit dar                               | `@punica/form-kit` 0.4.0                        | Claude    | Bekliyor           |
 | 9   | Güven ve süreç                                             | Provenance, eklenti, doküman, hosting | sürümden bağımsız                               | Karışık   | Bekliyor           |
