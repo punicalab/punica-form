@@ -1,4 +1,4 @@
-import { FormItem, writeToPropertyPath } from '@punica/form';
+import { FormItem, deepCopy, writeToPropertyPath } from '@punica/form';
 import { StandardIssue, StandardSchema } from './standard';
 
 /** The keys of the path of an issue. */
@@ -25,11 +25,17 @@ export const validate = async (
   return result.issues ?? [];
 };
 
-/** The values of the items of a form as one plain object. */
+/**
+ * What a form would be submitted as, as a plain object: the entity it was
+ * created from, with the values of its items.
+ */
 export const valuesOf = <E>(
+  entity: E,
   items: Array<FormItem<E>>
 ): Record<string, unknown> => {
-  const values: Record<string, unknown> = {};
+  const values: Record<string, unknown> = {
+    ...(deepCopy(entity) as Record<string, unknown>)
+  };
 
   for (const item of items) {
     if (item.path) {

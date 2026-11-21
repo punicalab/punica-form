@@ -345,6 +345,145 @@ describe('SchemaValidation', () => {
   });
 });
 
+describe('a schema and the rest of a form', () => {
+  const Line = defineForm({ product: field('', Text({ label: 'Product' })) });
+
+  type Order = { title: string; lines: Array<InstanceType<typeof Line>> };
+
+  const standard = z.object({
+    title: z.string().min(1, 'Title is required'),
+    lines: z.array(z.object({ product: z.string() })).min(2, 'Add two lines')
+  });
+
+  const createOrder = async (order: Array<new () => object>) => {
+    const controller = await FormController.fromForm<Order>({
+      items: [
+        { property: 'title', label: 'Title', value: 'Order' },
+        {
+          property: 'lines',
+          label: 'Lines',
+          value: [{ product: 'Paper' }],
+          row: () => new Line()
+        }
+      ],
+      services: [...order, Validate, SetValue, Trigger] as never
+    });
+
+    await controller.start();
+
+    return controller;
+  };
+
+  test.each([
+    ['before', (schema: new () => object) => [schema, FieldArray]],
+    ['after', (schema: new () => object) => [FieldArray, schema]]
+  ])(
+    'a schema given to the service is not the schema of the rows, listed %s FieldArray',
+    async (_order, list) => {
+      const controller = await createOrder(
+        list(SchemaValidation.of(standard) as never)
+      );
+      const rows = () => controller.getService(FieldArray).rows('lines');
+      const lines = () => controller.getForm().items[1];
+
+      expect(await controller.getService(Validate).run()).toBe(false);
+      expect(rows()[0].controller.getForm().state).toMatchObject({
+        valid: true,
+        errors: []
+      });
+      expect(lines()).toMatchObject({
+        error: true,
+        errorMessages: ['Add two lines']
+      });
+
+      // What the schema says about the list stays while a row changes
+      await rows()[0].controller.getService(SetValue).run('product', 'Ink');
+      await rows()[0].controller.getService(Trigger).run('product');
+
+      expect(lines()).toMatchObject({
+        error: true,
+        errorMessages: ['Add two lines']
+      });
+
+      await controller.getService(FieldArray).append('lines');
+
+      expect(await controller.getService(Validate).run()).toBe(true);
+      expect(lines().error).toBe(false);
+    }
+  );
+
+  test('a row with a problem of its own as a whole keeps its list in error', async () => {
+    const Range = defineForm(
+      {
+        from: field(2, Text({ label: 'From' })),
+        to: field(1, Text({ label: 'To' }))
+      },
+      Schema(
+        z
+          .object({ from: z.number(), to: z.number() })
+          .refine(({ from, to }) => from <= to, 'Ends before it starts')
+      )
+    );
+
+    type Plan = { ranges: Array<InstanceType<typeof Range>> };
+
+    const controller = await FormController.fromForm<Plan>({
+      items: [
+        {
+          property: 'ranges',
+          label: 'Ranges',
+          value: [{ from: 2, to: 1 }],
+          row: () => new Range()
+        }
+      ],
+      services: [FieldArray, SchemaValidation, Validate, SetValue, Trigger]
+    });
+
+    await controller.start();
+
+    const [row] = controller.getService(FieldArray).rows('ranges');
+
+    expect(await controller.getService(Validate).run()).toBe(false);
+    expect(row.controller.getForm().state).toMatchObject({
+      valid: false,
+      errors: ['Ends before it starts']
+    });
+
+    // Still not valid when the row is looked at again
+    await row.controller.getService(Trigger).run('from');
+
+    expect(controller.getForm().items[0].error).toBe(true);
+    expect(controller.getForm().state?.valid).toBe(false);
+
+    await row.controller.getService(SetValue).run('to', 5);
+
+    expect(await controller.getService(Validate).run()).toBe(true);
+    expect(controller.getForm().state?.valid).toBe(true);
+  });
+
+  test('the schema is asked about what the form is submitted as', async () => {
+    const UserForm = defineForm(
+      {
+        // Not an item: no decorator
+        id: field('u1'),
+        email: field('jane@example.com', Text({ label: 'Email' }))
+      },
+      Schema(z.object({ id: z.string(), email: z.email() })),
+      Services([SchemaValidation, GetValues, Validate, Submit])
+    );
+    const controller = await FormController.fromEntity(new UserForm());
+    const handler = jest.fn();
+
+    await controller.start();
+
+    expect(await controller.getService(Submit).run(handler)).toBe(true);
+    expect(handler).toHaveBeenCalledWith({
+      id: 'u1',
+      email: 'jane@example.com'
+    });
+  });
+});
+
 describe('schema', () => {
   test('makes the validation of one item from a schema of its value', async () => {
     const UserForm = defineForm(

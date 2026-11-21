@@ -41,11 +41,11 @@
     "build": "tsup lib/index.ts --format esm,cjs --target es2020 --clean && tsc -p tsconfig.build.json --emitDeclarationOnly",
     "clean": "rimraf dist",
     "lint": "eslint lib",
-    "test": "node --test test/"
+    "test": "node --test test/*.test.mjs"
   },
   "peerDependencies": {
-    "@punica/form": "^2.2.0-next.0",
-    "@punica/form-service": "^2.2.0-next.0"
+    "@punica/form": "^2.2.0-next.1",
+    "@punica/form-service": "^2.2.0-next.1"
   },
   "devDependencies": {
     "@punica/form": "workspace:^",

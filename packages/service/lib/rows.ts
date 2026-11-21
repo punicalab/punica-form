@@ -54,6 +54,12 @@ type List = {
   own?: ErrorDetail;
 
   /**
+   * The validation of the item itself, which runs besides the validation
+   * of its rows. Services wrap it with `wrapValidation`.
+   */
+  base?: FormItem<never>['validation'];
+
+  /**
    * Validations of the item that are running. Meanwhile a row whose state
    * changes does not write the item: the rows are validated as one.
    */
@@ -222,12 +228,15 @@ const inherited = <E, F extends FormItem<E>>(
   command: CommandService<E, F>,
   validate: new () => IService
 ): Array<new () => IService> => {
-  const classes = (command.getForm().services ?? []).map(
-    (service) =>
-      (typeof service === 'function'
-        ? service
-        : service.constructor) as new () => IService
-  );
+  const classes = (command.getForm().services ?? [])
+    .map(
+      (service) =>
+        (typeof service === 'function'
+          ? service
+          : service.constructor) as new () => IService
+    )
+    // A service that is made for one form says so
+    .filter((service) => (service as { forRows?: boolean }).forRows !== false);
 
   // The form validates its rows, whatever it lists itself
   return classes.some(
@@ -350,12 +359,14 @@ export const createLists = async <E, F extends FormItem<E>>(
   for (const item of command.getForm().items) {
     if (!item.row) continue;
 
-    const { property, validation } = item;
+    const { property } = item;
     const list = setRows(
       command,
       property,
       await createRows(command, item, item.value)
     );
+
+    list.base = item.validation as List['base'];
 
     command.setItems([
       {
@@ -366,7 +377,11 @@ export const createLists = async <E, F extends FormItem<E>>(
           list.validating++;
 
           try {
-            const own = await validation?.call(item, commandItem, context);
+            const own = await (list.base as F['validation'] | undefined)?.call(
+              item,
+              commandItem,
+              context
+            );
             const valid = await Promise.all(
               list.rows.map((row) => serviceOf(row, validate)?.run() ?? true)
             );
@@ -387,6 +402,32 @@ export const createLists = async <E, F extends FormItem<E>>(
       }
     ]);
   }
+};
+
+/**
+ * Wraps the validations of the items of a form, for a service that adds a
+ * validation of its own to them. It works with lists whatever the order of
+ * the services: the validation of a list item is wrapped inside the
+ * validation of its rows, so what it finds stays while the rows change.
+ * @param wrap - Returns the new validation of an item for its current one
+ */
+export const wrapValidation = <E, F extends FormItem<E>>(
+  command: CommandService<E, F>,
+  wrap: (item: F, validation: F['validation']) => F['validation']
+): void => {
+  const wrapped: F[] = [];
+
+  for (const item of command.getForm().items) {
+    const list = listOf(command, item.property);
+
+    if (list) {
+      list.base = wrap(item, list.base as F['validation']) as List['base'];
+    } else {
+      wrapped.push({ ...item, validation: wrap(item, item.validation) });
+    }
+  }
+
+  command.setItems(wrapped);
 };
 
 /**

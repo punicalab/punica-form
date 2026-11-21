@@ -46,8 +46,8 @@ class UserForm {
   path. An issue about `address.city` belongs to the item of the path
   `address/city`, or else to the item of `address`.
 - Issues that belong to no item, such as a rule about two values, become
-  errors of the form (`state.errors`) when it is validated or submitted, and
-  the form is not submitted.
+  errors of the form (`state.errors`) when it is validated or submitted. The
+  form is not valid then (`state.valid`) and not submitted.
 - `Trigger` validates one item: the schema is asked about the whole form and
   only that item is written.
 - A `validation` function of an item still runs, before the schema.
@@ -85,4 +85,7 @@ email = '';
   back to the form.
 - Hidden and disabled items are not validated, as everywhere in Punica Form.
 - The rows of a list are forms of their own: give the row class its own
-  `@Schema`.
+  `@Schema`. A schema given with `SchemaValidation.of` is the schema of that
+  form only, not of its rows.
+- The schema is asked about what the form would be submitted as: its entity
+  with the values of its items.

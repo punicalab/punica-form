@@ -15,6 +15,7 @@ export * from './clearError';
 export * from './clearErrors';
 export * from './fieldArray';
 export { addFormValidation } from './formValidation';
+export { wrapValidation } from './rows';
 export type { FormValidation } from './formValidation';
 export type { FormRow } from './rows';
 export * from './getValues';

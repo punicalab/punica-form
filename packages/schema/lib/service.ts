@@ -4,7 +4,7 @@ import {
   IServiceInitialize,
   isEqual
 } from '@punica/form';
-import { addFormValidation } from '@punica/form-service';
+import { addFormValidation, wrapValidation } from '@punica/form-service';
 import { schemaOf } from './decorator';
 import { Sorted, sort, validate, valuesOf } from './issues';
 import { StandardSchema } from './standard';
@@ -40,6 +40,9 @@ export class SchemaValidation<
   public static of(standard: StandardSchema): typeof SchemaValidation {
     return class extends SchemaValidation<never> {
       protected static schema = standard;
+
+      // The schema is the one of this form, not of the rows of its lists
+      public static forRows = false;
     } as unknown as typeof SchemaValidation;
   }
 
@@ -57,21 +60,17 @@ export class SchemaValidation<
     // have no schema
     if (!this.#schema) return;
 
-    command.setItems(
-      command.getForm().items.map((item) => ({
-        ...item,
-        validation: async (commandItem, context) => {
-          const own = await item.validation?.call(item, commandItem, context);
+    wrapValidation(command, (item, validation) => {
+      return async (commandItem, context) => {
+        const own = await validation?.call(item, commandItem, context);
 
-          if (own?.error) return own;
+        if (own?.error) return own;
 
-          const messages =
-            (await this.#issues()).items.get(item.property) ?? [];
+        const messages = (await this.#issues()).items.get(item.property) ?? [];
 
-          return { error: messages.length > 0, errorMessages: messages };
-        }
-      }))
-    );
+        return { error: messages.length > 0, errorMessages: messages };
+      };
+    });
 
     addFormValidation(command, async () => (await this.#issues()).form);
   }
@@ -83,7 +82,7 @@ export class SchemaValidation<
    */
   #issues(): Promise<Sorted<E>> {
     const { items } = this.#command.getForm();
-    const values = valuesOf(items);
+    const values = valuesOf(this.#command.initialEntity, items);
 
     if (this.#running && isEqual(values, this.#running.values)) {
       return this.#running.issues;

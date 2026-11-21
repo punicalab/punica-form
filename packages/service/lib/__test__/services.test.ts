@@ -1065,10 +1065,94 @@ describe('a validation of the form as a whole', () => {
       'The dates are not in order'
     ]);
 
+    expect(controller.getForm().state?.valid).toBe(false);
+
     problems = [];
 
     expect(await controller.getService(Validate).run()).toBe(true);
-    expect(controller.getForm().state?.errors).toEqual([]);
+    expect(controller.getForm().state).toMatchObject({
+      errors: [],
+      valid: true
+    });
+  });
+
+  test('the error of a submit that was refused stays when the form is validated', async () => {
+    await controller.getService(Submit).run(() => {
+      throw new Error('Email is taken');
+    });
+    problems = ['Not yet'];
+    await controller.getService(Validate).run();
+
+    expect(controller.getForm().state?.errors).toEqual([
+      'Email is taken',
+      'Not yet'
+    ]);
+
+    problems = [];
+    await controller.getService(Validate).run();
+
+    expect(controller.getForm().state?.errors).toEqual(['Email is taken']);
+  });
+
+  test('ClearErrors and Reset remove its messages', async () => {
+    for (const clear of [
+      () => controller.getService(ClearErrors).run(),
+      () => controller.getService(Reset).run()
+    ]) {
+      problems = ['Not yet'];
+      await controller.getService(Validate).run();
+
+      expect(controller.getForm().state?.valid).toBe(false);
+
+      await clear();
+
+      expect(controller.getForm().state).toMatchObject({
+        errors: [],
+        valid: true
+      });
+    }
+  });
+
+  test('an answer that arrives after the form was reset, or after a newer one, is dropped', async () => {
+    const waiting: Array<(messages: string[]) => void> = [];
+
+    Whole.validation = () =>
+      new Promise<string[]>((resolve) => waiting.push(resolve));
+
+    try {
+      const fresh = await FormController.fromForm({
+        ...createForm(),
+        services: [...(createForm().services ?? []), Whole]
+      });
+
+      await fresh.start();
+
+      const tick = () => new Promise((resolve) => setTimeout(resolve));
+      const before = fresh.getService(Validate).run();
+
+      await tick();
+      await fresh.getService(Reset).run();
+      waiting.splice(0).forEach((answer) => answer(['Too late']));
+
+      expect(await before).toBe(false);
+      expect(fresh.getForm().state).toMatchObject({ errors: [], valid: true });
+
+      const older = fresh.getService(Validate).run();
+
+      await tick();
+
+      const newer = fresh.getService(Validate).run();
+
+      await tick();
+      waiting[1](['Newer']);
+      await newer;
+      waiting[0](['Older']);
+      await older;
+
+      expect(fresh.getForm().state?.errors).toEqual(['Newer']);
+    } finally {
+      Whole.validation = () => problems;
+    }
   });
 
   test('a form with such a problem is not submitted', async () => {

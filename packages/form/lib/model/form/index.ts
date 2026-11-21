@@ -10,7 +10,10 @@ export type FormState = {
   /** Whether the user has left a field. */
   touched: boolean;
 
-  /** Whether no item is in error. */
+  /**
+   * Whether no item is in error, and the form as a whole is valid when it
+   * has validations of its own.
+   */
   valid: boolean;
 
   /** Whether an item is being validated. */
@@ -29,7 +32,13 @@ export type FormState = {
 /** The part of the state services write; the rest follows from the items. */
 export type FormStatePatch = Partial<
   Pick<FormState, 'submitting' | 'submitCount' | 'errors'>
->;
+> & {
+  /**
+   * Whether the form as a whole is not valid, whatever its items say: a
+   * validation of the form found something. It stays until it is set again.
+   */
+  invalid?: boolean;
+};
 
 /**
  * The state of a form. Readers and starters may attach their own properties

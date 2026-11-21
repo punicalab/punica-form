@@ -4,7 +4,7 @@ import {
   IServiceControl,
   IServiceInitialize
 } from '@punica/form';
-import { validateForm } from '../formValidation';
+import { formEpoch, validateForm } from '../formValidation';
 import { validateItems } from '../validateItem';
 
 /**
@@ -28,11 +28,12 @@ export class Validate<E, F extends FormItem<E> = FormItem<E>>
    * whole when it has validations of its own (`addFormValidation`)
    */
   public async run(): Promise<boolean> {
+    const epoch = formEpoch(this.#command);
     const items = await validateItems(
       this.#command,
       this.#command.getForm().items
     );
-    const form = await validateForm(this.#command);
+    const form = await validateForm(this.#command, epoch);
 
     return items && form;
   }

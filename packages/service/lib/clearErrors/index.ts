@@ -4,6 +4,7 @@ import {
   IServiceControl,
   IServiceInitialize
 } from '@punica/form';
+import { clearFormValidation } from '../formValidation';
 import { clearRows, serviceOf } from '../rows';
 
 /**
@@ -24,6 +25,9 @@ export class ClearErrors<E, F extends FormItem<E> = FormItem<E>>
 
   public async run(): Promise<void> {
     const { getForm, setItems } = this.#command;
+
+    // What validations of the form as a whole found
+    clearFormValidation(this.#command);
 
     // The rows of the lists first: their items follow from them
     const rows = clearRows(this.#command, undefined, (row) =>

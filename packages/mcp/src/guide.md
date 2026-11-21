@@ -262,8 +262,8 @@ class UserForm { … }
 ```
 
 - `SchemaValidation` has to be listed. It shows every issue on the item its
-  path is about; issues that belong to no item become `state.errors` and keep
-  the form from being submitted.
+  path is about; issues that belong to no item become `state.errors`, make
+  `state.valid` false and keep the form from being submitted.
 - For a form without a class: `services: [SchemaValidation.of(User), …]`.
 - A rule about the form as a whole without a schema: a service that calls
   `addFormValidation(command, () => messages)` of `@punica/form-service` in
