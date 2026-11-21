@@ -5,6 +5,7 @@ import {
   IServiceInitialize,
   deepCopy
 } from '@punica/form';
+import { resetRows } from '../rows';
 import { dropValidations } from '../validateItem';
 
 /**
@@ -33,6 +34,7 @@ export class Reset<E, F extends FormItem<E> = FormItem<E>>
     // Results of control functions that are still running are dropped
     supersede();
     dropValidations(this.#command);
+    await resetRows(this.#command);
 
     // A fresh copy, so the initial state stays intact
     setItems(deepCopy(getInitialItems()));

@@ -11,10 +11,13 @@ import {
  */
 export const readValues = <E, F extends FormItem<E>>(
   command: CommandService<E, F>
-): E => {
-  const entity = deepCopy(command.initialEntity);
+): E => valuesOf(command.initialEntity, command.getForm().items);
 
-  for (const { property, value, path } of command.getForm().items) {
+/** A copy of an entity that holds the values of the items of its form. */
+export const valuesOf = <E>(initial: E, items: Array<FormItem<E>>): E => {
+  const entity = deepCopy(initial);
+
+  for (const { property, value, path } of items) {
     if (path) {
       writeToPropertyPath(entity as object, path, value);
     } else {

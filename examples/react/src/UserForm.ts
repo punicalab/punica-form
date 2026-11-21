@@ -13,7 +13,7 @@ const CITIES: Record<string, string[]> = {
   Türkiye: ['Ankara', 'İzmir']
 };
 
-const required = (label: string) => {
+export const required = (label: string) => {
   return async ({
     formItem
   }: {

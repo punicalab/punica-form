@@ -9,6 +9,7 @@ import {
   Validate
 } from '@punica/form-service';
 import type { AppItem } from './formSystem';
+import { InvoicePanel } from './Invoice';
 import { UserForm } from './UserForm';
 
 type Controller = FormController<UserForm, AppItem<UserForm>>;
@@ -82,11 +83,12 @@ function UserFormPanel({ name }: { name: string }) {
 /** Two forms of the same class, side by side: each has its own state and services. */
 export function App() {
   return (
-    <main
-      style={{ display: 'flex', gap: 48, fontFamily: 'system-ui', padding: 24 }}
-    >
-      <UserFormPanel name="first" />
-      <UserFormPanel name="second" />
+    <main style={{ fontFamily: 'system-ui', padding: 24 }}>
+      <div style={{ display: 'flex', gap: 48 }}>
+        <UserFormPanel name="first" />
+        <UserFormPanel name="second" />
+      </div>
+      <InvoicePanel />
     </main>
   );
 }

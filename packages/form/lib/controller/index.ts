@@ -26,6 +26,12 @@ export type FormControllerOptions = {
 
   /** The register whose form item types the form reports. */
   register?: FormItemRegister;
+
+  /**
+   * The services of a form whose class lists none with `@Services`. The
+   * rows of a list get the services of the form they belong to this way.
+   */
+  services?: Array<IService | (new () => IService)>;
 };
 
 /** A class whose instances are services. */
@@ -132,6 +138,10 @@ export class FormController<
     const form: Form<E, F> = { items: [] };
 
     await createInitialReader<E, F>().read(entity, form);
+
+    if (!form.services?.length && options.services) {
+      form.services = options.services;
+    }
 
     // Readers and starters may still add items when the form is started
     if (!form.items.length && !form.readers?.length && !form.starters?.length) {
@@ -282,6 +292,15 @@ export class FormController<
 
       await (service as Partial<IServiceInitialize<E, F>>).initialize?.(
         command
+      );
+    }
+
+    if (
+      this.#form.items.some((item) => item.row) &&
+      ![...this.#services.values()].some(({ name }) => name === 'fieldArray')
+    ) {
+      console.warn(
+        `[punica-form] ${this.#name} has a list of rows but no FieldArray service: add FieldArray of @punica/form-service to @Services.`
       );
     }
 

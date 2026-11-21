@@ -187,6 +187,50 @@ describe('defineForm', () => {
     warn.mockRestore();
   });
 
+  test('a class without services gets the ones of the options', async () => {
+    class Service {
+      public get name() {
+        return 'given';
+      }
+    }
+
+    const Plain = defineForm({ id: field(1, Text({ label: 'Id' })) });
+    const Own = defineForm(
+      { id: field(1, Text({ label: 'Id' })) },
+      Services([Marker])
+    );
+    const options = { services: [Service] };
+    const plain = await FormController.fromEntity(new Plain(), options);
+    const own = await FormController.fromEntity(new Own(), options);
+
+    await plain.start();
+    await own.start();
+
+    expect(plain.getService(Service)).toBeInstanceOf(Service);
+    expect(own.getService(Marker)).toBeInstanceOf(Marker);
+    expect(() => own.getService(Service)).toThrow('Service not found');
+  });
+
+  test('a list of rows without the service that creates them is reported', async () => {
+    const warn = jest.spyOn(console, 'warn').mockImplementation();
+    const List = defineFormItem<{ label: string; row: () => object }>(
+      'define:list',
+      () => null
+    );
+    const controller = await FormController.fromEntity(
+      new (defineForm({
+        lines: field([], List({ label: 'Lines', row: () => ({}) }))
+      }))()
+    );
+
+    await controller.start();
+
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining('no FieldArray service')
+    );
+    warn.mockRestore();
+  });
+
   test('a class without form items is reported', async () => {
     const warn = jest.spyOn(console, 'warn').mockImplementation();
 

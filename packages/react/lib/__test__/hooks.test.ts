@@ -1,8 +1,19 @@
 import { StrictMode } from 'react';
 import { act, renderHook, waitFor } from '@testing-library/react';
-import { FormController, Services, defineFormItem } from '@punica/form';
-import { SetValue, Touch } from '@punica/form-service';
-import { useController, useForm, useFormController, useFormState } from '..';
+import {
+  FormController,
+  FormItem,
+  Services,
+  defineFormItem
+} from '@punica/form';
+import { FieldArray, SetValue, Touch } from '@punica/form-service';
+import {
+  useController,
+  useFieldArray,
+  useForm,
+  useFormController,
+  useFormState
+} from '..';
 
 const Text = defineFormItem<{ label: string }>('react:text', () => null);
 
@@ -176,5 +187,85 @@ describe('useController', () => {
     await waitFor(() => expect(result.current.controller).toBeDefined());
 
     expect(result.current.controller?.getForm().state?.valid).toBe(true);
+  });
+});
+
+describe('useFieldArray', () => {
+  const List = defineFormItem<{ label: string; row: () => object }>(
+    'react:list',
+    () => null
+  );
+
+  class Line {
+    @Text({ label: 'Name' })
+    public name = '';
+  }
+
+  @Services([FieldArray, SetValue])
+  class Invoice {
+    @List({ label: 'Lines', row: () => new Line() })
+    public lines: Line[] = [{ name: 'Paper' }, { name: 'Ink' }];
+  }
+
+  const render = async () => {
+    const controller = await FormController.fromEntity<
+      Invoice,
+      FormItem<Invoice>
+    >(new Invoice());
+
+    await controller.start();
+
+    let renders = 0;
+    const view = renderHook(() => {
+      renders++;
+
+      return useFieldArray(controller, 'lines');
+    });
+
+    return { controller, ...view, renders: () => renders };
+  };
+
+  test('returns the rows and renders again when a row is added, removed or moved', async () => {
+    const { result, renders } = await render();
+    const [paper, ink] = result.current.rows;
+
+    expect(result.current.rows).toHaveLength(2);
+    expect(renders()).toBe(1);
+
+    await act(() => result.current.append({ name: 'Pen' }));
+
+    expect(result.current.rows).toHaveLength(3);
+    expect(result.current.rows[2].controller.getForm().items[0].value).toBe(
+      'Pen'
+    );
+
+    await act(() => result.current.move(2, 0));
+    await act(() => result.current.remove(ink));
+    await act(() => result.current.insert(1));
+
+    expect(result.current.rows.map((row) => row.key)).toEqual([
+      result.current.rows[0].key,
+      result.current.rows[1].key,
+      paper.key
+    ]);
+
+    await act(() => result.current.replace([{ name: 'Glue' }]));
+
+    expect(result.current.rows).toHaveLength(1);
+    expect(renders()).toBe(6);
+  });
+
+  test('does not render again when a value of a row changes', async () => {
+    const { controller, result, renders } = await render();
+    const { append } = result.current;
+
+    await act(() =>
+      result.current.rows[0].controller.getService(SetValue).run('name', 'Pen')
+    );
+
+    expect(controller.getForm().items[0].value[0].name).toBe('Pen');
+    expect(renders()).toBe(1);
+    // The functions stay the same, so they can be passed to memoized components
+    expect(result.current.append).toBe(append);
   });
 });

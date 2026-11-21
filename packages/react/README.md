@@ -60,3 +60,20 @@ const { dirty, submitting } = useFormState(controller);
 ```
 
 Services are read from the controller as usual: `controller.getService(Validate)`.
+
+## Lists of rows
+
+`useFieldArray(controller, property)` returns the rows of a list, such as the
+lines of an invoice, and `append`, `insert`, `remove`, `move` and `replace`.
+Every row is a form of its own:
+
+```tsx
+const { rows, append, remove } = useFieldArray(controller, 'lines');
+
+rows.map((row) => <Line key={row.key} controller={row.controller} />);
+```
+
+The component renders again when a row is added, removed or moved. Call
+`useForm(row.controller)` in the component of a row: typing into a row then
+renders that row only. The form has to list the `FieldArray` service of
+`@punica/form-service`.

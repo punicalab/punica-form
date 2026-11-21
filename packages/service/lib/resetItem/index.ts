@@ -5,6 +5,7 @@ import {
   IServiceInitialize,
   deepCopy
 } from '@punica/form';
+import { resetRows } from '../rows';
 import { dropValidations } from '../validateItem';
 
 /**
@@ -37,6 +38,7 @@ export class ResetItem<E, F extends FormItem<E> = FormItem<E>>
 
     this.#command.supersede(property);
     dropValidations(this.#command, property);
+    await resetRows(this.#command, property);
     this.#command.setItems([deepCopy(initial)]);
   }
 }
