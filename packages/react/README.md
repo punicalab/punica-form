@@ -45,6 +45,18 @@ function UserFormView({ controller }) {
 | Hook                                        | What it does                                                                                                                                                 |
 | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `useFormController(createEntity, options?)` | Creates the controller when the component mounts, starts it and returns `{ controller, error }`. `controller` is `undefined` while the form is being started |
+| `useController(create)`                     | The same for a controller you create yourself, such as `() => fromSchema(definition)` of `@punica/form-json`                                                 |
 | `useForm(controller)`                       | The current form; the component renders again after every change                                                                                             |
+
+`useFormState(controller)` returns `{ dirty, touched, valid, submitting, submitCount, errors }`
+of the form. Unlike `useForm`, the component only renders again when that
+state changes, which suits a submit button or a "you have unsaved changes"
+notice:
+
+```tsx
+const { dirty, submitting } = useFormState(controller);
+
+<button disabled={!dirty || submitting}>Save</button>;
+```
 
 Services are read from the controller as usual: `controller.getService(Validate)`.

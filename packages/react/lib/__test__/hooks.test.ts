@@ -1,12 +1,12 @@
 import { StrictMode } from 'react';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { FormController, Services, defineFormItem } from '@punica/form';
-import { SetValue } from '@punica/form-service';
-import { useForm, useFormController } from '..';
+import { SetValue, Touch } from '@punica/form-service';
+import { useController, useForm, useFormController, useFormState } from '..';
 
 const Text = defineFormItem<{ label: string }>('react:text', () => null);
 
-@Services([SetValue])
+@Services([SetValue, Touch])
 class UserForm {
   @Text({ label: 'Name' })
   public name = 'Jane';
@@ -131,5 +131,50 @@ describe('useForm', () => {
     await controller.getService(SetValue).run('name', 'Jack');
 
     expect(renders).toHaveBeenCalledTimes(count);
+  });
+});
+
+describe('useFormState', () => {
+  test('renders again when the state changes, not after every change of an item', async () => {
+    const controller = await FormController.fromEntity(new UserForm());
+    const renders = jest.fn();
+    const { result } = renderHook(() => {
+      renders();
+
+      return useFormState(controller);
+    });
+
+    expect(result.current).toMatchObject({ dirty: false, valid: true });
+
+    await act(() => controller.start());
+    await act(() => controller.getService(SetValue).run('name', 'J'));
+
+    expect(result.current.dirty).toBe(true);
+
+    const count = renders.mock.calls.length;
+
+    await act(() => controller.getService(SetValue).run('name', 'Jo'));
+
+    expect(renders).toHaveBeenCalledTimes(count);
+
+    await act(() => controller.getService(Touch).run('name'));
+
+    expect(result.current.touched).toBe(true);
+  });
+});
+
+describe('useController', () => {
+  test('starts the controller it is given, also one of a form described as data', async () => {
+    const { result } = renderHook(() =>
+      useController(() =>
+        FormController.fromForm<{ name: string }>({
+          items: [{ property: 'name', label: 'Name', value: 'Jane' }]
+        })
+      )
+    );
+
+    await waitFor(() => expect(result.current.controller).toBeDefined());
+
+    expect(result.current.controller?.getForm().state?.valid).toBe(true);
   });
 });

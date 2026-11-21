@@ -28,6 +28,22 @@ export type FormItem<E> = {
   disabled?: boolean;
   hidden?: boolean;
 
+  /** Whether the value differs from the one the form was started with. */
+  dirty?: boolean;
+
+  /** Whether the user has left the field. Set by the `Touch` service. */
+  touched?: boolean;
+
+  /** Whether the item is being validated. */
+  validating?: boolean;
+
+  /**
+   * Milliseconds the `Trigger` service waits before it validates the item.
+   * A validation triggered again meanwhile starts the wait anew, so a
+   * validation that asks a server runs once the user stops typing.
+   */
+  validateDebounce?: number;
+
   /** Whether the last validation of the item failed. */
   error?: boolean;
 
@@ -47,8 +63,15 @@ export type FormItem<E> = {
   /** Runs after the value of the item was set; the returned items are written to the form. */
   control?(command: CommandItem<E, FormItem<E>>): Promise<Array<FormItem<E>>>;
 
-  /** Validates the item. */
-  validation?(command: CommandItem<E, FormItem<E>>): Promise<ErrorDetail>;
+  /**
+   * Validates the item. The services pass a context whose signal is aborted
+   * when the result is not needed any more; give it to `fetch` to cancel
+   * the request: `fetch(url, { signal: context?.signal })`.
+   */
+  validation?(
+    command: CommandItem<E, FormItem<E>>,
+    context?: ValidationContext
+  ): Promise<ErrorDetail>;
 };
 
 /**
@@ -62,6 +85,17 @@ export type FormItem<E> = {
 export type TypedFormItem<E, F extends FormItem<E> = FormItem<E>> = {
   [K in keyof E]: Omit<F, 'property' | 'value'> & { property: K; value?: E[K] };
 }[keyof E];
+
+/**
+ * What a validation function receives besides its command.
+ */
+export type ValidationContext = {
+  /**
+   * Aborted when the item is validated again, changed or reset while the
+   * validation is running.
+   */
+  signal: AbortSignal;
+};
 
 /**
  * The result of a validation.

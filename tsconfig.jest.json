@@ -10,6 +10,8 @@
       "@punica/form-service": ["packages/service/lib"],
       "@punica/form-react": ["packages/react/lib"],
       "@punica/form-kit": ["packages/kit/lib"],
+      "@punica/form-json": ["packages/json/lib"],
+      "@punica/form-json/definition": ["packages/json/lib/definition"],
       "@punica/components/react": [
         "packages/kit/node_modules/@punica/components/dist/types/react.d.ts"
       ]

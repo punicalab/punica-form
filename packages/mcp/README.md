@@ -10,12 +10,14 @@ and validates its answer.
 
 ## Tools
 
-| Tool            | What it does                                                                                                                  |
-| --------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| `get_guide`     | The rules: what the packages provide and what your application builds, the lifecycle, services, events and a complete example |
-| `search_api`    | Finds exports of the Punica Form packages (core, services, React hooks, form kit) by name or documentation                    |
-| `get_api`       | The exact TypeScript declaration and documentation of one or more exports                                                     |
-| `validate_code` | Checks code for imports that do not exist, wrong service names and service calls that do not exist; each problem with a fix   |
+| Tool              | What it does                                                                                                                     |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `get_guide`       | The rules: what the packages provide and what your application builds, the lifecycle, services, events and a complete example    |
+| `search_api`      | Finds exports of the Punica Form packages (core, services, React hooks, form kit) by name or documentation                       |
+| `get_api`         | The exact TypeScript declaration and documentation of one or more exports                                                        |
+| `validate_code`   | Checks code for imports that do not exist, wrong service names and service calls that do not exist; each problem with a fix      |
+| `get_form_schema` | The format of a form described as data (`@punica/form-json`): its JSON Schema, the types, rules and conditions                   |
+| `validate_form`   | Checks a form definition before it is rendered: each problem with its path. Also turns a flat JSON Schema into a form definition |
 
 Resources: `punica-form://guide` and `punica-form://api/<name>`.
 

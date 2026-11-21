@@ -11,6 +11,7 @@ Punica Form is a headless form engine. `@punica/form` holds the engine,
   `getFormProperty` and `getFormItemProperties`, the form item register,
   `deepCopy`, the DevTools switches and the types. Use `search_api` for the
   exact list.
+- `@punica/form-json`: forms as data; see "Forms as data" below.
 - `@punica/form-service`: `Validate`, `GetValues`, `SetValue`, `Reset`,
   `ResetItem`, `Trigger`, `ClearError`, `ClearErrors`, `Store`.
 - NOT provided: `@Title`, `@Description`, `@Layout`, `@FormItemInputText` or
@@ -21,6 +22,30 @@ Punica Form is a headless form engine. `@punica/form` holds the engine,
 - Decorators work with both the legacy implementation of TypeScript
   (`"experimentalDecorators": true`) and the standard one. There is no
   `reflect-metadata`: never call `Reflect.getMetadata`.
+- Before writing a decorated class, check that the build compiles decorator
+  syntax: `"experimentalDecorators": true` in `tsconfig.json` is enough for
+  Vite and esbuild. When it does not and you should not change it, define the
+  form with `defineForm` (since 2.2), which needs no decorator syntax. Every
+  decorator (`Services`, the kit's `TextField`, your own) is then a function
+  call:
+
+  ```ts
+  import { defineForm, field, Services } from "@punica/form";
+
+  const UserForm = defineForm(
+    {
+      name: field("", Text({ label: "Name" })),
+      age: field<number | undefined>(undefined, NumberInput({ label: "Age" })),
+    },
+    Services([GetValues, SetValue]) // or FormKit({ title: "User" })
+  );
+  type User = InstanceType<typeof UserForm>;
+
+  const controller = await FormController.fromEntity(new UserForm({ name: "Jane" }));
+  ```
+
+  The result is a form class like a decorated one; do not mix both styles in
+  one class. `fromEntity` warns when a class ends up without form items.
 
 ## The ready-made form system
 
@@ -30,8 +55,32 @@ Punica Form is a headless form engine. `@punica/form` holds the engine,
 `SwitchField` with the rules `required`, `minLength`, `maxLength`, `pattern`,
 `min` and `max`, and from `@punica/form-kit/react` the component
 `<KitForm entity={() => new UserForm()} onSubmit={…} />`, which renders the
-form with `@punica/components`. Use it when the project has it installed;
+form with `@punica/components`, shows what `onSubmit` throws above the
+fields and reports it to `onError`. Use it when the project has it installed;
 otherwise build the form system as described below.
+
+## Forms as data, written at run time
+
+Everything above is for code. When the form itself has to be produced at run
+time (an agent asking the user for information, a form sent by a server),
+write a form definition instead: JSON, no code. `@punica/form-json` checks
+and runs it.
+
+- Read `get_form_schema` for the format and check every definition with
+  `validate_form` before handing it over.
+- Render it with `<JsonForm definition={definition} onSubmit={…} />` from
+  `@punica/form-kit/json`, or create the controller with
+  `fromSchema(definition, { types, rules })` from `@punica/form-json`. Both
+  refuse a definition that is not valid with a `FormDefinitionError` whose
+  `problems` have a `path` and a `message`.
+- Types with the kit: `text`, `textarea`, `number`, `select`, `checkbox`,
+  `switch`. Kit options such as `inputType`, `rows` and `span` go into `props`.
+- Never put functions, expressions or HTML into a definition, and never
+  build one by string concatenation: produce the object and validate it.
+- In React a definition is read when the component mounts; give `JsonForm` a
+  `key` to show another one.
+- `fromJsonSchema(schema)` turns a flat JSON Schema (string, number, integer,
+  boolean and enum properties) into a definition.
 
 ## Lifecycle
 
@@ -68,6 +117,13 @@ const form = useForm(controller); // in a component that has the controller
 
 Without that package: `useSyncExternalStore(controller.subscribe, controller.getForm)`.
 `start()` publishes the started form the same way (since 2.1).
+
+Since 2.2 every item has `dirty` (its value differs from the initial one) and
+`touched` (set by the `Touch` service), and a started form has
+`form.state`: `{ dirty, touched, valid, validating, submitting, submitCount, errors }`.
+`dirty`, `touched` and `valid` follow from the items; `errors` are the errors
+of the form as a whole, such as a rejected submit. In React
+`useFormState(controller)` returns it and only renders again when it changes.
 Never change a form or an item in place; use the services.
 
 ## Services
@@ -77,7 +133,7 @@ entity of the form, so property names and results are type-checked.
 
 | Class | Call |
 |---|---|
-| `Validate` | `run(): Promise<boolean>`, validates every visible item |
+| `Validate` | `run(): Promise<boolean>`, validates every item that is not hidden or disabled |
 | `Trigger` | `run(property): Promise<void>`, validates one item |
 | `GetValues` | `run(): Promise<E>`, a copy of the entity filled with the item values |
 | `SetValue` | `run(property, value): Promise<void>`, then runs the `control` function of the item |
@@ -85,6 +141,8 @@ entity of the form, so property names and results are type-checked.
 | `ResetItem` | `run(property): Promise<void>` |
 | `ClearError` | `run(property): Promise<void>` |
 | `ClearErrors` | `run(): Promise<void>` |
+| `Touch` | `run(property): Promise<void>`, marks the item as touched; call it when the user leaves the field (since 2.2) |
+| `Submit` | `run(handler?): Promise<boolean>`, validates, then calls `handler(values)`; sets `state.submitting`, ignores a second submit meanwhile, and turns what the handler throws into `state.errors` instead of rejecting (since 2.2) |
 | `Store` | no `run`: it adds `readStoreItem`, `writeStoreItem`, `deleteStoreItem` to the command passed to item functions (`CommandItem<E, F, StoreCommand>`) |
 
 ```ts
@@ -110,11 +168,14 @@ if (await controller.getService(Validate).run()) {
 - `Validate.run()` returns `false` when the form is invalid. Other failures
   (an unknown property, an error thrown by a validation function) reject.
 - Setting a value does not validate it. Run `Trigger` for that.
+- To submit a form prefer `Submit` (since 2.2) over calling `Validate` and
+  `GetValues` by hand. Do not keep your own `submitting` or `dirty` flags.
 
 ## Form items
 
 A form item is a plain object: `property`, `label`, `type`, `value`,
-`required`, `disabled`, `hidden`, `error`, `errorMessages`. Add the
+`required`, `disabled`, `hidden`, `error`, `errorMessages`, `dirty`,
+`touched`, `validating`. Add the
 properties of your form system with a type of your own:
 `type AppItem<E> = FormItem<E> & { layout?: Layout }`, then use
 `FormController<UserForm, AppItem<UserForm>>`.
@@ -122,7 +183,15 @@ properties of your form system with a type of your own:
 The functions of an item receive a command `{ formItem, initialEntity,
 getItem }` holding copies, and return items instead of changing them:
 
-- `validation(command): Promise<{ error: boolean, errorMessages?: string[] }>`
+- `validation(command, context?): Promise<{ error: boolean, errorMessages?: string[] }>`.
+  Since 2.2 the services pass `context.signal`, an `AbortSignal` that is
+  aborted when the item is validated again, changed or reset: give it to
+  `fetch(url, { signal: context?.signal })`. A validation that rejects after
+  it was aborted is ignored. The item is `validating` meanwhile.
+- `validateDebounce: 300` on an item makes `Trigger` wait that many
+  milliseconds and validate once after the last trigger (since 2.2). Use it
+  for validations that ask a server while the user types; do not write your
+  own debounce around `Trigger`. `Validate` and `Submit` do not wait.
 - `control(command): Promise<FormItem[]>`, run after its value is set; the
   returned items are written to the form
 - `initialize(command): Promise<FormItem[]>`, run once while the form is created
@@ -137,6 +206,8 @@ handler. Payloads are typed.
 | `UPDATE_FORM` | the form; fired after every change |
 | `UPDATE_ITEM` | an array: the changed item, then the items its `control` returned |
 | `RESET` | the form; fired by `Reset`, after `UPDATE_FORM` |
+| `SUBMIT` | the values the submit handler received; fired by `Submit` (since 2.2) |
+| `SUBMIT_ERROR` | what a validation or the submit handler threw (since 2.2) |
 | `REGISTER_ITEMS` | `string[]` of registered form item types; fired at the start of `start()` |
 
 ## A complete example

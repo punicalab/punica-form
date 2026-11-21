@@ -38,23 +38,33 @@ Punica Form uses TypeScript decorators. Both implementations work: the legacy
 one (`"experimentalDecorators": true`) and the standard one of TypeScript 5.
 No reflection polyfill is needed.
 
+Projects that cannot compile decorator syntax define the same form with
+`defineForm`, where every decorator is a function call:
+
+```ts
+const UserForm = defineForm(
+  { name: field('', FormItemInputText({ label: 'Name' })) },
+  Services([GetValues, SetValue])
+);
+```
+
 ## 🚀 Quick Start
 
 `Title`, `FormItemInputText` and `Reader` below are part of **your** form
 system (see [Building Your Form System](https://form.punicalab.com/docs/building-your-form/building-form-overview)).
 
 ```typescript
-import { FormController, Readers, Services } from "@punica/form";
-import { GetValues, SetValue, Validate } from "@punica/form-service";
-import { Title, FormItemInputText, Reader } from "@/commons";
+import { FormController, Readers, Services } from '@punica/form';
+import { GetValues, SetValue, Validate } from '@punica/form-service';
+import { Title, FormItemInputText, Reader } from '@/commons';
 
 // Define your form class
-@Title("Create User")
+@Title('Create User')
 @Readers([new Reader()])
 @Services([GetValues, SetValue, Validate])
 export class UserForm {
-  @FormItemInputText({ label: "Name", required: true })
-  name: string = "";
+  @FormItemInputText({ label: 'Name', required: true })
+  name: string = '';
 }
 
 // Use FormController
@@ -64,7 +74,7 @@ controller.subscribe(() => render(controller.getForm()));
 await controller.start();
 
 // Services are read by class and are bound to UserForm
-await controller.getService(SetValue).run("name", "John");
+await controller.getService(SetValue).run('name', 'John');
 
 if (await controller.getService(Validate).run()) {
   const values = await controller.getService(GetValues).run(); // UserForm
@@ -122,6 +132,7 @@ Punica Form operates on a foundation of modularity and flexibility:
 ## 🎯 What Punica Form Provides
 
 **Business Logic Layer:**
+
 - ✅ Form state management
 - ✅ Metadata processing (decorators, readers)
 - ✅ Validation engine
@@ -133,6 +144,7 @@ Punica Form operates on a foundation of modularity and flexibility:
 ## 🛠️ What You Build
 
 **Your Form System:**
+
 - 🎨 FormItem Components (InputText, Select, Textarea, etc.)
 - 📝 Custom Decorators (@Layout, @FormItemInputText, etc.)
 - 🔄 Custom Readers (process your UI decorators)
@@ -146,6 +158,7 @@ This repository is a monorepo containing the following packages:
 
 - **[@punica/form](./packages/form)** - Core form engine
 - **[@punica/form-service](./packages/service)** - Built-in services (GetValues, SetValue, Validate, etc.)
+- **[@punica/form-json](./packages/json)** - Forms as data: a JSON form definition an AI agent can write, checked before it is rendered
 - **[@punica/form-kit](./packages/kit)** - A ready-made form system: field decorators, validation rules and React components built on `@punica/components`
 - **[@punica/form-react](./packages/react)** - React hooks: `useFormController` and `useForm`
 - **[@punica/form-mcp](./packages/mcp)** - MCP server that lets AI assistants look up the API and check their code
@@ -222,4 +235,3 @@ This project is licensed under the MIT License - see the [LICENSE](./LICENSE) fi
 ---
 
 **⭐ If you find Punica Form useful, please consider giving it a star on GitHub!**
-

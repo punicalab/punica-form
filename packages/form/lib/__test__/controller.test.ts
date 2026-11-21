@@ -307,4 +307,18 @@ describe('form controller', () => {
     expect(register.getItem('text')).toBe(second);
     expect(register.getItemKeys()).toEqual(['text']);
   });
+
+  test('a form that used the name state for its own data gets the state of the form', async () => {
+    const { form } = await start({ state: 'draft' as never });
+
+    expect(form.state).toEqual({
+      dirty: false,
+      touched: false,
+      valid: true,
+      validating: false,
+      submitting: false,
+      submitCount: 0,
+      errors: []
+    });
+  });
 });

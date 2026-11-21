@@ -218,7 +218,90 @@ importers:
         specifier: ^8.73.0
         version: 8.73.0(eslint@10.15.0(supports-color@8.1.1))(supports-color@8.1.1)(typescript@5.9.3)
 
+  examples/json:
+    dependencies:
+      '@punica/components':
+        specifier: ^2.1.0
+        version: 2.1.0(@types/react@19.3.0)
+      '@punica/form':
+        specifier: workspace:^
+        version: link:../../packages/form
+      '@punica/form-json':
+        specifier: workspace:^
+        version: link:../../packages/json
+      '@punica/form-kit':
+        specifier: workspace:^
+        version: link:../../packages/kit
+      '@punica/form-react':
+        specifier: workspace:^
+        version: link:../../packages/react
+      '@punica/form-service':
+        specifier: workspace:^
+        version: link:../../packages/service
+      react:
+        specifier: ^19.0.0
+        version: 19.3.1
+      react-dom:
+        specifier: ^19.0.0
+        version: 19.3.1(react@19.3.1)
+    devDependencies:
+      '@playwright/test':
+        specifier: ^1.65.1
+        version: 1.65.1
+      '@types/react':
+        specifier: ^19.0.0
+        version: 19.3.0
+      '@types/react-dom':
+        specifier: ^19.0.0
+        version: 19.3.0(@types/react@19.3.0)
+      '@vitejs/plugin-react':
+        specifier: ^6.3.0
+        version: 6.3.0(vite@8.3.8(@types/node@20.6.1)(esbuild@0.28.2)(yaml@2.9.1))
+      vite:
+        specifier: ^8.3.8
+        version: 8.3.8(@types/node@20.6.1)(esbuild@0.28.2)(yaml@2.9.1)
+
   examples/kit:
+    dependencies:
+      '@punica/components':
+        specifier: ^2.1.0
+        version: 2.1.0(@types/react@19.3.0)
+      '@punica/form':
+        specifier: workspace:^
+        version: link:../../packages/form
+      '@punica/form-kit':
+        specifier: workspace:^
+        version: link:../../packages/kit
+      '@punica/form-react':
+        specifier: workspace:^
+        version: link:../../packages/react
+      '@punica/form-service':
+        specifier: workspace:^
+        version: link:../../packages/service
+      react:
+        specifier: ^19.0.0
+        version: 19.3.1
+      react-dom:
+        specifier: ^19.0.0
+        version: 19.3.1(react@19.3.1)
+    devDependencies:
+      '@playwright/test':
+        specifier: ^1.65.1
+        version: 1.65.1
+      '@types/react':
+        specifier: ^19.0.0
+        version: 19.3.0
+      '@types/react-dom':
+        specifier: ^19.0.0
+        version: 19.3.0(@types/react@19.3.0)
+      '@vitejs/plugin-react':
+        specifier: ^6.3.0
+        version: 6.3.0(vite@8.3.8(@types/node@20.6.1)(esbuild@0.28.2)(yaml@2.9.1))
+      vite:
+        specifier: ^8.3.8
+        version: 8.3.8(@types/node@20.6.1)(esbuild@0.28.2)(yaml@2.9.1)
+
+  examples/plain:
     dependencies:
       '@punica/components':
         specifier: ^2.1.0
@@ -294,6 +377,18 @@ importers:
 
   packages/form: {}
 
+  packages/json:
+    devDependencies:
+      '@punica/form':
+        specifier: workspace:^
+        version: link:../form
+      '@punica/form-service':
+        specifier: workspace:^
+        version: link:../service
+      ajv:
+        specifier: ^8.17.1
+        version: 8.20.0
+
   packages/kit:
     devDependencies:
       '@punica/components':
@@ -302,6 +397,9 @@ importers:
       '@punica/form':
         specifier: workspace:^
         version: link:../form
+      '@punica/form-json':
+        specifier: workspace:^
+        version: link:../json
       '@punica/form-react':
         specifier: workspace:^
         version: link:../react
@@ -332,6 +430,9 @@ importers:
       '@modelcontextprotocol/sdk':
         specifier: ^1.32.2
         version: 1.32.2(supports-color@8.1.1)(zod@4.6.7)
+      '@punica/form-json':
+        specifier: workspace:^
+        version: link:../json
       zod:
         specifier: ^4.6.7
         version: 4.6.7

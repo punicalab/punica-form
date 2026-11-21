@@ -1,4 +1,4 @@
-import { CommandItem, Form, FormEventMap, FormItem } from '..';
+import { CommandItem, Form, FormEventMap, FormItem, FormStatePatch } from '..';
 
 /**
  * What a service receives when it is initialized: the only way to read and
@@ -20,8 +20,15 @@ export type CommandService<E, F extends FormItem<E>> = {
   /**
    * Replaces the items with the same properties. The form gets a new
    * reference and UPDATE_FORM is fired. Unknown properties are ignored.
+   * `dirty` of the items is set by comparing their values with the initial ones.
    */
   setItems: (items: Array<FormItem<E>>) => void;
+
+  /**
+   * Changes the state of the form as a whole. The form gets a new reference
+   * and UPDATE_FORM is fired, unless nothing changed.
+   */
+  setState: (state: FormStatePatch) => void;
 
   /**
    * Marks the pending asynchronous writes of a property, or of the whole

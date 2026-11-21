@@ -9,7 +9,5 @@
     "module": "esnext",
     "moduleResolution": "bundler"
   },
-  "include": [
-    "lib"
-  ]
+  "include": ["lib"]
 }

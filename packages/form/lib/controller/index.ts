@@ -5,6 +5,8 @@ import {
   FormEventMap,
   FormItem,
   FormItemRegister,
+  FormState,
+  FormStatePatch,
   IService,
   IServiceCommand,
   IServiceControl,
@@ -12,7 +14,8 @@ import {
   ServiceRegistry,
   createInitialReader,
   deepCopy,
-  defaultFormItemRegister
+  defaultFormItemRegister,
+  isEqual
 } from '..';
 import { shared } from '../shared';
 import { isDevToolsEnabled, sendToDevTools } from '../utils/devtools';
@@ -51,7 +54,19 @@ type BoundService<S, E, F extends FormItem<E>> = [RegistryKey<S>] extends [
   ? S
   : ServiceRegistry<E, F>[RegistryKey<S>];
 
+const DOCS_URL = 'https://form.punicalab.com';
+
 let formCount = 0;
+
+const INITIAL_STATE: FormState = {
+  dirty: false,
+  touched: false,
+  valid: true,
+  validating: false,
+  submitting: false,
+  submitCount: 0,
+  errors: []
+};
 
 /**
  * Holds the state of a form and runs its readers, starters and services.
@@ -68,7 +83,7 @@ export class FormController<
   #services = new Map<object, IService>();
   #started = false;
   #batching = 0;
-  #dirty = false;
+  #pending = false;
   #epoch = 0;
   #writes = new Map<keyof E, number>();
   #subscribers = new Set<() => void>();
@@ -117,6 +132,13 @@ export class FormController<
     const form: Form<E, F> = { items: [] };
 
     await createInitialReader<E, F>().read(entity, form);
+
+    // Readers and starters may still add items when the form is started
+    if (!form.items.length && !form.readers?.length && !form.starters?.length) {
+      console.warn(
+        `[punica-form] ${options.name ?? entity.constructor?.name ?? 'The form'} has no form items. Its properties need a form item decorator. If they have one, the build of the project does not apply decorators: see ${DOCS_URL}/docs/installation, or define the form with defineForm, which needs no decorator syntax.`
+      );
+    }
 
     return new FormController<E, F>(form, entity, options);
   }
@@ -186,8 +208,8 @@ export class FormController<
    */
   public batch = <T>(change: () => T): T => {
     const done = (): void => {
-      if (--this.#batching === 0 && this.#dirty) {
-        this.#dirty = false;
+      if (--this.#batching === 0 && this.#pending) {
+        this.#pending = false;
         this.#notify();
       }
     };
@@ -264,6 +286,10 @@ export class FormController<
     }
 
     this.#initialItems = deepCopy(this.#form.items);
+    this.#form = {
+      ...this.#form,
+      state: this.#deriveState(this.#form.items)
+    };
     this.#started = true;
 
     sendToDevTools(this.#name, '@@INIT', this.#form);
@@ -293,23 +319,66 @@ export class FormController<
       const index = this.#itemsMap.get(item.property);
 
       if (index !== undefined) {
-        next[index] = item as F;
+        const initial = this.#initialItems[index];
+        const dirty = Boolean(initial) && !isEqual(item.value, initial.value);
+
+        next[index] = (
+          dirty === Boolean(item.dirty) ? item : { ...item, dirty }
+        ) as F;
         changed = true;
       }
     }
 
-    if (!changed) {
-      return;
+    if (changed) {
+      this.#commit({
+        ...this.#form,
+        items: next,
+        state: this.#deriveState(next)
+      });
     }
+  };
 
-    this.#form = { ...this.#form, items: next };
+  #setState = (patch: FormStatePatch): void => {
+    const state = this.#deriveState(this.#form.items, patch);
+
+    if (state !== this.#form.state) {
+      this.#commit({ ...this.#form, state });
+    }
+  };
+
+  /**
+   * The state of the form for its items. The current state object is
+   * returned when nothing changed, so it can be compared by reference.
+   */
+  #deriveState(items: F[], patch: FormStatePatch = {}): FormState {
+    // A form may have used the name for data of its own before 2.2
+    const known = Array.isArray(this.#form.state?.errors);
+    const current = known ? (this.#form.state as FormState) : INITIAL_STATE;
+    const next: FormState = {
+      ...current,
+      ...patch,
+      dirty: items.some((item) => item.dirty),
+      touched: items.some((item) => item.touched),
+      validating: items.some((item) => item.validating),
+      // Like the validation, which skips items the user cannot change
+      valid: items.every((item) => !item.error || item.hidden || item.disabled)
+    };
+    const same = (Object.keys(next) as Array<keyof FormState>).every((key) =>
+      isEqual(next[key], current[key])
+    );
+
+    return same && known ? current : next;
+  }
+
+  #commit(form: Form<E, F>): void {
+    this.#form = form;
 
     if (this.#batching) {
-      this.#dirty = true;
+      this.#pending = true;
     } else {
       this.#notify();
     }
-  };
+  }
 
   /** Tells everyone who follows the form that it changed. */
   #notify(): void {
@@ -381,6 +450,7 @@ export class FormController<
     getInitialItems: () => this.#initialItems,
     getItem: this.#getItem,
     setItems: this.#setItems,
+    setState: this.#setState,
     supersede: this.#supersede,
     emit: this.#emit,
     createCommandItem: this.#createCommandItem

@@ -7,18 +7,15 @@
     }
   ],
   "commit": false,
-  "fixed": [
-    [
-      "@punica/form",
-      "@punica/form-service"
-    ]
-  ],
+  "fixed": [["@punica/form", "@punica/form-service"]],
   "linked": [],
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
   "ignore": [
     "@punica/example-react",
-    "@punica/example-kit"
+    "@punica/example-kit",
+    "@punica/example-plain",
+    "@punica/example-json"
   ]
 }

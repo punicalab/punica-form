@@ -48,11 +48,26 @@ import { KitForm } from '@punica/form-kit/react';
 ```
 
 `onError` receives what a validation, a control function or `onSubmit` threw;
-without it the error is logged to the console. Disabled and hidden fields are
+without it the error is logged to the console. What `onSubmit` throws is also
+shown above the fields, so `throw new Error('That email is taken')` is enough
+to report a failed request. Disabled and hidden fields are
 not validated.
 
 It needs React 19 or later: React 18 does not pass properties and custom
 events to custom elements.
+
+## Forms from JSON
+
+`@punica/form-kit/json` renders a form that is described as data, such as one
+a language model wrote. It needs
+[`@punica/form-json`](https://www.npmjs.com/package/@punica/form-json), which
+checks the definition before anything is rendered:
+
+```tsx
+import { JsonForm } from '@punica/form-kit/json';
+
+<JsonForm definition={definition} onSubmit={(values) => send(values)} />;
+```
 
 ## Fields
 

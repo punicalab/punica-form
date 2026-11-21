@@ -68,7 +68,7 @@ const check = (props: FieldProps, value: unknown): string | undefined => {
  * function, which only runs for a value that passed the rules.
  */
 export const createValidation = (props: FieldProps): Validation => {
-  return async (command): Promise<ErrorDetail> => {
+  return async (command, context): Promise<ErrorDetail> => {
     // The rules are read from the item, so a starter or a control function can change them
     const item = { ...props, ...command.formItem } as FieldProps;
     const message = check(item, command.formItem.value);
@@ -77,7 +77,7 @@ export const createValidation = (props: FieldProps): Validation => {
       return { error: true, errorMessages: [message] };
     }
 
-    const result = await props.validation?.(command);
+    const result = await props.validation?.(command, context);
 
     // An error always has a message: a field must not block the form silently
     if (result?.error && !result.errorMessages?.length) {

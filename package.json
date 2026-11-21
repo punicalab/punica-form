@@ -10,7 +10,7 @@
     "clean": "pnpm -r run clean",
     "test": "jest --coverage && pnpm -r run test",
     "typecheck": "pnpm typecheck:legacy && pnpm typecheck:standard",
-    "typecheck:legacy": "tsc --noEmit -p packages/form && tsc --noEmit -p packages/service && tsc --noEmit -p packages/react && tsc --noEmit -p packages/kit && tsc --noEmit -p examples/react && tsc --noEmit -p examples/kit",
+    "typecheck:legacy": "tsc --noEmit -p packages/form && tsc --noEmit -p packages/service && tsc --noEmit -p packages/react && tsc --noEmit -p packages/json && tsc --noEmit -p packages/kit && tsc --noEmit -p examples/react && tsc --noEmit -p examples/kit && tsc --noEmit -p examples/plain && tsc --noEmit -p examples/json",
     "typecheck:standard": "tsc --noEmit -p packages/form --experimentalDecorators false && tsc --noEmit -p packages/service --experimentalDecorators false && tsc --noEmit -p packages/react --experimentalDecorators false && tsc --noEmit -p packages/kit --experimentalDecorators false",
     "test-watch": "jest --watch",
     "lint": "eslint .",

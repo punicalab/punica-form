@@ -4,6 +4,7 @@ import {
   IServiceControl,
   IServiceInitialize
 } from '@punica/form';
+import { dropValidations } from '../validateItem';
 
 /**
  * Sets the value of an item and runs its control function.
@@ -36,7 +37,12 @@ export class SetValue<E, F extends FormItem<E> = FormItem<E>>
       throw new Error(`Item not found: ${String(property)}`);
     }
 
-    const changed: F = { ...item, value };
+    // A validation of the old value is cancelled
+    dropValidations(this.#command, property);
+
+    const changed: F = item.validating
+      ? { ...item, value, validating: false }
+      : { ...item, value };
     const isCurrent = supersede(property);
 
     setItems([changed]);
@@ -49,7 +55,20 @@ export class SetValue<E, F extends FormItem<E> = FormItem<E>>
       return;
     }
 
-    setItems(controlled);
-    emit('UPDATE_ITEM', [getItem(property) ?? changed, ...controlled]);
+    // The control worked on copies from before it ran: what happened to the
+    // items meanwhile (a field was left, a validation ended) is kept
+    setItems(
+      controlled.map((item) => {
+        const { touched, validating } = getItem(item.property) ?? item;
+
+        return { ...item, touched: touched || item.touched, validating };
+      })
+    );
+
+    // Listeners get the items as the form holds them now
+    emit(
+      'UPDATE_ITEM',
+      [changed, ...controlled].map((item) => getItem(item.property) ?? item)
+    );
   }
 }

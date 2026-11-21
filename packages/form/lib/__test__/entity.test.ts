@@ -1,4 +1,11 @@
-import { FormController } from '..';
+import {
+  FormController,
+  Readers,
+  Services,
+  defineForm,
+  defineFormItem,
+  field
+} from '..';
 import { AppItem } from '../__example__/formSystem';
 import { AdminForm, Marker, UserForm } from '../__example__/UserForm';
 
@@ -88,5 +95,106 @@ describe('a form created from a decorated class', () => {
 
     expect(base.items).toHaveLength(2);
     expect(base.title).toEqual('Create User');
+  });
+});
+
+describe('defineForm', () => {
+  const Text = defineFormItem<{ label: string }>('define:text', () => null);
+
+  class Capture {
+    public get name() {
+      return 'capture';
+    }
+  }
+
+  const UserForm = defineForm(
+    {
+      name: field('', Text({ label: 'Name' })),
+      age: field<number | undefined>(undefined, Text({ label: 'Age' })),
+      tags: field(['a'], Text({ label: 'Tags' })),
+      // Not an item: no decorator
+      id: field(7)
+    },
+    Services([Capture])
+  );
+
+  test('defines a form class without decorator syntax', async () => {
+    const controller = await FormController.fromEntity(new UserForm());
+    const form = await controller.start();
+
+    expect(form.items).toMatchObject([
+      { property: 'name', label: 'Name', type: 'define:text', value: '' },
+      { property: 'age', label: 'Age', value: undefined },
+      { property: 'tags', label: 'Tags', value: ['a'] }
+    ]);
+    expect(controller.getService(Capture)).toBeInstanceOf(Capture);
+  });
+
+  test('its instances start with their own values, or with the given ones', () => {
+    const first = new UserForm();
+    const second = new UserForm({ name: 'Jane', age: 30 });
+
+    first.tags.push('b');
+
+    // The values are typed after the fields
+    const age: number | undefined = second.age;
+
+    expect(new UserForm().tags).toEqual(['a']);
+    expect(second).toMatchObject({ name: 'Jane', age: 30, id: 7 });
+    expect(age).toBe(30);
+  });
+
+  test('a value that is undefined, or a name objects have, leaves the initial value', () => {
+    const Named = defineForm({ name: field('x') });
+    const Inherited = defineForm({ valueOf: field('y') });
+
+    expect(new Named({ name: undefined as unknown as string }).name).toEqual(
+      'x'
+    );
+    expect(new Inherited().valueOf).toEqual('y');
+  });
+
+  test('decorators are applied like the ones above a class: the last one first', async () => {
+    class Other {
+      public get name() {
+        return 'other';
+      }
+    }
+
+    const Form = defineForm(
+      { name: field('', Text({ label: 'First' }), Text({ label: 'Second' })) },
+      Services([Capture]),
+      Services([Other])
+    );
+    const controller = await FormController.fromEntity(new Form());
+
+    await controller.start();
+
+    expect(controller.getForm().items[0].label).toEqual('First');
+    expect(controller.getService(Capture)).toBeInstanceOf(Capture);
+  });
+
+  test('a class whose reader adds the items is not reported', async () => {
+    const warn = jest.spyOn(console, 'warn').mockImplementation();
+    const Form = defineForm(
+      { id: field(1) },
+      Readers([{ read: () => undefined }])
+    );
+
+    await FormController.fromEntity(new Form());
+
+    expect(warn).not.toHaveBeenCalled();
+    warn.mockRestore();
+  });
+
+  test('a class without form items is reported', async () => {
+    const warn = jest.spyOn(console, 'warn').mockImplementation();
+
+    await FormController.fromEntity(new (defineForm({ id: field(1) }))());
+
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining('has no form items')
+    );
+    warn.mockRestore();
   });
 });
