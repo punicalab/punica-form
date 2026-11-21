@@ -1,6 +1,6 @@
 {
   "name": "@punica/form-react",
-  "version": "0.1.1",
+  "version": "0.2.0-next.0",
   "description": "React hooks for Punica Form",
   "keywords": [
     "form",
@@ -41,7 +41,7 @@
     "lint": "eslint lib"
   },
   "peerDependencies": {
-    "@punica/form": "^2.1.1",
+    "@punica/form": "^2.2.0-next.0",
     "react": ">=18"
   },
   "devDependencies": {

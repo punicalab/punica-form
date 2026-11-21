@@ -1,6 +1,6 @@
 {
   "name": "@punica/form-json",
-  "version": "0.0.0",
+  "version": "0.1.0-next.0",
   "description": "Forms as data for Punica Form: a JSON form definition an AI agent can write, checked before it is rendered",
   "keywords": [
     "form",
@@ -49,8 +49,8 @@
     "lint": "eslint lib"
   },
   "peerDependencies": {
-    "@punica/form": "^2.1.1",
-    "@punica/form-service": "^2.1.1"
+    "@punica/form": "^2.2.0-next.0",
+    "@punica/form-service": "^2.2.0-next.0"
   },
   "devDependencies": {
     "@punica/form": "workspace:^",
