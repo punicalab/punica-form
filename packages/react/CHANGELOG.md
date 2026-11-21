@@ -1,5 +1,23 @@
 # @punica/form-react
 
+## 0.2.0-next.0
+
+### Minor Changes
+
+- [#87](https://github.com/punicalab/punica-form/pull/87) [`23812b8`](https://github.com/punicalab/punica-form/commit/23812b8d6892bc4c2f85add6496f31cf6dfa0710) Thanks [@punicalab](https://github.com/punicalab)! - Forms as data.
+  
+  - `@punica/form-kit/json`: `<JsonForm definition={…} />` checks a form definition and renders it with the components of the kit. It needs `@punica/form-json`, an optional peer of the kit.
+  - `@punica/form-react`: `useController(create)` starts a controller you create yourself; `useFormController` is built on it.
+  - `@punica/form-mcp`: new tools `get_form_schema` and `validate_form`; the server knows `@punica/form-json` and `@punica/form-kit/json`.
+
+- [#84](https://github.com/punicalab/punica-form/pull/84) [`5eadc29`](https://github.com/punicalab/punica-form/commit/5eadc29df7b37ea45c9f80e248d3c4273c3ad628) Thanks [@punicalab](https://github.com/punicalab)! - New `useFormState(controller)`: the state of the form as a whole (`dirty`, `touched`, `valid`, `submitting`, `submitCount`, `errors`). The component only renders again when that state changes.
+
+### Patch Changes
+
+- [#85](https://github.com/punicalab/punica-form/pull/85) [`4866c54`](https://github.com/punicalab/punica-form/commit/4866c544a2401d9913afc42733326395b42d89a0) Thanks [@punicalab](https://github.com/punicalab)! - The `validation` of a kit field receives the `{ signal }` context; `useFormState` reports `validating`.
+- Updated dependencies [[`4866c54`](https://github.com/punicalab/punica-form/commit/4866c544a2401d9913afc42733326395b42d89a0), [`b806d2f`](https://github.com/punicalab/punica-form/commit/b806d2f86d39d2ee3c68f32ceac0acee5d7fd550), [`5eadc29`](https://github.com/punicalab/punica-form/commit/5eadc29df7b37ea45c9f80e248d3c4273c3ad628)]:
+  - @punica/form@2.2.0-next.0
+
 ## 0.1.1
 
 ### Patch Changes

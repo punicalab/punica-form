@@ -1,5 +1,23 @@
 # @punica/form-mcp
 
+## 0.4.0-next.0
+
+### Minor Changes
+
+- [#87](https://github.com/punicalab/punica-form/pull/87) [`23812b8`](https://github.com/punicalab/punica-form/commit/23812b8d6892bc4c2f85add6496f31cf6dfa0710) Thanks [@punicalab](https://github.com/punicalab)! - Forms as data.
+  
+  - `@punica/form-kit/json`: `<JsonForm definition={…} />` checks a form definition and renders it with the components of the kit. It needs `@punica/form-json`, an optional peer of the kit.
+  - `@punica/form-react`: `useController(create)` starts a controller you create yourself; `useFormController` is built on it.
+  - `@punica/form-mcp`: new tools `get_form_schema` and `validate_form`; the server knows `@punica/form-json` and `@punica/form-kit/json`.
+
+- [#84](https://github.com/punicalab/punica-form/pull/84) [`5eadc29`](https://github.com/punicalab/punica-form/commit/5eadc29df7b37ea45c9f80e248d3c4273c3ad628) Thanks [@punicalab](https://github.com/punicalab)! - The guide covers the form state of 2.2: `dirty`, `touched`, `form.state`, the `Touch` and `Submit` services and `useFormState`.
+
+### Patch Changes
+
+- [#86](https://github.com/punicalab/punica-form/pull/86) [`b806d2f`](https://github.com/punicalab/punica-form/commit/b806d2f86d39d2ee3c68f32ceac0acee5d7fd550) Thanks [@punicalab](https://github.com/punicalab)! - The guide explains `defineForm` and when to prefer it over a decorated class; it also covers cancelling and delaying validations.
+- Updated dependencies [[`c61306a`](https://github.com/punicalab/punica-form/commit/c61306a9ae9c33c2bd9ac645b3684b5521c45156)]:
+  - @punica/form-json@0.1.0-next.0
+
 ## 0.3.1
 
 ### Patch Changes
