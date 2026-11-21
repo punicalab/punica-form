@@ -177,9 +177,6 @@ const write = <E, F extends FormItem<E>>(
 
   list.stale.clear();
 
-  // What the validation of the item itself found was about other rows
-  if (all) list.own = undefined;
-
   if (changed) {
     // Like a value that is set: a validation of the old rows does not count
     dropValidations(command, property);
@@ -360,7 +357,8 @@ export const createLists = async <E, F extends FormItem<E>>(
   listsOf(command).validate = validate;
 
   for (const item of command.getForm().items) {
-    if (!item.row) continue;
+    // Also when the service is listed twice: a list is created once
+    if (!item.row || hasRows(command, item.property)) continue;
 
     const { property } = item;
     const list = setRows(
@@ -434,6 +432,33 @@ export const wrapValidation = <E, F extends FormItem<E>>(
 };
 
 /**
+ * Asks the validation of the item of a list itself again, after its rows
+ * were added, removed or moved: what it found was about other rows. The
+ * rows are not validated, and a list that was never validated is left alone.
+ */
+const refreshOwn = async <E, F extends FormItem<E>>(
+  command: CommandService<E, F>,
+  property: keyof E
+): Promise<void> => {
+  const list = listOf(command, property);
+  const item = command.getItem(property);
+
+  if (!list?.own || !list.base || !item) return;
+
+  const rows = list.rows;
+  const own = await (list.base as unknown as NonNullable<F['validation']>).call(
+    item,
+    command.createCommandItem(item)
+  );
+
+  // Other rows again meanwhile: the change that made them asks
+  if (list.rows === rows && list.own) {
+    list.own = own;
+    write(command, property);
+  }
+};
+
+/**
  * Adds a row to a list.
  * @param index - Where; at the end when it is left out
  */
@@ -450,6 +475,7 @@ export const insertRow = <E, F extends FormItem<E>>(
     rows.splice(index ?? rows.length, 0, row);
     setRows(command, property, rows);
     write(command, property, true);
+    await refreshOwn(command, property);
 
     return row;
   });
@@ -473,6 +499,7 @@ export const removeRow = <E, F extends FormItem<E>>(
       rows.filter((other) => other !== removed)
     );
     write(command, property, true);
+    await refreshOwn(command, property);
   });
 };
 
@@ -491,6 +518,7 @@ export const moveRow = <E, F extends FormItem<E>>(
     rows.splice(to, 0, ...rows.splice(from, 1));
     setRows(command, property, rows);
     write(command, property, true);
+    await refreshOwn(command, property);
   });
 };
 
@@ -505,6 +533,7 @@ export const replaceRows = <E, F extends FormItem<E>>(
 
     setRows(command, property, rows);
     write(command, property, true);
+    await refreshOwn(command, property);
   });
 };
 

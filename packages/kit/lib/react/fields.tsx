@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type {} from '@punica/components/react';
 import '@punica/components/components/checkbox/checkbox.js';
 import '@punica/components/components/datePicker/datePicker.js';
@@ -24,6 +24,7 @@ const Text: FieldComponent = ({ item, onChange }) => (
     type={item.inputType ?? 'text'}
     value={item.value ?? ''}
     placeholder={item.placeholder}
+    autocomplete={item.autocomplete}
     disabled={item.disabled}
     full-width
     onpunica-input={(event) => onChange(event.detail.value)}
@@ -115,8 +116,11 @@ const Select: FieldComponent = ({ item, onChange, onError }) => {
   return (
     <punica-select
       multiple={multiple}
-      // The element takes an array with `multiple`
-      value={(item.value ?? (multiple ? [] : '')) as string}
+      // The element takes an array with `multiple`. While the choices are
+      // loaded it is empty, or it would show a value it has no text for
+      value={
+        ((loading ? undefined : item.value) ?? (multiple ? [] : '')) as string
+      }
       placeholder={
         loading ? (item.loadingText ?? 'Loading…') : item.placeholder
       }
@@ -155,25 +159,58 @@ const RadioGroup: FieldComponent = ({ item, onChange, onError }) => {
   );
 };
 
-const DatePicker: FieldComponent = ({ item, onChange }) => (
-  <punica-date-picker
-    // null empties the field; the value is `yyyy-mm-dd`
-    value={(item.value ?? null) as string}
-    min={item.minDate}
-    max={item.maxDate}
-    locale={item.locale}
-    placeholder={item.placeholder}
-    disabled={item.disabled}
-    full-width
-    onpunica-change={(event) => onChange(event.detail.value ?? undefined)}
-  />
-);
+/** What the value of a date field is while what was typed is not a date. */
+const NOT_A_DATE = 'invalid';
+
+const isDate = (value: unknown): value is string => {
+  return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value);
+};
+
+const DatePicker: FieldComponent = ({ item, onChange }) => {
+  const bad = item.value !== undefined && !isDate(item.value);
+  const wasBad = useRef(bad);
+  const [shown, setShown] = useState(0);
+
+  // The form was reset while the field held a text that is no date: the
+  // element only forgets that text when it is created anew
+  useEffect(() => {
+    if (wasBad.current && item.value === undefined)
+      setShown((count) => count + 1);
+
+    wasBad.current = bad;
+  }, [bad, item.value]);
+
+  return (
+    <punica-date-picker
+      key={shown}
+      // null empties the field; the value is `yyyy-mm-dd`
+      value={(isDate(item.value) ? item.value : null) as string}
+      min={item.minDate}
+      max={item.maxDate}
+      locale={item.locale}
+      placeholder={item.placeholder}
+      disabled={item.disabled}
+      full-width
+      onpunica-change={(event) => onChange(event.detail.value ?? undefined)}
+      onBlur={(event) => {
+        // A text that is no date leaves the element without a value and
+        // without a change: the form has to know, or it would submit nothing
+        const { validity } = event.currentTarget as unknown as {
+          validity?: ValidityState;
+        };
+
+        if (validity?.badInput) onChange(NOT_A_DATE);
+      }}
+    />
+  );
+};
 
 const Password: FieldComponent = ({ item, onChange }) => (
   <punica-input
     type="password"
     value={item.value ?? ''}
     placeholder={item.placeholder}
+    autocomplete={item.autocomplete}
     disabled={item.disabled}
     full-width
     onpunica-input={(event) => onChange(event.detail.value)}

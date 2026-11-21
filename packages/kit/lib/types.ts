@@ -61,6 +61,12 @@ export type KitItem<E> = FormItem<E> &
     /** The type of a text field, `text` by default. */
     inputType?: 'text' | 'email' | 'password' | 'tel' | 'url' | 'date';
 
+    /**
+     * What the browser may fill a text or password field in with, as the
+     * `autocomplete` of an input (`email`, `new-password`, `off`).
+     */
+    autocomplete?: string;
+
     /** The choices of a select, a multi-select or a radio group. */
     options?: Options;
 
@@ -113,6 +119,8 @@ export type Messages = {
   minItems: (label: string, count: number) => string;
   maxItems: (label: string, count: number) => string;
   maxFileSize: (label: string, bytes: number) => string;
+  date: (label: string) => string;
+  accept: (label: string) => string;
 };
 
 /** A validation of an item. */

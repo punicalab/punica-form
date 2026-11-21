@@ -1,14 +1,16 @@
 import type { ReactNode } from 'react';
-import { FormController } from '@punica/form';
+import { CommandService, FormController } from '@punica/form';
 import {
   FromSchemaOptions,
   JsonFormValues,
   fromSchema
 } from '@punica/form-json';
 import { useController } from '@punica/form-react';
+import { wrapValidation } from '@punica/form-service';
 import { KIT_TYPES } from '../decorators';
 import { FormView, type FormViewProps } from '../react';
 import { KitItem } from '../types';
+import { check } from '../validation';
 
 /**
  * The types a form definition may use with the kit, and the form item type
@@ -20,6 +22,52 @@ export const KIT_JSON_TYPES: Record<string, string> = Object.fromEntries(
 );
 
 type Controller = FormController<JsonFormValues, KitItem<JsonFormValues>>;
+
+/**
+ * The rules of the kit a definition sets with `props` (`maxFileSize`,
+ * `maxItems`, …), which the rules of a definition do not cover. They run
+ * for a value that passed the rules of the definition.
+ */
+class KitRules {
+  public get name(): string {
+    return 'kitRules';
+  }
+
+  public initialize(
+    command: CommandService<JsonFormValues, KitItem<JsonFormValues>>
+  ): void {
+    wrapValidation(command, (item, validation) => {
+      return async (commandItem, context) => {
+        const own = await validation?.call(item, commandItem, context);
+
+        if (own?.error) return own;
+
+        const { label, type, messages, accept, value } =
+          commandItem.formItem as KitItem<JsonFormValues>;
+        const { minDate, maxDate, minItems, maxItems, maxFileSize } =
+          commandItem.formItem as KitItem<JsonFormValues>;
+        const message = check(
+          {
+            label,
+            type,
+            messages,
+            accept,
+            minDate,
+            maxDate,
+            minItems,
+            maxItems,
+            maxFileSize
+          },
+          value
+        );
+
+        return message
+          ? { error: true, errorMessages: [message] }
+          : (own ?? { error: false, errorMessages: [] });
+      };
+    });
+  }
+}
 
 export type JsonFormProps = Omit<
   FormViewProps<JsonFormValues>,
@@ -63,7 +111,8 @@ export function JsonForm({
     () =>
       fromSchema(definition, {
         ...options,
-        types: { ...KIT_JSON_TYPES, ...options?.types }
+        types: { ...KIT_JSON_TYPES, ...options?.types },
+        services: [...(options?.services ?? []), KitRules]
         // The items of a definition are the items the kit renders
       }) as unknown as Promise<Controller>
   );

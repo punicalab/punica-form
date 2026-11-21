@@ -51,6 +51,9 @@ type FieldsProps<E extends object> = {
   items: Array<KitItem<E>>;
   components: Record<string, FieldComponent>;
   onError: (error: unknown) => void;
+
+  /** Whether every field is disabled, as the rows of a disabled list are. */
+  disabled?: boolean;
 };
 
 /**
@@ -61,7 +64,8 @@ export function Fields<E extends object>({
   controller,
   items,
   components,
-  onError
+  onError,
+  disabled = false
 }: FieldsProps<E>): ReactNode {
   // Validates a field when the user leaves it. Not when they leave it for a
   // button of the form: a message that appears or disappears moves the
@@ -108,7 +112,7 @@ export function Fields<E extends object>({
             {...(item.span ? { span: item.span } : {})}
           >
             <Field
-              item={item}
+              item={disabled ? { ...item, disabled: true } : item}
               controller={
                 controller as unknown as FieldComponentProps['controller']
               }

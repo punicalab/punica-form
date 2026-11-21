@@ -1,7 +1,7 @@
 import { createElement } from 'react';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import { FormController } from '@punica/form';
-import { SetValue, Trigger } from '@punica/form-service';
+import { FieldArray, SetValue, Trigger } from '@punica/form-service';
 import {
   ArrayField,
   DateField,
@@ -15,7 +15,7 @@ import {
   SelectField,
   TextField
 } from '..';
-import { KitForm } from '../react';
+import { KitForm, type FieldComponent } from '../react';
 
 const loadCities = jest.fn(async (): Promise<Option[]> => [
   'Tunis',
@@ -139,6 +139,11 @@ describe('the rules of the new fields', () => {
     expect(await errorOf('receipt', file('a.pdf', 2048))).toEqual(
       'Receipt must not be larger than 1 KB'
     );
+    // Whatever the dialog of the browser let through
+    expect(await errorOf('receipt', file('a.exe', 10))).toEqual(
+      'Receipt does not take this kind of file'
+    );
+    expect(await errorOf('day', 'tomorrow')).toEqual('Day is not a date');
     expect(await errorOf('receipt', file('a.pdf', 10))).toBeUndefined();
     expect(
       await errorOf('photos', [file('a', 1), file('b', 1), file('c', 1)])
@@ -307,7 +312,7 @@ describe('the components of the new fields', () => {
     @FormKit({ title: 'Order' })
     class CityForm {
       @SelectField({ label: 'City', options: load, loadingText: 'Wait…' })
-      public city = '';
+      public city = 'ANK';
     }
 
     const show = () =>
@@ -321,6 +326,8 @@ describe('the components of the new fields', () => {
     const city = () => container.querySelector('punica-select') as Element;
 
     expect(city().getAttribute('placeholder')).toEqual('Wait…');
+    // Not a value it has no text for yet
+    expect(city().getAttribute('value')).toEqual('');
     expect(city().hasAttribute('disabled')).toBe(true);
     expect(city().querySelectorAll('punica-option')).toHaveLength(0);
 
@@ -431,6 +438,157 @@ describe('the components of the new fields', () => {
     );
 
     expect(field(3).getAttribute('error')).toEqual('');
+  });
+
+  test('a text that is no date is an error, not an empty field', async () => {
+    const onSubmit = jest.fn();
+    const { field, form } = await renderForm({ onSubmit, resetLabel: 'Reset' });
+    const picker = () =>
+      field(1).querySelector('punica-date-picker') as Element;
+    const first = picker();
+
+    // The element has no value for such a text and reports no change
+    Object.defineProperty(first, 'validity', { value: { badInput: true } });
+    await act(async () => {
+      first.dispatchEvent(new FocusEvent('focusout', { bubbles: true }));
+    });
+
+    await waitFor(() =>
+      expect(field(1).getAttribute('error')).toEqual('Day is not a date')
+    );
+
+    await submit(form);
+
+    expect(onSubmit).not.toHaveBeenCalled();
+
+    // Reset shows an element that has forgotten the text
+    await click(screen.getByText('Reset'));
+    await waitFor(() => expect(picker()).not.toBe(first));
+
+    expect(field(1).getAttribute('error')).toEqual('');
+  });
+
+  test('the rows of a disabled list are disabled, and only the row that changes is rendered', async () => {
+    const renders: Record<string, number> = {};
+    const components: Record<string, FieldComponent> = {
+      'kit:text': ({ item }) => {
+        const name = `${String(item.property)}:${item.value}`;
+
+        renders[name] = (renders[name] ?? 0) + 1;
+
+        return createElement('output', {
+          'data-disabled': String(Boolean(item.disabled))
+        });
+      }
+    };
+
+    @FormKit({ title: 'Order' })
+    class Locked {
+      @ArrayField({ label: 'Lines', row: () => new LineForm(), disabled: true })
+      public lines = [
+        { product: 'Paper', note: '' },
+        { product: 'Ink', note: '' }
+      ];
+    }
+
+    let controller: FormController<Locked, KitItem<Locked>> | undefined;
+    const onError = jest.fn();
+    const { container } = render(
+      createElement(KitForm<Locked>, {
+        entity: () => new Locked(),
+        components,
+        onError,
+        onSubmit: (_values, form) => void (controller = form)
+      })
+    );
+
+    await screen.findByRole('heading', { name: 'Order' });
+
+    expect(
+      [...container.querySelectorAll('output')].map((output) =>
+        output.getAttribute('data-disabled')
+      )
+    ).toEqual(['true', 'true', 'true', 'true']);
+    expect(
+      [...container.querySelectorAll('[data-kit-action]')].every((button) =>
+        button.hasAttribute('disabled')
+      )
+    ).toBe(true);
+
+    await submit(container.querySelector('form') as HTMLFormElement);
+    await waitFor(() => expect(controller).toBeDefined());
+
+    const [first] = (controller as FormController<Locked, KitItem<Locked>>)
+      .getService(FieldArray)
+      .rows('lines');
+    const before = renders['product:Ink'];
+
+    await act(async () => {
+      await first.controller.getService(SetValue).run('product', 'Pen');
+    });
+
+    expect(renders['product:Pen']).toBeGreaterThan(0);
+    // The other row was not rendered again
+    expect(renders['product:Ink']).toBe(before);
+  });
+
+  test('a list takes no more rows than it may while rows are being added', async () => {
+    const { field } = await renderForm();
+    const add = screen.getByText('Add line');
+
+    // Three clicks before the first row is shown
+    await act(async () => {
+      for (let count = 0; count < 3; count++) {
+        add.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      }
+    });
+
+    await waitFor(() =>
+      expect(field(7).querySelectorAll('[data-kit-row]')).toHaveLength(2)
+    );
+    await act(async () => new Promise((resolve) => setTimeout(resolve)));
+
+    expect(field(7).querySelectorAll('[data-kit-row]')).toHaveLength(2);
+  });
+
+  test('a list says what it still needs when a row is removed', async () => {
+    const { field, form } = await renderForm();
+
+    await submit(form);
+    await waitFor(() =>
+      expect(field(7).getAttribute('error')).toEqual('Lines needs at least 1')
+    );
+
+    await click(screen.getByText('Add line'));
+    await waitFor(() => expect(field(7).getAttribute('error')).toEqual(''));
+
+    await click(
+      field(7).querySelector('[data-kit-row] punica-button') as Element
+    );
+    await waitFor(() =>
+      expect(field(7).getAttribute('error')).toEqual('Lines needs at least 1')
+    );
+  });
+
+  test('a kit form that lists FieldArray itself is validated', async () => {
+    @FormKit({ title: 'Order', services: [FieldArray] })
+    class Twice {
+      @ArrayField({ label: 'Lines', row: () => new LineForm(), minItems: 1 })
+      public lines: LineForm[] = [];
+    }
+
+    const { container } = render(
+      createElement(KitForm<Twice>, { entity: () => new Twice() })
+    );
+
+    await screen.findByRole('heading', { name: 'Order' });
+    await submit(container.querySelector('form') as HTMLFormElement);
+
+    await waitFor(() =>
+      expect(
+        container.querySelector('punica-field')?.getAttribute('error')
+      ).toEqual('Lines needs at least 1')
+    );
   });
 
   test('leaving a button of a list does not validate its rows', async () => {

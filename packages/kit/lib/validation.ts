@@ -14,11 +14,45 @@ const messages: Messages = {
   minItems: (label, count) => `${label} needs at least ${count}`,
   maxItems: (label, count) => `${label} takes at most ${count}`,
   maxFileSize: (label, bytes) =>
-    `${label} must not be larger than ${Math.round(bytes / 1024)} KB`
+    `${label} must not be larger than ${sizeOf(bytes)}`,
+  date: (label) => `${label} is not a date`,
+  accept: (label) => `${label} does not take this kind of file`
+};
+
+/** A size as a text that never says more than the size is. */
+function sizeOf(bytes: number): string {
+  const [unit, size] =
+    bytes >= 1024 * 1024
+      ? ['MB', bytes / (1024 * 1024)]
+      : bytes >= 1024
+        ? ['KB', bytes / 1024]
+        : ['bytes', bytes];
+
+  return `${Math.floor((size as number) * 10) / 10} ${unit}`;
+}
+
+/** Whether a file is one a file field with `accept` takes. */
+const accepts = (accept: string, file: { name?: string; type?: string }) => {
+  const name = (file.name ?? '').toLowerCase();
+  const type = (file.type ?? '').toLowerCase();
+
+  return accept
+    .split(',')
+    .map((entry) => entry.trim().toLowerCase())
+    .filter(Boolean)
+    .some((entry) =>
+      entry.startsWith('.')
+        ? name.endsWith(entry)
+        : entry.endsWith('/*')
+          ? type.startsWith(entry.slice(0, -1))
+          : type === entry
+    );
 };
 
 /** Whether a value is a file, as far as its size goes. */
-const isFile = (value: unknown): value is { size: number } => {
+const isFile = (
+  value: unknown
+): value is { size: number; name?: string; type?: string } => {
   return (
     typeof value === 'object' &&
     value !== null &&
@@ -45,7 +79,10 @@ const isEmpty = (value: unknown): boolean => {
 };
 
 /** The first rule the value breaks, as its message. */
-const check = (props: FieldProps, value: unknown): string | undefined => {
+export const check = (
+  props: FieldProps & { type?: string },
+  value: unknown
+): string | undefined => {
   const { label, minLength, maxLength, pattern, min, max } = props;
   const { minDate, maxDate, minItems, maxItems, maxFileSize } = props;
   const text = { ...messages, ...props.messages };
@@ -81,6 +118,11 @@ const check = (props: FieldProps, value: unknown): string | undefined => {
     if (max !== undefined && value > max) return text.max(label, max);
   }
 
+  // What a date field holds when what was typed into it is not a date
+  if (props.type === 'kit:date' && !/^\d{4}-\d{2}-\d{2}$/.test(String(value))) {
+    return text.date(label);
+  }
+
   // Dates are `yyyy-mm-dd`, which sorts like the dates themselves
   if (typeof value === 'string') {
     if (minDate && value < minDate) return text.minDate(label, minDate);
@@ -97,11 +139,19 @@ const check = (props: FieldProps, value: unknown): string | undefined => {
     }
   }
 
+  const files = (Array.isArray(value) ? value : [value]).filter(isFile);
+
+  // The dialog of the browser lets the user pick any file
+  if (
+    props.accept &&
+    files.some((file) => !accepts(props.accept ?? '', file))
+  ) {
+    return text.accept(label);
+  }
+
   if (
     maxFileSize !== undefined &&
-    (Array.isArray(value) ? value : [value]).some(
-      (file) => isFile(file) && file.size > maxFileSize
-    )
+    files.some((file) => file.size > maxFileSize)
   ) {
     return text.maxFileSize(label, maxFileSize);
   }

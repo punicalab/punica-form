@@ -127,6 +127,13 @@ test.describe('the other kinds of fields', () => {
     await city.click();
     await city.locator('punica-option', { hasText: 'Sfax' }).click();
 
+    // A text that is no date is not an empty field
+    await day.fill('soon');
+    // Past the button of the calendar, out of the field
+    await day.press('Tab');
+    await page.keyboard.press('Tab');
+    await expect(page.getByText('Day is not a date')).toBeVisible();
+
     // Outside the days the form takes
     await day.fill('01/25/2026');
     await day.press('Tab');
@@ -150,6 +157,15 @@ test.describe('the other kinds of fields', () => {
 
     const receipt = page.locator('punica-file-input input[type="file"]');
 
+    // The dialog of the browser lets any file through
+    await receipt.setInputFiles({
+      name: 'photo.png',
+      mimeType: 'image/png',
+      buffer: Buffer.from('x')
+    });
+    await expect(
+      page.getByText('Receipt does not take this kind of file')
+    ).toBeVisible();
     await receipt.setInputFiles({
       name: 'large.txt',
       mimeType: 'text/plain',

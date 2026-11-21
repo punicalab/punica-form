@@ -1,4 +1,4 @@
-import { type FormEvent, type ReactNode } from 'react';
+import { useMemo, type FormEvent, type ReactNode } from 'react';
 import type {} from '@punica/components/react';
 import '@punica/components/components/button/button.js';
 import '@punica/components/components/formLayout/formLayout.js';
@@ -41,19 +41,27 @@ export type FormViewProps<E extends object> = ViewProps<E> & {
   controller: FormController<E, KitItem<E>>;
 };
 
+/** What the form does with an error when it is given no `onError`. */
+const logError = (error: unknown): void => console.error(error);
+
 /**
  * Renders the form of a started controller with `@punica/components`.
  */
 export function FormView<E extends object>({
   controller,
   onSubmit,
-  onError = (error) => console.error(error),
+  onError = logError,
   submitLabel = 'Submit',
   resetLabel,
   components
 }: FormViewProps<E>): ReactNode {
   const form = useForm(controller);
-  const fields = { ...fieldComponents, ...components };
+  // The same object between renders, so the rows of a list are not
+  // rendered again when another one changes
+  const fields = useMemo(
+    () => ({ ...fieldComponents, ...components }),
+    [components]
+  );
 
   // The Submit service validates, keeps a second submit out (Enter in a
   // field while the button is loading) and records what the handler throws

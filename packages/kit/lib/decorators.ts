@@ -71,8 +71,7 @@ class KitReader<E extends object, F extends KitItem<E>> implements IReader<
  */
 export const FormKit = (options: FormKitOptions = {}): FormClassDecorator => {
   return (target) => {
-    defineFormProperty<FormKitOptions>(OPTIONS)(options)(target);
-    Services([
+    const own: Array<IService | (new () => IService)> = [
       GetValues,
       SetValue,
       Validate,
@@ -80,8 +79,14 @@ export const FormKit = (options: FormKitOptions = {}): FormClassDecorator => {
       Reset,
       Touch,
       Submit,
-      FieldArray,
-      ...(options.services ?? [])
+      FieldArray
+    ];
+
+    defineFormProperty<FormKitOptions>(OPTIONS)(options)(target);
+    Services([
+      ...own,
+      // A service the kit lists already is not listed twice
+      ...(options.services ?? []).filter((service) => !own.includes(service))
     ])(target);
     Readers([new KitReader(), ...(options.readers ?? [])])(target);
     Starters(options.starters ?? [])(target);

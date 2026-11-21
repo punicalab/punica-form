@@ -132,14 +132,18 @@ class InvoiceForm {
 ```
 
 The row class needs no `@FormKit`; with it, `columns` lays out the fields of
-a row. Typing into a row renders that row only.
+a row. The rows of a disabled list are disabled. Typing into a row renders
+that row only, as long as the `components` and `onError` you give the form
+are the same between renders.
 
 ## Validation
 
 Rules are validated by the kit: `required`, `minLength`, `maxLength` and
 `pattern` for text, `min` and `max` for numbers, `minDate` and `maxDate` for
 dates, `minItems` and `maxItems` for several choices, files and rows, and
-`maxFileSize` (bytes) for files. A field's own `validation` function runs
+`maxFileSize` (bytes) for files. A file field also checks `accept`, since the
+dialog of the browser lets any file through, and a date field reports a
+text that is no date. A field's own `validation` function runs
 after them, for a value that passed.
 
 What is typed is validated when the user leaves the field, what is chosen

@@ -115,4 +115,72 @@ describe('JsonForm', () => {
     );
     expect(failed.mock.calls[0][0]).toBeInstanceOf(FormDefinitionError);
   });
+
+  test('the rules of the kit a definition sets with props are validated', async () => {
+    const onSubmit = jest.fn();
+    const { container } = render(
+      createElement(JsonForm, {
+        onSubmit,
+        definition: {
+          version: 1,
+          title: 'Extras',
+          items: [
+            {
+              property: 'extras',
+              type: 'multiselect',
+              label: 'Extras',
+              options: ['Wrap', 'Card', 'Bag'],
+              props: { maxItems: 2 }
+            },
+            {
+              property: 'day',
+              type: 'date',
+              label: 'Day',
+              rules: [{ rule: 'required', message: 'Pick a day' }],
+              props: { maxDate: '2026-01-20' }
+            }
+          ]
+        }
+      })
+    );
+
+    await screen.findByRole('heading', { name: 'Extras' });
+
+    const fields = () => [...container.querySelectorAll('punica-field')];
+
+    await fire(
+      fields()[0].querySelector('punica-select') as Element,
+      'punica-change',
+      { value: ['Wrap', 'Card', 'Bag'] }
+    );
+    await waitFor(() =>
+      expect(fields()[0].getAttribute('error')).toEqual(
+        'Extras takes at most 2'
+      )
+    );
+
+    // The rules of the definition come first, with their own messages
+    await act(async () => {
+      container
+        .querySelector('form')
+        ?.dispatchEvent(
+          new Event('submit', { bubbles: true, cancelable: true })
+        );
+    });
+    await waitFor(() =>
+      expect(fields()[1].getAttribute('error')).toEqual('Pick a day')
+    );
+
+    await fire(
+      fields()[1].querySelector('punica-date-picker') as Element,
+      'punica-change',
+      { value: '2026-02-01' }
+    );
+    await waitFor(() =>
+      expect(fields()[1].getAttribute('error')).toEqual(
+        'Day must be 2026-01-20 or earlier'
+      )
+    );
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
 });

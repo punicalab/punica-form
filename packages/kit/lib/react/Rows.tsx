@@ -1,4 +1,4 @@
-import { memo, type ReactNode } from 'react';
+import { memo, useCallback, useRef, type ReactNode } from 'react';
 import type {} from '@punica/components/react';
 import '@punica/components/components/button/button.js';
 import '@punica/components/components/formLayout/formLayout.js';
@@ -20,7 +20,8 @@ type RowProps = Pick<FieldComponentProps, 'components' | 'onError'> & {
 
 /**
  * A row follows its own form: typing into it renders this row and no other
- * one.
+ * one, as long as the `components` and `onError` the form was given stay
+ * the same between renders.
  */
 const RowView = memo(function RowView({
   row,
@@ -48,6 +49,7 @@ const RowView = memo(function RowView({
           items={form.items}
           components={components}
           onError={onError}
+          disabled={disabled}
         />
       </punica-form-layout>
       <punica-button
@@ -65,7 +67,8 @@ const RowView = memo(function RowView({
 
 /**
  * The rows of a list, each with the fields of its form, a button that
- * removes it and one that adds a row.
+ * removes it and one that adds a row. The rows of a disabled list are
+ * disabled as well.
  */
 export const Rows: FieldComponent = ({
   item,
@@ -77,7 +80,27 @@ export const Rows: FieldComponent = ({
     controller,
     item.property as never
   );
-  const full = item.maxItems !== undefined && rows.length >= item.maxItems;
+  // Rows that are being added: they count before they are shown
+  const adding = useRef(0);
+  const { maxItems } = item;
+
+  const handleRemove = useCallback(
+    (row: Row) => {
+      remove(row as never).catch(onError);
+    },
+    [remove, onError]
+  );
+
+  const handleAdd = () => {
+    if (maxItems !== undefined && rows.length + adding.current >= maxItems) {
+      return;
+    }
+
+    adding.current++;
+    append()
+      .catch(onError)
+      .finally(() => adding.current--);
+  };
 
   return (
     <div style={{ display: 'grid', gap: 12 }}>
@@ -88,7 +111,7 @@ export const Rows: FieldComponent = ({
           components={components}
           removeLabel={item.removeLabel ?? 'Remove'}
           disabled={Boolean(item.disabled)}
-          onRemove={(removed) => remove(removed as never).catch(onError)}
+          onRemove={handleRemove}
           onError={onError}
         />
       ))}
@@ -97,8 +120,11 @@ export const Rows: FieldComponent = ({
           type="button"
           variant="outlined"
           data-kit-action=""
-          disabled={Boolean(item.disabled) || full}
-          onClick={() => append().catch(onError)}
+          disabled={
+            Boolean(item.disabled) ||
+            (maxItems !== undefined && rows.length >= maxItems)
+          }
+          onClick={handleAdd}
         >
           {item.addLabel ?? 'Add'}
         </punica-button>

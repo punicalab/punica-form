@@ -257,10 +257,21 @@ describe('FieldArray', () => {
       errorMessages: ['Add two lines']
     });
 
-    // It was about the rows the list had: with other rows it is gone
-    await list().append('lines', { name: 'Glue' });
+    // It was about the rows the list had: it is asked again about the new
+    // ones, without validating them
+    await list().append('lines', { name: '' });
 
     expect(item()).toMatchObject({ error: false, errorMessages: [] });
+    expect(rows()[1].controller.getForm().items[0].error).toBeFalsy();
+
+    await list().remove('lines', 1);
+
+    expect(item()).toMatchObject({
+      error: true,
+      errorMessages: ['Add two lines']
+    });
+
+    await list().append('lines', { name: 'Glue' });
 
     await controller.getService(Trigger).run('lines');
 
@@ -638,6 +649,17 @@ describe('FieldArray', () => {
 
     expect(await orders.getService(Validate).run()).toBe(true);
     expect(orders.getForm().state?.dirty).toBe(false);
+  });
+
+  test('a list is created once, also when the service is listed twice', async () => {
+    controller = await FormController.fromForm({
+      ...createForm(),
+      services: [FieldArray, FieldArray, Validate, SetValue]
+    });
+    await controller.start();
+
+    expect(rows()).toHaveLength(2);
+    expect(await controller.getService(Validate).run()).toBe(true);
   });
 
   test('a list without values starts empty', async () => {
