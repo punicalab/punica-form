@@ -1,5 +1,17 @@
 # @punica/form-react
 
+## 0.2.0-next.1
+
+### Minor Changes
+
+- [#92](https://github.com/punicalab/punica-form/pull/92) [`c6aafbd`](https://github.com/punicalab/punica-form/commit/c6aafbdcea7b438f7ecd275e6eb8d403673fb95c) Thanks [@punicalab](https://github.com/punicalab)! - `useFieldArray(controller, property)` returns the rows of a list and the functions that change it. The component renders again when a row is added, removed or moved; a value that changes renders the row it belongs to. The hook uses the `FieldArray` service, so `@punica/form-service` is a peer dependency now.
+
+### Patch Changes
+
+- Updated dependencies [[`c6aafbd`](https://github.com/punicalab/punica-form/commit/c6aafbdcea7b438f7ecd275e6eb8d403673fb95c), [`dc61d18`](https://github.com/punicalab/punica-form/commit/dc61d1839b0155e883e7b383f9f16dd587e24441), [`a1f2274`](https://github.com/punicalab/punica-form/commit/a1f227425f8f06bdaa37b10a5f1c7363d053d761)]:
+  - @punica/form@2.2.0-next.1
+  - @punica/form-service@2.2.0-next.1
+
 ## 0.2.0-next.0
 
 ### Minor Changes

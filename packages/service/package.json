@@ -1,6 +1,6 @@
 {
   "name": "@punica/form-service",
-  "version": "2.2.0-next.0",
+  "version": "2.2.0-next.1",
   "description": "Built-in services of Punica Form",
   "author": {
     "name": "Uryan Sezgin TEKE",
@@ -42,7 +42,7 @@
     "test": "node --test test/*.test.mjs"
   },
   "peerDependencies": {
-    "@punica/form": "^2.2.0-next.0"
+    "@punica/form": "^2.2.0-next.1"
   },
   "devDependencies": {
     "@punica/form": "workspace:^"
