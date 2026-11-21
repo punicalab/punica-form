@@ -38,7 +38,12 @@ export class ResetItem<E, F extends FormItem<E> = FormItem<E>>
 
     this.#command.supersede(property);
     dropValidations(this.#command, property);
-    await resetRows(this.#command, property);
+
+    // The rows of a list are created anew; its item is reset at once
+    const rows = resetRows(this.#command, property);
+
     this.#command.setItems([deepCopy(initial)]);
+
+    if (rows) await rows;
   }
 }

@@ -209,6 +209,19 @@ describe('defineForm', () => {
     expect(plain.getService(Service)).toBeInstanceOf(Service);
     expect(own.getService(Marker)).toBeInstanceOf(Marker);
     expect(() => own.getService(Service)).toThrow('Service not found');
+
+    // A form described as data
+    const data = await FormController.fromForm({ items: [] }, options);
+    const listed = await FormController.fromForm(
+      { items: [], services: [Marker] },
+      options
+    );
+
+    await data.start();
+    await listed.start();
+
+    expect(data.getService(Service)).toBeInstanceOf(Service);
+    expect(() => listed.getService(Service)).toThrow('Service not found');
   });
 
   test('a list of rows without the service that creates them is reported', async () => {

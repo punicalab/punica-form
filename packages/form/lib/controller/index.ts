@@ -28,8 +28,9 @@ export type FormControllerOptions = {
   register?: FormItemRegister;
 
   /**
-   * The services of a form whose class lists none with `@Services`. The
-   * rows of a list get the services of the form they belong to this way.
+   * The services of a form that lists none, with `@Services` or in the form
+   * given to `fromForm`. The rows of a list get the services of the form
+   * they belong to this way.
    */
   services?: Array<IService | (new () => IService)>;
 };
@@ -119,10 +120,13 @@ export class FormController<
     form: Form<E, F>,
     options: FormControllerOptions = {}
   ): Promise<FormController<E, F>> {
-    return new FormController<E, F>(form, {} as E, {
-      name: 'Form',
-      ...options
-    });
+    return new FormController<E, F>(
+      form.services?.length || !options.services
+        ? form
+        : { ...form, services: options.services },
+      {} as E,
+      { name: 'Form', ...options }
+    );
   }
 
   /**
@@ -391,6 +395,12 @@ export class FormController<
 
   #commit(form: Form<E, F>): void {
     this.#form = form;
+
+    // A service that writes while the form is started: start() publishes
+    // the form once it is complete
+    if (!this.#started) {
+      return;
+    }
 
     if (this.#batching) {
       this.#pending = true;

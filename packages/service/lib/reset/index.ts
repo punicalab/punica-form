@@ -34,11 +34,17 @@ export class Reset<E, F extends FormItem<E> = FormItem<E>>
     // Results of control functions that are still running are dropped
     supersede();
     dropValidations(this.#command);
-    await resetRows(this.#command);
+
+    // The rows of the lists are created anew, which takes a moment; the
+    // items are reset at once, as in a form without lists
+    const rows = resetRows(this.#command);
 
     // A fresh copy, so the initial state stays intact
     setItems(deepCopy(getInitialItems()));
     setState({ errors: [], submitCount: 0 });
+
+    if (rows) await rows;
+
     emit('RESET', getForm());
   }
 }

@@ -7,7 +7,8 @@ import {
   deepCopy,
   isEqual
 } from '@punica/form';
-import { valuesOf } from './readValues';
+import { dropValidations } from './validateItem';
+import { valuesOf } from './valuesOf';
 
 /**
  * A row of a list: a form of its own. `key` identifies the row for as long
@@ -45,17 +46,26 @@ type List = {
 
   /** The last result of the validation of the item itself. */
   own?: ErrorDetail;
+
+  /**
+   * Validations of the item that are running. Meanwhile a row whose state
+   * changes does not write the item: the rows are validated as one.
+   */
+  validating: number;
+
+  /** While above zero the item is not written: the list is being reset. */
+  frozen: number;
 };
 
 /** The lists of a form. */
 type Lists = {
   byProperty: Map<PropertyKey, List>;
 
-  /** While above zero the items of the lists are not written. */
-  paused: number;
-
   /** The changes of the lists run one after the other, in call order. */
   queue: Promise<unknown>;
+
+  /** The class of the service the rows are validated with. */
+  validate?: new () => IService;
 };
 
 const forms = new WeakMap<object, Lists>();
@@ -66,7 +76,6 @@ let rowCount = 0;
 const listsOf = (command: object): Lists => {
   const found = forms.get(command) ?? {
     byProperty: new Map(),
-    paused: 0,
     queue: Promise.resolve()
   };
 
@@ -129,8 +138,7 @@ const readRow = (row: AnyRow): object => {
 /**
  * Writes what the rows of a list say onto its item: their values and
  * whether they are valid, touched or being validated.
- * @param all - Write the item although no row changed, after rows were
- * added, removed or moved
+ * @param all - The rows were added, removed, moved or replaced
  */
 const write = <E, F extends FormItem<E>>(
   command: CommandService<E, F>,
@@ -140,7 +148,9 @@ const write = <E, F extends FormItem<E>>(
   const list = listOf(command, property);
   const item = command.getItem(property);
 
-  if (!list || !item || listsOf(command).paused) return;
+  if (!list || !item || list.frozen) return;
+
+  let changed = all;
 
   for (const row of list.stale) {
     const detail = details.get(row);
@@ -149,22 +159,35 @@ const write = <E, F extends FormItem<E>>(
     // An unchanged row keeps its value object, so the array below stays
     if (detail && !isEqual(value, detail.value)) {
       detail.value = value as object;
+      changed = true;
     }
   }
 
   list.stale.clear();
 
+  if (changed) {
+    // Like a value that is set: a validation of the old rows does not count
+    dropValidations(command, property);
+  } else if (list.validating) {
+    return;
+  }
+
   const current: unknown[] = Array.isArray(item.value) ? item.value : [];
   const values = list.rows.map((row) => detailOf(row).value);
   const same =
-    !all &&
-    values.length === current.length &&
-    values.every((value, index) => value === current[index]);
+    (values.length === current.length &&
+      values.every((value, index) => value === current[index])) ||
+    // Rows that were created anew for the values the item holds
+    (all && isEqual(values, current));
   const states = list.rows.map((row) => row.controller.getForm().state);
   const next = {
     error: Boolean(list.own?.error) || states.some((state) => !state?.valid),
-    touched: states.some((state) => state?.touched),
-    validating: states.some((state) => state?.validating)
+    // The list itself may have been touched, with the Touch service
+    touched: Boolean(item.touched) || states.some((state) => state?.touched),
+    // While the item itself is validated that validation says so
+    validating: list.validating
+      ? Boolean(item.validating)
+      : states.some((state) => state?.validating)
   };
 
   if (
@@ -181,9 +204,29 @@ const write = <E, F extends FormItem<E>>(
       ...item,
       ...next,
       value: same ? item.value : values,
-      errorMessages: list.own ? (list.own.errorMessages ?? []) : []
+      errorMessages: list.own?.errorMessages ?? []
     }
   ]);
+};
+
+/** The service classes the rows of a form get when their class lists none. */
+const inherited = <E, F extends FormItem<E>>(
+  command: CommandService<E, F>,
+  validate: new () => IService
+): Array<new () => IService> => {
+  const classes = (command.getForm().services ?? []).map(
+    (service) =>
+      (typeof service === 'function'
+        ? service
+        : service.constructor) as new () => IService
+  );
+
+  // The form validates its rows, whatever it lists itself
+  return classes.some(
+    (service) => service === validate || service.prototype instanceof validate
+  )
+    ? classes
+    : [...classes, validate];
 };
 
 /** Creates a row and starts its form. It is not part of a list yet. */
@@ -192,6 +235,8 @@ const createRow = async <E, F extends FormItem<E>>(
   item: F,
   value?: object
 ): Promise<AnyRow> => {
+  const { validate } = listsOf(command);
+
   const entity = (item.row as NonNullable<F['row']>)() as Record<
     string,
     unknown
@@ -204,9 +249,7 @@ const createRow = async <E, F extends FormItem<E>>(
   const controller = await FormController.fromEntity(entity, {
     name: String(item.property),
     // A row class without services of its own works like the form around it
-    services: command
-      .getForm()
-      .services?.filter((service) => typeof service === 'function')
+    services: validate && inherited(command, validate)
   });
 
   await controller.start();
@@ -228,7 +271,9 @@ const setRows = <E, F extends FormItem<E>>(
   const lists = listsOf(command);
   const list = lists.byProperty.get(property) ?? {
     rows: [],
-    stale: new Set()
+    stale: new Set(),
+    validating: 0,
+    frozen: 0
   };
   const kept = new Set(rows);
 
@@ -284,14 +329,15 @@ const itemOf = <E, F extends FormItem<E>>(
 
 /**
  * Creates the rows of every list of a form from the values of their items.
- * @param validateRow - Validates a row; the validation of the item of a
- * list also validates its rows with it
+ * @param validate - The class of the service a row is validated with: the
+ * validation of the item of a list also validates its rows. A row whose
+ * class lists services of its own, without that one, counts as valid
  */
 export const createLists = async <E, F extends FormItem<E>>(
   command: CommandService<E, F>,
-  validateRow: (row: AnyRow) => Promise<boolean>
+  validate: new () => IService & { run: () => Promise<boolean> }
 ): Promise<void> => {
-  const lists = listsOf(command);
+  listsOf(command).validate = validate;
 
   for (const item of command.getForm().items) {
     if (!item.row) continue;
@@ -309,29 +355,26 @@ export const createLists = async <E, F extends FormItem<E>>(
         // What the rows hold, so the item and its rows start out the same
         value: list.rows.map((row) => detailOf(row).value),
         validation: async (commandItem, context) => {
-          const own = await validation?.call(item, commandItem, context);
-          let valid: boolean[];
-
-          // The rows are validated as one: the item is written once
-          lists.paused++;
+          list.validating++;
 
           try {
-            valid = await Promise.all(
-              rowsOf(command, property).map(validateRow)
+            const own = await validation?.call(item, commandItem, context);
+            const valid = await Promise.all(
+              list.rows.map((row) => serviceOf(row, validate)?.run() ?? true)
             );
-          } finally {
-            lists.paused--;
-          }
 
-          if (!context?.signal.aborted) {
-            list.own = own;
+            if (!context?.signal.aborted) list.own = own;
+
+            return {
+              error: Boolean(own?.error) || valid.includes(false),
+              errorMessages: own?.errorMessages ?? []
+            };
+          } finally {
+            list.validating--;
+
+            // What the rows became meanwhile, also when it was cancelled
             write(command, property);
           }
-
-          return {
-            error: Boolean(own?.error) || valid.includes(false),
-            errorMessages: own?.errorMessages ?? []
-          };
         }
       }
     ]);
@@ -415,31 +458,43 @@ export const replaceRows = <E, F extends FormItem<E>>(
 
 /**
  * Brings the rows of a list, or of every list, back to the ones the form
- * was started with. The items are not written: the caller resets them.
+ * was started with. The items of the lists are not written until that is
+ * done; the caller resets them meanwhile.
+ * @returns `undefined`, at once, for a form without lists
  */
 export const resetRows = <E, F extends FormItem<E>>(
   command: CommandService<E, F>,
   property?: keyof E
-): Promise<void> => {
+): Promise<void> | undefined => {
+  const lists = listsOf(command);
   const properties = (
     property === undefined ? listProperties(command) : [property]
   ).filter((key) => hasRows(command, key)) as Array<keyof E>;
 
-  if (!properties.length) return Promise.resolve();
+  if (!properties.length) return undefined;
+
+  const frozen = properties.map((key) => lists.byProperty.get(key) as List);
+
+  frozen.forEach((list) => list.frozen++);
 
   return enqueue(command, async () => {
-    const initial = command.getInitialItems();
-    const created = await Promise.all(
-      properties.map(async (key) => {
-        const item = initial.find((other) => other.property === key);
+    try {
+      const initial = command.getInitialItems();
+      const created = await Promise.all(
+        properties.map(async (key) => {
+          const item = initial.find((other) => other.property === key);
 
-        return item ? createRows(command, item, item.value) : [];
-      })
-    );
+          return item ? createRows(command, item, item.value) : [];
+        })
+      );
 
-    properties.forEach((key, index) => {
-      setRows(command, key, created[index]).own = undefined;
-    });
+      properties.forEach((key, index) => {
+        setRows(command, key, created[index]).own = undefined;
+      });
+    } finally {
+      frozen.forEach((list) => list.frozen--);
+      properties.forEach((key) => write(command, key, true));
+    }
   });
 };
 
@@ -462,31 +517,25 @@ export const serviceOf = <S extends IService>(
  * Clears the errors of the rows of a list, or of every list, of a form and
  * forgets the result of the validation of the items of the lists.
  * @param clear - Clears the errors of a row
+ * @returns `undefined`, at once, for a form without lists
  */
-export const clearRows = async <E, F extends FormItem<E>>(
+export const clearRows = <E, F extends FormItem<E>>(
   command: CommandService<E, F>,
   property: keyof E | undefined,
   clear: (row: AnyRow) => unknown
-): Promise<void> => {
-  const lists = listsOf(command);
+): Promise<void> | undefined => {
   const properties = (
     property === undefined ? listProperties(command) : [property]
   ).filter((key) => hasRows(command, key)) as Array<keyof E>;
 
-  if (!properties.length) return;
+  if (!properties.length) return undefined;
 
-  lists.paused++;
-
-  try {
-    await Promise.all(
-      properties.flatMap((key) => rowsOf(command, key).map(clear))
-    );
-  } finally {
-    lists.paused--;
-  }
-
-  for (const key of properties) {
-    (listOf(command, key) as List).own = undefined;
-    write(command, key);
-  }
+  return Promise.all(
+    properties.flatMap((key) => rowsOf(command, key).map(clear))
+  ).then(() => {
+    for (const key of properties) {
+      (listOf(command, key) as List).own = undefined;
+      write(command, key);
+    }
+  });
 };

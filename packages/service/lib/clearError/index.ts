@@ -34,9 +34,11 @@ export class ClearError<E, F extends FormItem<E> = FormItem<E>>
     }
 
     // The rows of a list first: its item follows from them
-    await clearRows(this.#command, property, (row) =>
+    const rows = clearRows(this.#command, property, (row) =>
       serviceOf(row, ClearErrors)?.run()
     );
+
+    if (rows) await rows;
 
     this.#command.setItems([
       {

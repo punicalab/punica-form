@@ -46,9 +46,7 @@ export class FieldArray<
   public async initialize(command: CommandService<E, F>): Promise<void> {
     this.#command = command;
 
-    await createLists(command, (row) =>
-      row.controller.getService(Validate).run()
-    );
+    await createLists(command, Validate);
   }
 
   /**

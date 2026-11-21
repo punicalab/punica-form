@@ -393,10 +393,193 @@ describe('FieldArray', () => {
     expect(item().value).toEqual([{ name: 'b' }]);
     expect(() => row.controller.getService(Touch)).toThrow('Service not found');
 
-    // The form cannot validate a row that has no Validate
-    await expect(controller.getService(Validate).run()).rejects.toThrow(
-      'Service not found: Validate'
+    // A row that cannot be validated counts as valid
+    expect(await controller.getService(Validate).run()).toBe(true);
+  });
+
+  test('rows are validated whatever the form lists, also services given as instances', async () => {
+    controller = await FormController.fromForm({
+      ...createForm(),
+      services: [FieldArray, new SetValue(), Submit]
+    });
+    await controller.start();
+
+    const handler = jest.fn();
+
+    // The rows got a SetValue of their own and a Validate
+    await setName(0, '');
+
+    expect(rows()[0].controller.getService(SetValue)).not.toBe(
+      controller.getService(SetValue)
     );
+    expect(await controller.getService(Submit).run(handler)).toBe(false);
+    expect(controller.getForm().state?.errors).toEqual([]);
+    expect(rows()[0].controller.getForm().items[0].error).toBe(true);
+
+    await setName(0, 'Pen');
+
+    expect(await controller.getService(Submit).run(handler)).toBe(true);
+  });
+
+  describe('while a validation is running', () => {
+    const waiting: Array<() => void> = [];
+
+    const Slow = defineForm({
+      name: field(
+        '',
+        Text({
+          label: 'Name',
+          validation: async ({ formItem }) => {
+            await new Promise<void>((resolve) => waiting.push(resolve));
+
+            return { error: !formItem.value, errorMessages: [] };
+          }
+        })
+      )
+    });
+
+    const tick = () => new Promise((resolve) => setTimeout(resolve));
+
+    /** Lets the validations that are waiting finish, also ones started then. */
+    const finish = async <T>(result: Promise<T>): Promise<T> => {
+      let done = false;
+
+      result.then(
+        () => (done = true),
+        () => (done = true)
+      );
+
+      while (!done) {
+        waiting.splice(0).forEach((open) => open());
+        await tick();
+      }
+
+      return result;
+    };
+
+    beforeEach(() =>
+      start({ row: () => new Slow(), value: [{ name: '' }, { name: 'ok' }] })
+    );
+
+    test('rows that are replaced are written to the item at once', async () => {
+      const triggered = controller.getService(Trigger).run('lines');
+
+      await tick();
+
+      const set = controller
+        .getService(SetValue)
+        .run('lines', [{ name: 'X' }, { name: 'Y' }]);
+
+      await finish(set);
+
+      expect(names()).toEqual(['X', 'Y']);
+
+      await finish(triggered);
+
+      expect(names()).toEqual(['X', 'Y']);
+    });
+
+    test('a row that is removed does not keep the form from being submitted', async () => {
+      const handler = jest.fn();
+      const submitted = controller.getService(Submit).run(handler);
+
+      await tick();
+      await list().remove('lines', 0);
+
+      expect(await finish(submitted)).toBe(true);
+      expect(handler).toHaveBeenCalledWith({
+        customer: 'Jane',
+        lines: [{ name: 'ok' }]
+      });
+      expect(controller.getForm().state).toMatchObject({
+        valid: true,
+        validating: false
+      });
+    });
+
+    test('a row that is changed is validated with its new value', async () => {
+      const validated = controller.getService(Validate).run();
+
+      await tick();
+      await setName(0, 'now');
+
+      expect(names()).toEqual(['now', 'ok']);
+      expect(await finish(validated)).toBe(true);
+      expect(item().error).toBeFalsy();
+    });
+  });
+
+  test('a list that was touched itself stays touched', async () => {
+    await controller.getService(Touch).run('lines');
+    await setName(0, 'Pen');
+
+    expect(item().touched).toBe(true);
+  });
+
+  test('a list keeps following its rows while another list is validated', async () => {
+    let open: () => void = () => undefined;
+
+    controller = await FormController.fromForm({
+      items: [
+        {
+          property: 'customer',
+          label: 'Other',
+          value: [{ name: 'a' }],
+          row: () => new Line(),
+          validation: async () => {
+            await new Promise<void>((resolve) => (open = resolve));
+
+            return { error: false };
+          }
+        } as unknown as Item,
+        createForm().items[1]
+      ],
+      services
+    });
+    await controller.start();
+
+    const triggered = controller.getService(Trigger).run('customer');
+
+    await new Promise((resolve) => setTimeout(resolve));
+    await setName(0, 'Pen');
+
+    expect(names()).toEqual(['Pen', 'Ink']);
+
+    open();
+    await triggered;
+  });
+
+  test('what GetValues hands out is not the state of the form', async () => {
+    const values = await controller.getService(GetValues).run();
+
+    values.lines[0].name = 'changed';
+    values.lines.push(new Line());
+
+    expect(names()).toEqual(['Paper', 'Ink']);
+    expect(item().value).toHaveLength(2);
+  });
+
+  test('a form is reset at once; its rows follow', async () => {
+    await controller.getService(SetValue).run('customer', 'John');
+    await setName(0, 'Pen');
+
+    const reset = controller.getService(Reset).run();
+    const set = controller.getService(SetValue).run('customer', 'after');
+
+    await Promise.all([reset, set]);
+
+    expect(controller.getForm().items[0].value).toBe('after');
+    expect(names()).toEqual(['Paper', 'Ink']);
+  });
+
+  test('starting a form with a list notifies once, when it is started', async () => {
+    const started = await FormController.fromForm(createForm());
+    const seen: boolean[] = [];
+
+    started.subscribe(() => seen.push(Boolean(started.getService(FieldArray))));
+    await started.start();
+
+    expect(seen).toEqual([true]);
   });
 
   test('a row may hold a list of its own', async () => {
