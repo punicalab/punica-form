@@ -13,6 +13,7 @@ import {
   getFormProperty
 } from '@punica/form';
 import {
+  FieldArray,
   GetValues,
   Reset,
   SetValue,
@@ -38,7 +39,7 @@ export type FormKitOptions = {
 
   /**
    * Services in addition to GetValues, SetValue, Validate, Trigger, Reset,
-   * Touch and Submit.
+   * Touch, Submit and FieldArray.
    */
   services?: Array<IService | (new () => IService)>;
 
@@ -70,8 +71,7 @@ class KitReader<E extends object, F extends KitItem<E>> implements IReader<
  */
 export const FormKit = (options: FormKitOptions = {}): FormClassDecorator => {
   return (target) => {
-    defineFormProperty<FormKitOptions>(OPTIONS)(options)(target);
-    Services([
+    const own: Array<IService | (new () => IService)> = [
       GetValues,
       SetValue,
       Validate,
@@ -79,7 +79,14 @@ export const FormKit = (options: FormKitOptions = {}): FormClassDecorator => {
       Reset,
       Touch,
       Submit,
-      ...(options.services ?? [])
+      FieldArray
+    ];
+
+    defineFormProperty<FormKitOptions>(OPTIONS)(options)(target);
+    Services([
+      ...own,
+      // A service the kit lists already is not listed twice
+      ...(options.services ?? []).filter((service) => !own.includes(service))
     ])(target);
     Readers([new KitReader(), ...(options.readers ?? [])])(target);
     Starters(options.starters ?? [])(target);
@@ -93,7 +100,13 @@ export const KIT_TYPES = {
   number: 'kit:number',
   select: 'kit:select',
   checkbox: 'kit:checkbox',
-  switch: 'kit:switch'
+  switch: 'kit:switch',
+  radio: 'kit:radio',
+  date: 'kit:date',
+  multiselect: 'kit:multiselect',
+  password: 'kit:password',
+  file: 'kit:file',
+  array: 'kit:array'
 } as const;
 
 /**
@@ -125,3 +138,38 @@ export const CheckboxField = field(KIT_TYPES.checkbox);
 
 /** A switch; its value is a boolean. */
 export const SwitchField = field(KIT_TYPES.switch);
+
+/** A set of radio buttons for `options`, of which one is chosen. */
+export const RadioGroupField = field(KIT_TYPES.radio);
+
+/**
+ * A date field; its value is the date as `yyyy-mm-dd`, or `undefined` while
+ * it is empty. `minDate` and `maxDate` limit it.
+ */
+export const DateField = field(KIT_TYPES.date);
+
+/** A select that takes several of its `options`; its value is an array. */
+export const MultiSelectField = field(KIT_TYPES.multiselect);
+
+/** A text field that hides what is typed. */
+export const PasswordField = field(KIT_TYPES.password);
+
+/**
+ * A file field; its value is a `File`, or `undefined` while it is empty.
+ * With `multiple` it is an array of files. `accept` and `maxFileSize` limit
+ * what it takes.
+ */
+export const FileField = field(KIT_TYPES.file);
+
+/**
+ * A list of rows, such as the lines of an invoice. Every row is a form of
+ * the class `row` returns, with the fields of that class:
+ *
+ * @ArrayField({ label: 'Lines', row: () => new LineForm(), minItems: 1 })
+ * lines: LineForm[] = [];
+ *
+ * The row class needs no `@FormKit`; with it, `columns` lays out its fields.
+ */
+export const ArrayField = field(KIT_TYPES.array) as (
+  props: FieldProps & { row: () => object }
+) => FormPropertyDecorator;

@@ -13,7 +13,7 @@ const { version } = JSON.parse(readFileSync(new URL('../package.json', import.me
 const text = (value) => ({ content: [{ type: 'text', text: value }] });
 
 /** The types a form definition may use when the form kit renders it. */
-const KIT_TYPES = ['text', 'textarea', 'number', 'select', 'checkbox', 'switch'];
+const KIT_TYPES = ['text', 'textarea', 'number', 'select', 'checkbox', 'switch', 'radio', 'date', 'multiselect', 'password', 'file'];
 
 /** A tool argument that is JSON: given as an object, or as its text. */
 const parse = (value) => (typeof value === 'string' ? JSON.parse(value) : value);

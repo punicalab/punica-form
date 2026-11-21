@@ -8,7 +8,56 @@ const messages: Messages = {
   maxLength: (label, length) => `${label} must be at most ${length} characters`,
   pattern: (label) => `${label} is not valid`,
   min: (label, value) => `${label} must be at least ${value}`,
-  max: (label, value) => `${label} must be at most ${value}`
+  max: (label, value) => `${label} must be at most ${value}`,
+  minDate: (label, date) => `${label} must be ${date} or later`,
+  maxDate: (label, date) => `${label} must be ${date} or earlier`,
+  minItems: (label, count) => `${label} needs at least ${count}`,
+  maxItems: (label, count) => `${label} takes at most ${count}`,
+  maxFileSize: (label, bytes) =>
+    `${label} must not be larger than ${sizeOf(bytes)}`,
+  date: (label) => `${label} is not a date`,
+  accept: (label) => `${label} does not take this kind of file`
+};
+
+/** A size as a text that never says more than the size is. */
+function sizeOf(bytes: number): string {
+  const [unit, size] =
+    bytes >= 1024 * 1024
+      ? ['MB', bytes / (1024 * 1024)]
+      : bytes >= 1024
+        ? ['KB', bytes / 1024]
+        : ['bytes', bytes];
+
+  return `${Math.floor((size as number) * 10) / 10} ${unit}`;
+}
+
+/** Whether a file is one a file field with `accept` takes. */
+const accepts = (accept: string, file: { name?: string; type?: string }) => {
+  const name = (file.name ?? '').toLowerCase();
+  const type = (file.type ?? '').toLowerCase();
+
+  return accept
+    .split(',')
+    .map((entry) => entry.trim().toLowerCase())
+    .filter(Boolean)
+    .some((entry) =>
+      entry.startsWith('.')
+        ? name.endsWith(entry)
+        : entry.endsWith('/*')
+          ? type.startsWith(entry.slice(0, -1))
+          : type === entry
+    );
+};
+
+/** Whether a value is a file, as far as its size goes. */
+const isFile = (
+  value: unknown
+): value is { size: number; name?: string; type?: string } => {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    typeof (value as { size?: unknown }).size === 'number'
+  );
 };
 
 /**
@@ -30,12 +79,21 @@ const isEmpty = (value: unknown): boolean => {
 };
 
 /** The first rule the value breaks, as its message. */
-const check = (props: FieldProps, value: unknown): string | undefined => {
+export const check = (
+  props: FieldProps & { type?: string },
+  value: unknown
+): string | undefined => {
   const { label, minLength, maxLength, pattern, min, max } = props;
+  const { minDate, maxDate, minItems, maxItems, maxFileSize } = props;
   const text = { ...messages, ...props.messages };
 
   if (isEmpty(value)) {
-    return props.required ? text.required(label) : undefined;
+    if (props.required) return text.required(label);
+
+    // A list that needs rows needs them, whether it is required or not
+    return Array.isArray(value) && minItems
+      ? text.minItems(label, minItems)
+      : undefined;
   }
 
   if (typeof value === 'string') {
@@ -58,6 +116,44 @@ const check = (props: FieldProps, value: unknown): string | undefined => {
   if (typeof value === 'number') {
     if (min !== undefined && value < min) return text.min(label, min);
     if (max !== undefined && value > max) return text.max(label, max);
+  }
+
+  // What a date field holds when what was typed into it is not a date
+  if (props.type === 'kit:date' && !/^\d{4}-\d{2}-\d{2}$/.test(String(value))) {
+    return text.date(label);
+  }
+
+  // Dates are `yyyy-mm-dd`, which sorts like the dates themselves
+  if (typeof value === 'string') {
+    if (minDate && value < minDate) return text.minDate(label, minDate);
+    if (maxDate && value > maxDate) return text.maxDate(label, maxDate);
+  }
+
+  if (Array.isArray(value)) {
+    if (minItems !== undefined && value.length < minItems) {
+      return text.minItems(label, minItems);
+    }
+
+    if (maxItems !== undefined && value.length > maxItems) {
+      return text.maxItems(label, maxItems);
+    }
+  }
+
+  const files = (Array.isArray(value) ? value : [value]).filter(isFile);
+
+  // The dialog of the browser lets the user pick any file
+  if (
+    props.accept &&
+    files.some((file) => !accepts(props.accept ?? '', file))
+  ) {
+    return text.accept(label);
+  }
+
+  if (
+    maxFileSize !== undefined &&
+    files.some((file) => file.size > maxFileSize)
+  ) {
+    return text.maxFileSize(label, maxFileSize);
   }
 
   return undefined;

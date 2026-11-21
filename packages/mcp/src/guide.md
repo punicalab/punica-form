@@ -54,9 +54,13 @@ Punica Form is a headless form engine. `@punica/form` holds the engine,
 
 `@punica/form-kit` provides what the application would otherwise build:
 `@FormKit({ title, columns })` on the class, the field decorators `TextField`,
-`NumberField`, `TextAreaField`, `SelectField`, `CheckboxField` and
-`SwitchField` with the rules `required`, `minLength`, `maxLength`, `pattern`,
-`min` and `max`, and from `@punica/form-kit/react` the component
+`NumberField`, `TextAreaField`, `SelectField`, `CheckboxField`,
+`SwitchField`, `RadioGroupField`, `MultiSelectField`, `DateField` (its value
+is `yyyy-mm-dd`), `PasswordField`, `FileField` and `ArrayField` (a list of
+rows: `@ArrayField({ label, row: () => new LineForm() })`, the kit renders a
+form for every row) with the rules `required`, `minLength`, `maxLength`,
+`pattern`, `min`, `max`, `minDate`, `maxDate`, `minItems`, `maxItems` and
+`maxFileSize`; `options` may be a function that loads the choices. And from `@punica/form-kit/react` the component
 `<KitForm entity={() => new UserForm()} onSubmit={…} />`, which renders the
 form with `@punica/components`, shows what `onSubmit` throws above the
 fields and reports it to `onError`. Use it when the project has it installed;
@@ -77,7 +81,7 @@ and runs it.
   refuse a definition that is not valid with a `FormDefinitionError` whose
   `problems` have a `path` and a `message`.
 - Types with the kit: `text`, `textarea`, `number`, `select`, `checkbox`,
-  `switch`. Kit options such as `inputType`, `rows` and `span` go into `props`.
+  `switch`, `radio`, `date`, `multiselect`, `password`, `file`. Kit options such as `inputType`, `rows` and `span` go into `props`.
 - Never put functions, expressions or HTML into a definition, and never
   build one by string concatenation: produce the object and validate it.
 - In React a definition is read when the component mounts; give `JsonForm` a
