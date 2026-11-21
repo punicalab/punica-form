@@ -92,3 +92,6 @@ type Props = Omit<AppItem<any>, 'property'>;
 
 export const FormItemText = defineFormItem<Props>('example:text', Text);
 export const FormItemSelect = defineFormItem<Props>('example:select', Select);
+
+// A list of rows: the application renders its rows itself, see Invoice.tsx
+export const FormItemList = defineFormItem<Props>('example:list', () => null);

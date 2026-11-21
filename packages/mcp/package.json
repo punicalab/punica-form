@@ -48,6 +48,7 @@
     "@punica/form": "workspace:^",
     "@punica/form-service": "workspace:^",
     "@punica/form-react": "workspace:^",
-    "@punica/form-kit": "workspace:^"
+    "@punica/form-kit": "workspace:^",
+    "@punica/form-schema": "workspace:^"
   }
 }

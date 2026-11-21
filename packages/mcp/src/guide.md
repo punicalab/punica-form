@@ -12,8 +12,11 @@ Punica Form is a headless form engine. `@punica/form` holds the engine,
   `deepCopy`, the DevTools switches and the types. Use `search_api` for the
   exact list.
 - `@punica/form-json`: forms as data; see "Forms as data" below.
+- `@punica/form-schema`: validation with a schema of Zod, Valibot, ArkType
+  or Yup; see "Validation with a schema" below.
 - `@punica/form-service`: `Validate`, `GetValues`, `SetValue`, `Reset`,
-  `ResetItem`, `Trigger`, `ClearError`, `ClearErrors`, `Store`.
+  `ResetItem`, `Trigger`, `ClearError`, `ClearErrors`, `Touch`, `Submit`,
+  `FieldArray`, `Store`.
 - NOT provided: `@Title`, `@Description`, `@Layout`, `@FormItemInputText` or
   any other form item decorator, a `Reader` class, a base form item. These
   belong to the application's own form system. Build them with the `define*`
@@ -51,9 +54,13 @@ Punica Form is a headless form engine. `@punica/form` holds the engine,
 
 `@punica/form-kit` provides what the application would otherwise build:
 `@FormKit({ title, columns })` on the class, the field decorators `TextField`,
-`NumberField`, `TextAreaField`, `SelectField`, `CheckboxField` and
-`SwitchField` with the rules `required`, `minLength`, `maxLength`, `pattern`,
-`min` and `max`, and from `@punica/form-kit/react` the component
+`NumberField`, `TextAreaField`, `SelectField`, `CheckboxField`,
+`SwitchField`, `RadioGroupField`, `MultiSelectField`, `DateField` (its value
+is `yyyy-mm-dd`), `PasswordField`, `FileField` and `ArrayField` (a list of
+rows: `@ArrayField({ label, row: () => new LineForm() })`, the kit renders a
+form for every row) with the rules `required`, `minLength`, `maxLength`,
+`pattern`, `min`, `max`, `minDate`, `maxDate`, `minItems`, `maxItems` and
+`maxFileSize`; `options` may be a function that loads the choices. And from `@punica/form-kit/react` the component
 `<KitForm entity={() => new UserForm()} onSubmit={…} />`, which renders the
 form with `@punica/components`, shows what `onSubmit` throws above the
 fields and reports it to `onError`. Use it when the project has it installed;
@@ -74,7 +81,7 @@ and runs it.
   refuse a definition that is not valid with a `FormDefinitionError` whose
   `problems` have a `path` and a `message`.
 - Types with the kit: `text`, `textarea`, `number`, `select`, `checkbox`,
-  `switch`. Kit options such as `inputType`, `rows` and `span` go into `props`.
+  `switch`, `radio`, `date`, `multiselect`, `password`, `file`. Kit options such as `inputType`, `rows` and `span` go into `props`.
 - Never put functions, expressions or HTML into a definition, and never
   build one by string concatenation: produce the object and validate it.
 - In React a definition is read when the component mounts; give `JsonForm` a
@@ -143,6 +150,7 @@ entity of the form, so property names and results are type-checked.
 | `ClearErrors` | `run(): Promise<void>` |
 | `Touch` | `run(property): Promise<void>`, marks the item as touched; call it when the user leaves the field (since 2.2) |
 | `Submit` | `run(handler?): Promise<boolean>`, validates, then calls `handler(values)`; sets `state.submitting`, ignores a second submit meanwhile, and turns what the handler throws into `state.errors` instead of rejecting (since 2.2) |
+| `FieldArray` | no `run`: `rows(property)`, `append`, `insert`, `remove`, `move`, `replace`; see "Lists of rows" (since 2.2) |
 | `Store` | no `run`: it adds `readStoreItem`, `writeStoreItem`, `deleteStoreItem` to the command passed to item functions (`CommandItem<E, F, StoreCommand>`) |
 
 ```ts
@@ -171,11 +179,53 @@ if (await controller.getService(Validate).run()) {
 - To submit a form prefer `Submit` (since 2.2) over calling `Validate` and
   `GetValues` by hand. Do not keep your own `submitting` or `dirty` flags.
 
+## Lists of rows
+
+For repeated rows (the lines of an invoice, a list of phone numbers) do not
+keep an array in a single item and do not build property names such as
+`lines.0.price`. Since 2.2 a form item with a `row` function is a list: every
+row is a form of its own, created from the entity `row` returns.
+
+```ts
+class LineForm {
+  @FormItemInputText({ label: 'Product' })
+  product = '';
+}
+
+@Services([FieldArray, GetValues, SetValue, Validate, Trigger, Submit])
+class InvoiceForm {
+  // Any form item decorator of the application; `row` makes it a list
+  @FormItemList({ label: 'Lines', row: () => new LineForm() })
+  lines: LineForm[] = [];
+}
+
+const list = controller.getService(FieldArray);
+
+const row = await list.append('lines', { product: 'Paper' });
+await row.controller.getService(SetValue).run('product', 'Ink');
+await list.remove('lines', row); // or an index
+list.rows('lines'); // [{ key, controller }], a new array only when rows change
+```
+
+- The form has to list `FieldArray`. A row class without `@Services` gets the
+  services of the form around it; one with `@Services` keeps its own.
+- The value of the list item is the array of the values of its rows.
+  `GetValues` and `Submit` return it; never collect the rows by hand.
+- `Validate` and `Submit` validate the rows. The list item is `dirty`,
+  `touched` and in `error` when a row is, and `Reset` brings back the rows the
+  form was started with. `SetValue` on the list replaces its rows.
+- A `validation` of the list item itself counts besides the rows, for
+  example "add at least one line".
+- In React: `const { rows, append, remove, move } = useFieldArray(controller, "lines")`
+  from `@punica/form-react`. Render `rows.map((row) => <Line key={row.key} controller={row.controller} />)`
+  and call `useForm(row.controller)` inside `Line`, so typing into a row
+  renders that row only.
+
 ## Form items
 
 A form item is a plain object: `property`, `label`, `type`, `value`,
 `required`, `disabled`, `hidden`, `error`, `errorMessages`, `dirty`,
-`touched`, `validating`. Add the
+`touched`, `validating`, and `row` for a list of rows. Add the
 properties of your form system with a type of your own:
 `type AppItem<E> = FormItem<E> & { layout?: Layout }`, then use
 `FormController<UserForm, AppItem<UserForm>>`.
@@ -195,6 +245,33 @@ getItem }` holding copies, and return items instead of changing them:
 - `control(command): Promise<FormItem[]>`, run after its value is set; the
   returned items are written to the form
 - `initialize(command): Promise<FormItem[]>`, run once while the form is created
+
+## Validation with a schema
+
+When the project has a schema library (Zod, Valibot, ArkType, Yup: anything
+that implements Standard Schema) and `@punica/form-schema`, do not write the
+same rules again as validation functions.
+
+```ts
+import { Schema, SchemaValidation, schema } from "@punica/form-schema";
+
+const User = z.object({ email: z.email(), age: z.number().min(18) });
+
+@Schema(User) // the class does not compile when its properties do not fit
+@Services([SchemaValidation, GetValues, SetValue, Validate, Trigger, Submit])
+class UserForm { … }
+
+// Or one item only, without the service:
+// validation: schema(z.email("Enter an email"))
+```
+
+- `SchemaValidation` has to be listed. It shows every issue on the item its
+  path is about; issues that belong to no item become `state.errors`, make
+  `state.valid` false and keep the form from being submitted.
+- For a form without a class: `services: [SchemaValidation.of(User), …]`.
+- A rule about the form as a whole without a schema: a service that calls
+  `addFormValidation(command, () => messages)` of `@punica/form-service` in
+  its `initialize` (since 2.2).
 
 ## Events
 

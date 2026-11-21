@@ -26,6 +26,13 @@ export type FormControllerOptions = {
 
   /** The register whose form item types the form reports. */
   register?: FormItemRegister;
+
+  /**
+   * The services of a form that lists none, with `@Services` or in the form
+   * given to `fromForm`. The rows of a list get the services of the form
+   * they belong to this way.
+   */
+  services?: Array<IService | (new () => IService)>;
 };
 
 /** A class whose instances are services. */
@@ -84,6 +91,8 @@ export class FormController<
   #started = false;
   #batching = 0;
   #pending = false;
+  /** Whether a validation of the form as a whole found something. */
+  #invalid = false;
   #epoch = 0;
   #writes = new Map<keyof E, number>();
   #subscribers = new Set<() => void>();
@@ -113,10 +122,13 @@ export class FormController<
     form: Form<E, F>,
     options: FormControllerOptions = {}
   ): Promise<FormController<E, F>> {
-    return new FormController<E, F>(form, {} as E, {
-      name: 'Form',
-      ...options
-    });
+    return new FormController<E, F>(
+      form.services?.length || !options.services
+        ? form
+        : { ...form, services: options.services },
+      {} as E,
+      { name: 'Form', ...options }
+    );
   }
 
   /**
@@ -132,6 +144,10 @@ export class FormController<
     const form: Form<E, F> = { items: [] };
 
     await createInitialReader<E, F>().read(entity, form);
+
+    if (!form.services?.length && options.services) {
+      form.services = options.services;
+    }
 
     // Readers and starters may still add items when the form is started
     if (!form.items.length && !form.readers?.length && !form.starters?.length) {
@@ -285,6 +301,15 @@ export class FormController<
       );
     }
 
+    if (
+      this.#form.items.some((item) => item.row) &&
+      ![...this.#services.values()].some(({ name }) => name === 'fieldArray')
+    ) {
+      console.warn(
+        `[punica-form] ${this.#name} has a list of rows but no FieldArray service: add FieldArray of @punica/form-service to @Services.`
+      );
+    }
+
     this.#initialItems = deepCopy(this.#form.items);
     this.#form = {
       ...this.#form,
@@ -338,7 +363,9 @@ export class FormController<
     }
   };
 
-  #setState = (patch: FormStatePatch): void => {
+  #setState = ({ invalid, ...patch }: FormStatePatch): void => {
+    this.#invalid = invalid ?? this.#invalid;
+
     const state = this.#deriveState(this.#form.items, patch);
 
     if (state !== this.#form.state) {
@@ -350,7 +377,10 @@ export class FormController<
    * The state of the form for its items. The current state object is
    * returned when nothing changed, so it can be compared by reference.
    */
-  #deriveState(items: F[], patch: FormStatePatch = {}): FormState {
+  #deriveState(
+    items: F[],
+    patch: Omit<FormStatePatch, 'invalid'> = {}
+  ): FormState {
     // A form may have used the name for data of its own before 2.2
     const known = Array.isArray(this.#form.state?.errors);
     const current = known ? (this.#form.state as FormState) : INITIAL_STATE;
@@ -361,7 +391,9 @@ export class FormController<
       touched: items.some((item) => item.touched),
       validating: items.some((item) => item.validating),
       // Like the validation, which skips items the user cannot change
-      valid: items.every((item) => !item.error || item.hidden || item.disabled)
+      valid:
+        !this.#invalid &&
+        items.every((item) => !item.error || item.hidden || item.disabled)
     };
     const same = (Object.keys(next) as Array<keyof FormState>).every((key) =>
       isEqual(next[key], current[key])
@@ -372,6 +404,12 @@ export class FormController<
 
   #commit(form: Form<E, F>): void {
     this.#form = form;
+
+    // A service that writes while the form is started: start() publishes
+    // the form once it is complete
+    if (!this.#started) {
+      return;
+    }
 
     if (this.#batching) {
       this.#pending = true;

@@ -12,7 +12,8 @@ const packages = [
   loadPackage('@punica/form-kit'),
   loadPackage('@punica/form-kit', process.cwd(), 'react'),
   loadPackage('@punica/form-kit', process.cwd(), 'json'),
-  loadPackage('@punica/form-json')
+  loadPackage('@punica/form-json'),
+  loadPackage('@punica/form-schema')
 ].filter(Boolean);
 const guide = readFileSync(new URL('./guide.md', import.meta.url), 'utf8');
 

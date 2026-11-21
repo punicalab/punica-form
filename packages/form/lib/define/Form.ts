@@ -1,5 +1,5 @@
 import { deepCopy } from '../utils/deepCopy';
-import { FormClassDecorator, FormPropertyDecorator } from './decorator';
+import { FormPropertyDecorator } from './decorator';
 
 /** A property of a form defined with `defineForm`. */
 export type FormField<T> = {
@@ -49,7 +49,14 @@ export const field = <T>(
  */
 export const defineForm = <S extends Record<string, FormField<unknown>>>(
   fields: S,
-  ...decorators: FormClassDecorator[]
+  ...decorators: Array<
+    (
+      // A decorator may ask for the entity it is made for, as `Schema` of
+      // @punica/form-schema does
+      target: new (values?: Partial<FormValues<S>>) => FormValues<S>,
+      context?: ClassDecoratorContext
+    ) => void
+  >
 ): new (values?: Partial<FormValues<S>>) => FormValues<S> => {
   class DefinedForm {
     constructor(values: Partial<FormValues<S>> = {}) {
@@ -71,7 +78,9 @@ export const defineForm = <S extends Record<string, FormField<unknown>>>(
   }
 
   for (const decorate of [...decorators].reverse()) {
-    decorate(DefinedForm);
+    decorate(
+      DefinedForm as new (values?: Partial<FormValues<S>>) => FormValues<S>
+    );
   }
 
   return DefinedForm as new (values?: Partial<FormValues<S>>) => FormValues<S>;

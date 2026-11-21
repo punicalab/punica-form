@@ -1,7 +1,8 @@
 /**
  * Creates a deep copy of the given value.
  * Functions are kept by reference, prototypes are preserved and
- * circular references are supported.
+ * circular references are supported. Files (`File`, `Blob`) are kept by
+ * reference.
  * @param value - The value to copy
  * @returns The copied value
  */
@@ -41,6 +42,12 @@ export const deepCopy = <T>(
     value.forEach((v) => copy.add(deepCopy(v, seen)));
 
     return copy as T;
+  }
+
+  // A file is not made of properties that could be copied; it cannot be
+  // changed either, so it is safe to share
+  if (typeof Blob !== 'undefined' && value instanceof Blob) {
+    return value;
   }
 
   const copy: Record<string, unknown> = Array.isArray(value)

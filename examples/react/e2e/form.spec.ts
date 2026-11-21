@@ -112,3 +112,106 @@ test('two forms of one class do not share state or services', async ({
   await expect(second.getByText('Name is required')).toBeVisible();
   await expect(first.getByText('Name is required')).toHaveCount(0);
 });
+
+test.describe('a list of rows', () => {
+  const openInvoice = async (page: Page, query = '') => {
+    page.on('console', (message) => {
+      if (message.type() === 'error') errors.push(message.text());
+    });
+    page.on('pageerror', (error) => errors.push(String(error)));
+
+    await page.goto(`/${query}`);
+
+    const invoice = page.getByTestId('invoice');
+
+    await expect(invoice.getByRole('heading')).toHaveText('Invoice');
+
+    return { invoice, lines: invoice.getByTestId('line') };
+  };
+
+  test('rows are added, moved and removed, and submitted as a list', async ({
+    page
+  }) => {
+    const { invoice, lines } = await openInvoice(page);
+
+    await expect(lines).toHaveCount(1);
+    await expect(invoice.getByTestId('status')).toHaveText('unchanged, valid');
+
+    await invoice.getByLabel('Customer').fill('Jane');
+    await lines.nth(0).getByLabel('Product').fill('Paper');
+    await invoice.getByRole('button', { name: 'Add line' }).click();
+    await expect(lines).toHaveCount(2);
+    await expect(invoice.getByTestId('status')).toHaveText('changed, valid');
+
+    // The new row is empty: the invoice is not submitted
+    await invoice.getByRole('button', { name: 'Submit' }).click();
+    await expect(lines.nth(1).getByText('Product is required')).toBeVisible();
+    await expect(lines.nth(0).getByText('Product is required')).toHaveCount(0);
+    await expect(invoice.getByTestId('status')).toHaveText('changed, invalid');
+    await expect(invoice.getByTestId('values')).toHaveCount(0);
+
+    await lines.nth(1).getByLabel('Product').fill('Ink');
+    await lines.nth(1).getByLabel('Price').fill('20');
+    await invoice.getByRole('button', { name: 'Last line first' }).click();
+    await expect(lines.nth(0).getByLabel('Product')).toHaveValue('Ink');
+
+    await invoice.getByRole('button', { name: 'Submit' }).click();
+    await expect(invoice.getByTestId('values')).toHaveText(
+      '{"customer":"Jane","lines":[{"product":"Ink","price":"20"},{"product":"Paper","price":""}]}'
+    );
+
+    await lines.nth(0).getByRole('button', { name: 'Remove' }).click();
+    await expect(lines).toHaveCount(1);
+    await expect(lines.nth(0).getByLabel('Product')).toHaveValue('Paper');
+  });
+
+  test('the list has a validation of its own, and reset brings its rows back', async ({
+    page
+  }) => {
+    const { invoice, lines } = await openInvoice(page);
+
+    await invoice.getByLabel('Customer').fill('Jane');
+    await lines.nth(0).getByRole('button', { name: 'Remove' }).click();
+    await expect(lines).toHaveCount(0);
+
+    await invoice.getByRole('button', { name: 'Submit' }).click();
+    await expect(invoice.getByText('Add a line')).toBeVisible();
+
+    await invoice.getByRole('button', { name: 'Reset' }).click();
+    await expect(lines).toHaveCount(1);
+    await expect(invoice.getByText('Add a line')).toHaveCount(0);
+    await expect(invoice.getByLabel('Customer')).toHaveValue('');
+    await expect(invoice.getByTestId('status')).toHaveText('unchanged, valid');
+  });
+
+  test('typing into one of a thousand rows renders that row only', async ({
+    page
+  }) => {
+    const { invoice, lines } = await openInvoice(page, '?lines=1000');
+
+    await expect(lines).toHaveCount(1000);
+
+    const renders = () =>
+      lines.evaluateAll((all) =>
+        all.map((line) => Number(line.getAttribute('data-renders')))
+      );
+    const before = await renders();
+    const started = Date.now();
+
+    await lines.nth(500).getByLabel('Product').pressSequentially('abcdefghij');
+
+    const elapsed = Date.now() - started;
+    const after = await renders();
+
+    await expect(lines.nth(500).getByLabel('Product')).toHaveValue(
+      'abcdefghijProduct 501'
+    );
+    expect(after[500] - before[500]).toBeGreaterThanOrEqual(10);
+    expect(
+      after.filter((count, index) => count !== before[index])
+    ).toHaveLength(1);
+    // Ten keys; far from the seconds a list that renders every row would take
+    expect(elapsed).toBeLessThan(2000);
+    await expect(invoice.getByTestId('status')).toHaveText('changed, valid');
+  });
+});

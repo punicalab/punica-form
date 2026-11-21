@@ -47,6 +47,14 @@ export type FormItem<E> = {
   /** Whether the last validation of the item failed. */
   error?: boolean;
 
+  /**
+   * Makes the item a list of forms, such as the lines of an invoice: returns
+   * the entity of a new row, an instance of a form class. The value of the
+   * item is then the array of the values of its rows. The rows are created
+   * and changed by the `FieldArray` service, which the form has to list.
+   */
+  row?(): object;
+
   /** The messages of the last failed validation. */
   errorMessages?: string[];
 

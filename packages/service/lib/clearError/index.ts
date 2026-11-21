@@ -4,6 +4,8 @@ import {
   IServiceControl,
   IServiceInitialize
 } from '@punica/form';
+import { ClearErrors } from '../clearErrors';
+import { clearRows, serviceOf } from '../rows';
 
 /**
  * Clears the validation error of one item.
@@ -31,6 +33,19 @@ export class ClearError<E, F extends FormItem<E> = FormItem<E>>
       throw new Error(`Item not found: ${String(property)}`);
     }
 
-    this.#command.setItems([{ ...item, error: false, errorMessages: [] }]);
+    // The rows of a list first: its item follows from them
+    const rows = clearRows(this.#command, property, (row) =>
+      serviceOf(row, ClearErrors)?.run()
+    );
+
+    if (rows) await rows;
+
+    this.#command.setItems([
+      {
+        ...(this.#command.getItem(property) ?? item),
+        error: false,
+        errorMessages: []
+      }
+    ]);
   }
 }
