@@ -1,10 +1,9 @@
 # Punica Form yol haritası: kalan zayıflıklar
 
-Durum (2026-11-21): Faz 1 yayınlandı (`@punica/form` ve `@punica/form-service` 2.1.1, `@punica/form-react` 0.1.1,
-`@punica/form-kit` 0.2.0, `@punica/form-mcp` 0.3.1). Faz 2, 3, 4 ve 5 aday sürüm olarak `next` etiketiyle yayında:
-`@punica/form` ve `@punica/form-service` 2.2.0-next.0, `@punica/form-react` 0.2.0-next.0, `@punica/form-kit` 0.3.0-next.0,
-`@punica/form-json` 0.1.0-next.0, `@punica/form-mcp` 0.4.0-next.0. Depo aday sürüm modunda; kararlı 2.2.0 için
-`changeset pre exit` gerekir. Dizi alanları (Faz 6) `develop`'ta; kit'te `ArrayField` ve JSON tanımında liste desteği sonraya kaldı. Doküman sitesi 2.2 için henüz güncellenmedi.
+Durum (2026-11-21): uygulama fazları (1–8) bitti. Faz 1 yayınlandı (2.1.1). Faz 2–8 ikinci aday sürümde, `next` etiketiyle yayında:
+`@punica/form` ve `@punica/form-service` 2.2.0-next.1, `@punica/form-react` 0.2.0-next.1, `@punica/form-kit` 0.3.0-next.1,
+`@punica/form-json` 0.1.0-next.0, `@punica/form-schema` 0.1.0-next.0, `@punica/form-mcp` 0.4.0-next.1. Depo aday sürüm modunda; kararlı 2.2.0 için
+`changeset pre exit` gerekir. Kalanlar: Faz 0 (gerçek kullanım), Faz 9 (güven ve süreç), doküman sitesinde dizi alanları, şema ve yeni kit alanları.
 
 ## Konum
 
@@ -25,19 +24,19 @@ Aynı motor, aynı servisler, aynı DevTools; yalnızca formun nereden geldiği 
 
 ## Özet
 
-| Faz | Konu                                                       | Kapattığı zayıflık                    | Hedef sürüm                                     | Kim       | Durum              |
-| --- | ---------------------------------------------------------- | ------------------------------------- | ----------------------------------------------- | --------- | ------------------ |
-| 0   | Dondurma ve gerçek kullanım                                | Gerçek kullanıcı yok, sürüm geçmişi   | sürüm yok                                       | Kullanıcı | Bekliyor           |
-| 1   | İncelenmemiş kodun incelenmesi                             | İnceleme kâğıt üzerinde               | yama sürümleri                                  | Claude    | Yayınlandı (2.1.1) |
-| 2   | Alan ve form durumu (dirty/touched, gönderim, form hatası) | Temel özellik eksikleri               | 2.2.0                                           | Claude    | Aday sürümde       |
-| 3   | Asenkron doğrulama: gecikme ve iptal                       | Temel özellik eksikleri               | 2.2.0                                           | Claude    | Aday sürümde       |
-| 4   | Decorator sürtünmesi (decorator'sız yol)                   | İlk kurulumda takılma                 | 2.2.0 + doküman                                 | Claude    | Aday sürümde       |
-| 5   | AI için form motoru (veri olarak form)                     | Konum: rakiplerden ayrışma            | `@punica/form-json` 0.1.0, kit 0.3.0, mcp 0.4.0 | Claude    | Aday sürümde       |
-| 6   | Dizi alanları                                              | Temel özellik eksikleri               | 2.2.0                                           | Claude    | develop'ta         |
-| 7   | Şema bağlantısı (Zod, Valibot, ArkType)                    | Temel özellik eksikleri               | `@punica/form-schema` 0.1.0                     | Claude    | develop'ta         |
-| 8   | Kit: yeni alan tipleri                                     | Kit dar                               | `@punica/form-kit` 0.4.0                        | Claude    | PR'da              |
-| 9   | Güven ve süreç                                             | Provenance, eklenti, doküman, hosting | sürümden bağımsız                               | Karışık   | Bekliyor           |
-| 10  | Diğer framework adaptörleri                                | Yalnızca React                        | talep gelirse                                   | Ertelendi | Ertelendi          |
+| Faz | Konu                                                       | Kapattığı zayıflık                    | Hedef sürüm                                     | Kim       | Durum                 |
+| --- | ---------------------------------------------------------- | ------------------------------------- | ----------------------------------------------- | --------- | --------------------- |
+| 0   | Dondurma ve gerçek kullanım                                | Gerçek kullanıcı yok, sürüm geçmişi   | sürüm yok                                       | Kullanıcı | Bekliyor              |
+| 1   | İncelenmemiş kodun incelenmesi                             | İnceleme kâğıt üzerinde               | yama sürümleri                                  | Claude    | Yayınlandı (2.1.1)    |
+| 2   | Alan ve form durumu (dirty/touched, gönderim, form hatası) | Temel özellik eksikleri               | 2.2.0                                           | Claude    | Aday sürümde (next.1) |
+| 3   | Asenkron doğrulama: gecikme ve iptal                       | Temel özellik eksikleri               | 2.2.0                                           | Claude    | Aday sürümde (next.1) |
+| 4   | Decorator sürtünmesi (decorator'sız yol)                   | İlk kurulumda takılma                 | 2.2.0 + doküman                                 | Claude    | Aday sürümde (next.1) |
+| 5   | AI için form motoru (veri olarak form)                     | Konum: rakiplerden ayrışma            | `@punica/form-json` 0.1.0, kit 0.3.0, mcp 0.4.0 | Claude    | Aday sürümde (next.1) |
+| 6   | Dizi alanları                                              | Temel özellik eksikleri               | 2.2.0                                           | Claude    | Aday sürümde (next.1) |
+| 7   | Şema bağlantısı (Zod, Valibot, ArkType)                    | Temel özellik eksikleri               | `@punica/form-schema` 0.1.0                     | Claude    | Aday sürümde (next.1) |
+| 8   | Kit: yeni alan tipleri                                     | Kit dar                               | `@punica/form-kit` 0.4.0                        | Claude    | Aday sürümde (next.1) |
+| 9   | Güven ve süreç                                             | Provenance, eklenti, doküman, hosting | sürümden bağımsız                               | Karışık   | Bekliyor              |
+| 10  | Diğer framework adaptörleri                                | Yalnızca React                        | talep gelirse                                   | Ertelendi | Ertelendi             |
 
 Bağımlılıklar: Faz 2; Faz 5, 6 ve 8'in ön koşuludur (JSON formlar, dizi satırları ve kit alanları gönderim ve dirty/touched durumunu kullanır).
 Faz 4, Faz 5'in ön koşuludur. Faz 3 ve 7 diğerlerinden bağımsızdır. Faz 9 her an yapılabilir.
