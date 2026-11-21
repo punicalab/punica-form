@@ -12,6 +12,8 @@ Punica Form is a headless form engine. `@punica/form` holds the engine,
   `deepCopy`, the DevTools switches and the types. Use `search_api` for the
   exact list.
 - `@punica/form-json`: forms as data; see "Forms as data" below.
+- `@punica/form-schema`: validation with a schema of Zod, Valibot, ArkType
+  or Yup; see "Validation with a schema" below.
 - `@punica/form-service`: `Validate`, `GetValues`, `SetValue`, `Reset`,
   `ResetItem`, `Trigger`, `ClearError`, `ClearErrors`, `Touch`, `Submit`,
   `FieldArray`, `Store`.
@@ -239,6 +241,33 @@ getItem }` holding copies, and return items instead of changing them:
 - `control(command): Promise<FormItem[]>`, run after its value is set; the
   returned items are written to the form
 - `initialize(command): Promise<FormItem[]>`, run once while the form is created
+
+## Validation with a schema
+
+When the project has a schema library (Zod, Valibot, ArkType, Yup: anything
+that implements Standard Schema) and `@punica/form-schema`, do not write the
+same rules again as validation functions.
+
+```ts
+import { Schema, SchemaValidation, schema } from "@punica/form-schema";
+
+const User = z.object({ email: z.email(), age: z.number().min(18) });
+
+@Schema(User) // the class does not compile when its properties do not fit
+@Services([SchemaValidation, GetValues, SetValue, Validate, Trigger, Submit])
+class UserForm { … }
+
+// Or one item only, without the service:
+// validation: schema(z.email("Enter an email"))
+```
+
+- `SchemaValidation` has to be listed. It shows every issue on the item its
+  path is about; issues that belong to no item become `state.errors` and keep
+  the form from being submitted.
+- For a form without a class: `services: [SchemaValidation.of(User), …]`.
+- A rule about the form as a whole without a schema: a service that calls
+  `addFormValidation(command, () => messages)` of `@punica/form-service` in
+  its `initialize` (since 2.2).
 
 ## Events
 

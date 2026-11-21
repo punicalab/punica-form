@@ -16,7 +16,8 @@ const packages = [
   { name: '@punica/form-kit', version: '0.1.0', files: types('../../kit/dist/') },
   { name: '@punica/form-kit/react', version: '0.1.0', files: types('../../kit/dist/react/') },
   { name: '@punica/form-kit/json', version: '0.1.0', files: types('../../kit/dist/json/') },
-  { name: '@punica/form-json', version: '0.1.0', files: types('../../json/dist/') }
+  { name: '@punica/form-json', version: '0.1.0', files: types('../../json/dist/') },
+  { name: '@punica/form-schema', version: '0.1.0', files: types('../../schema/dist/') }
 ];
 const guide = readFileSync(new URL('../src/guide.md', import.meta.url), 'utf8');
 
@@ -235,6 +236,20 @@ test('forms as data: the schema, the check and the conversion', async () => {
   assert.match(all, /^fromSchema \(const, @punica\/form-json\)/m);
   assert.match(all, /^validateDefinition \(const, @punica\/form-json\)/m);
   assert.match(all, /^JsonForm \(function, @punica\/form-kit\/json\)/m);
+});
+
+test('validation with a schema is part of the API', async () => {
+  const { call } = await connect();
+  const all = await call('search_api');
+
+  assert.match(all, /^SchemaValidation \(class, @punica\/form-schema\)/m);
+  assert.match(all, /^schema \(const, @punica\/form-schema\)/m);
+  assert.match(all, /^addFormValidation \(const, @punica\/form-service\)/m);
+  assert.match(await call('get_guide'), /Standard Schema/);
+  assert.match(
+    await call('validate_code', { code: 'import { Schema, SchemaValidation, schema } from "@punica/form-schema";' }),
+    /^No problems/
+  );
 });
 
 test('loadPackage falls back to the bundled copy', () => {

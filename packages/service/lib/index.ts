@@ -14,6 +14,8 @@ import type { Validate } from './validate';
 export * from './clearError';
 export * from './clearErrors';
 export * from './fieldArray';
+export { addFormValidation } from './formValidation';
+export type { FormValidation } from './formValidation';
 export type { FormRow } from './rows';
 export * from './getValues';
 export * from './reset';

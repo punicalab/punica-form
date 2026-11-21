@@ -9,6 +9,7 @@ import {
 import {
   ClearError,
   ClearErrors,
+  FormValidation,
   GetValues,
   Reset,
   ResetItem,
@@ -18,7 +19,8 @@ import {
   Submit,
   Touch,
   Trigger,
-  Validate
+  Validate,
+  addFormValidation
 } from '..';
 
 type Entity = { name: string; age: number; address: { city: string } };
@@ -1024,5 +1026,101 @@ describe('services', () => {
 
       expect(validation).not.toHaveBeenCalled();
     });
+  });
+});
+
+describe('a validation of the form as a whole', () => {
+  let problems: string[];
+
+  /** Reports the problems the test sets. */
+  class Whole {
+    public static validation: FormValidation = () => problems;
+
+    public get name() {
+      return 'whole';
+    }
+
+    public initialize(command: Parameters<typeof addFormValidation>[0]) {
+      addFormValidation(command, Whole.validation);
+      addFormValidation(command, async () => []);
+    }
+  }
+
+  let controller: FormController<Entity, Item>;
+
+  beforeEach(async () => {
+    problems = [];
+    controller = await FormController.fromForm({
+      ...createForm(),
+      services: [...(createForm().services ?? []), Whole]
+    });
+    await controller.start();
+  });
+
+  test('its messages are the errors of the form, which is not valid then', async () => {
+    problems = ['The dates are not in order'];
+
+    expect(await controller.getService(Validate).run()).toBe(false);
+    expect(controller.getForm().state?.errors).toEqual([
+      'The dates are not in order'
+    ]);
+
+    problems = [];
+
+    expect(await controller.getService(Validate).run()).toBe(true);
+    expect(controller.getForm().state?.errors).toEqual([]);
+  });
+
+  test('a form with such a problem is not submitted', async () => {
+    const handler = jest.fn();
+    const failed = jest.fn();
+
+    controller.on('SUBMIT_ERROR', failed);
+    problems = ['Not yet'];
+
+    expect(await controller.getService(Submit).run(handler)).toBe(false);
+    expect(handler).not.toHaveBeenCalled();
+    expect(failed).not.toHaveBeenCalled();
+    expect(controller.getForm().state).toMatchObject({
+      errors: ['Not yet'],
+      submitting: false,
+      submitCount: 1
+    });
+
+    // Shown besides the errors of the items
+    await controller.getService(SetValue).run('name', '');
+
+    expect(await controller.getService(Submit).run(handler)).toBe(false);
+    expect(controller.getForm().items[0].error).toBe(true);
+    expect(controller.getForm().state?.errors).toEqual(['Not yet']);
+
+    problems = [];
+    await controller.getService(SetValue).run('name', 'a');
+
+    expect(await controller.getService(Submit).run(handler)).toBe(true);
+    expect(controller.getForm().state?.errors).toEqual([]);
+  });
+
+  test('a validation that throws fails the submit and rejects the validation', async () => {
+    Whole.validation = () => {
+      throw new Error('no connection');
+    };
+
+    try {
+      const fresh = await FormController.fromForm({
+        ...createForm(),
+        services: [...(createForm().services ?? []), Whole]
+      });
+
+      await fresh.start();
+
+      await expect(fresh.getService(Validate).run()).rejects.toThrow(
+        'no connection'
+      );
+      expect(await fresh.getService(Submit).run(jest.fn())).toBe(false);
+      expect(fresh.getForm().state?.errors).toEqual(['no connection']);
+    } finally {
+      Whole.validation = () => problems;
+    }
   });
 });

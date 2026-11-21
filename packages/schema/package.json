@@ -1,0 +1,58 @@
+{
+  "name": "@punica/form-schema",
+  "version": "0.0.0",
+  "description": "Validate Punica Form forms with Zod, Valibot, ArkType or any other Standard Schema library",
+  "keywords": [
+    "form",
+    "validation",
+    "standard-schema",
+    "zod",
+    "valibot",
+    "punica"
+  ],
+  "homepage": "https://form.punicalab.com",
+  "license": "MIT",
+  "author": "PunicaLab",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "sideEffects": false,
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/punicalab/punica-form.git",
+    "directory": "packages/schema"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup lib/index.ts --format esm,cjs --target es2020 --clean && tsc -p tsconfig.build.json --emitDeclarationOnly",
+    "clean": "rimraf dist",
+    "lint": "eslint lib",
+    "test": "node --test test/"
+  },
+  "peerDependencies": {
+    "@punica/form": "^2.2.0-next.0",
+    "@punica/form-service": "^2.2.0-next.0"
+  },
+  "devDependencies": {
+    "@punica/form": "workspace:^",
+    "@punica/form-service": "workspace:^",
+    "arktype": "^2.2.10",
+    "valibot": "^1.5.0",
+    "yup": "^1.7.1",
+    "zod": "^4.6.7"
+  }
+}

@@ -158,6 +158,7 @@ This repository is a monorepo containing the following packages:
 
 - **[@punica/form](./packages/form)** - Core form engine
 - **[@punica/form-service](./packages/service)** - Built-in services (GetValues, SetValue, Validate, etc.)
+- **[@punica/form-schema](./packages/schema)** - Validation with the schemas you have: Zod, Valibot, ArkType, Yup and any other Standard Schema library
 - **[@punica/form-json](./packages/json)** - Forms as data: a JSON form definition an AI agent can write, checked before it is rendered
 - **[@punica/form-kit](./packages/kit)** - A ready-made form system: field decorators, validation rules and React components built on `@punica/components`
 - **[@punica/form-react](./packages/react)** - React hooks: `useFormController` and `useForm`

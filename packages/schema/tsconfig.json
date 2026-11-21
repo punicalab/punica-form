@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "composite": false,
+    "rootDir": "lib",
+    "outDir": "dist",
+    // The tests import schema libraries whose types need a newer library
+    "lib": ["es2022", "dom"],
+    "skipLibCheck": true
+  },
+  "include": ["lib"]
+}
