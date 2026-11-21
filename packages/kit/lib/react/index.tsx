@@ -1,15 +1,15 @@
-import { type FocusEvent, type FormEvent, type ReactNode } from 'react';
+import { type FormEvent, type ReactNode } from 'react';
 import type {} from '@punica/components/react';
 import '@punica/components/components/button/button.js';
-import '@punica/components/components/field/field.js';
 import '@punica/components/components/formLayout/formLayout.js';
 import { FormController, FormControllerOptions } from '@punica/form';
 import { useForm, useFormController } from '@punica/form-react';
-import { Reset, SetValue, Submit, Touch, Trigger } from '@punica/form-service';
+import { Reset, Submit } from '@punica/form-service';
 import { KitItem } from '../types';
-import { FieldComponent, SELF_LABELLED, fieldComponents } from './fields';
+import { FieldComponent, Fields } from './FieldList';
+import { fieldComponents } from './fields';
 
-export type { FieldComponent, FieldComponentProps } from './fields';
+export type { FieldComponent, FieldComponentProps } from './FieldList';
 export { fieldComponents } from './fields';
 
 type ViewProps<E extends object> = {
@@ -74,23 +74,6 @@ export function FormView<E extends object>({
     }
   };
 
-  // Validates a field when the user leaves it. Not when they leave it for a
-  // button of the form: a message that appears or disappears moves the
-  // buttons, and the click would miss. Submitting validates everything anyway.
-  const handleBlur = async (event: FocusEvent, property: keyof E) => {
-    const next = event.relatedTarget as Element | null;
-
-    try {
-      if (!next?.closest('[slot="actions"]')) {
-        await controller.getService(Trigger).run(property);
-      }
-
-      await controller.getService(Touch).run(property);
-    } catch (error) {
-      onError(error);
-    }
-  };
-
   return (
     // The kit validates; the browser's own messages stay out of the way
     <form onSubmit={handleSubmit} noValidate>
@@ -103,39 +86,12 @@ export function FormView<E extends object>({
       ) : null}
 
       <punica-form-layout columns={Number(form.columns ?? 1)}>
-        {form.items
-          .filter((item) => !item.hidden)
-          .map((item) => {
-            const Field = fields[item.type ?? ''];
-
-            return (
-              Field && (
-                <punica-field
-                  key={String(item.property)}
-                  label={
-                    SELF_LABELLED.includes(item.type ?? '') ? '' : item.label
-                  }
-                  help={item.help ?? ''}
-                  error={
-                    item.error ? (item.errorMessages?.join(' ') ?? '') : ''
-                  }
-                  required={Boolean(item.required)}
-                  onBlur={(event) => handleBlur(event, item.property)}
-                  {...(item.span ? { span: item.span } : {})}
-                >
-                  <Field
-                    item={item}
-                    onChange={(value) =>
-                      controller
-                        .getService(SetValue)
-                        .run(item.property, value)
-                        .catch(onError)
-                    }
-                  />
-                </punica-field>
-              )
-            );
-          })}
+        <Fields
+          controller={controller}
+          items={form.items}
+          components={fields}
+          onError={onError}
+        />
 
         <div slot="actions" style={{ display: 'flex', gap: 8 }}>
           <punica-button

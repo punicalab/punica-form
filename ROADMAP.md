@@ -34,8 +34,8 @@ Aynı motor, aynı servisler, aynı DevTools; yalnızca formun nereden geldiği 
 | 4   | Decorator sürtünmesi (decorator'sız yol)                   | İlk kurulumda takılma                 | 2.2.0 + doküman                                 | Claude    | Aday sürümde       |
 | 5   | AI için form motoru (veri olarak form)                     | Konum: rakiplerden ayrışma            | `@punica/form-json` 0.1.0, kit 0.3.0, mcp 0.4.0 | Claude    | Aday sürümde       |
 | 6   | Dizi alanları                                              | Temel özellik eksikleri               | 2.2.0                                           | Claude    | develop'ta         |
-| 7   | Şema bağlantısı (Zod, Valibot, ArkType)                    | Temel özellik eksikleri               | `@punica/form-schema` 0.1.0                     | Claude    | Bekliyor           |
-| 8   | Kit: yeni alan tipleri                                     | Kit dar                               | `@punica/form-kit` 0.4.0                        | Claude    | Bekliyor           |
+| 7   | Şema bağlantısı (Zod, Valibot, ArkType)                    | Temel özellik eksikleri               | `@punica/form-schema` 0.1.0                     | Claude    | develop'ta         |
+| 8   | Kit: yeni alan tipleri                                     | Kit dar                               | `@punica/form-kit` 0.4.0                        | Claude    | PR'da              |
 | 9   | Güven ve süreç                                             | Provenance, eklenti, doküman, hosting | sürümden bağımsız                               | Karışık   | Bekliyor           |
 | 10  | Diğer framework adaptörleri                                | Yalnızca React                        | talep gelirse                                   | Ertelendi | Ertelendi          |
 

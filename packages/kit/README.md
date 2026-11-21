@@ -12,6 +12,10 @@ is a class and one component.
 npm install @punica/form-kit @punica/form @punica/form-service @punica/form-react @punica/components
 ```
 
+It needs React 19 or later. The components are custom elements: React 19
+passes them objects, such as the files of a file field, as properties and
+listens to their events, which earlier versions do not.
+
 ```ts
 import {
   CheckboxField,
@@ -71,25 +75,77 @@ import { JsonForm } from '@punica/form-kit/json';
 
 ## Fields
 
-| Decorator       | Value                             | Component                                                                     |
-| --------------- | --------------------------------- | ----------------------------------------------------------------------------- |
-| `TextField`     | `string`                          | `punica-input`; `inputType` picks `email`, `password`, `tel`, `url` or `date` |
-| `NumberField`   | `number`, `undefined` while empty | `punica-input` of type `number`                                               |
-| `TextAreaField` | `string`                          | `punica-textarea`                                                             |
-| `SelectField`   | `string`                          | `punica-select` with `options`                                                |
-| `CheckboxField` | `boolean`                         | `punica-checkbox`                                                             |
-| `SwitchField`   | `boolean`                         | `punica-switch`                                                               |
+| Decorator          | Value                                 | Component                                                                     |
+| ------------------ | ------------------------------------- | ----------------------------------------------------------------------------- |
+| `TextField`        | `string`                              | `punica-input`; `inputType` picks `email`, `password`, `tel`, `url` or `date` |
+| `NumberField`      | `number`, `undefined` while empty     | `punica-input` of type `number`                                               |
+| `TextAreaField`    | `string`                              | `punica-textarea`                                                             |
+| `SelectField`      | `string`                              | `punica-select` with `options`                                                |
+| `CheckboxField`    | `boolean`                             | `punica-checkbox`                                                             |
+| `SwitchField`      | `boolean`                             | `punica-switch`                                                               |
+| `RadioGroupField`  | `string`                              | `punica-radio-group` with `options`; `orientation` lays them out              |
+| `MultiSelectField` | `string[]`                            | `punica-select` with `multiple` and `options`                                 |
+| `DateField`        | `yyyy-mm-dd`, `undefined` while empty | `punica-date-picker`; `locale` picks the language                             |
+| `PasswordField`    | `string`                              | `punica-input` of type `password`                                             |
+| `FileField`        | `File`, with `multiple` a `File[]`    | `punica-file-input`; `accept` limits the files                                |
+| `ArrayField`       | an array of rows                      | a form for every row, with buttons to add and remove; see below               |
 
 Every field takes `label`, `help`, `placeholder`, `disabled`, `hidden`,
 `span` (columns it takes) and the functions of a form item (`validation`,
 `control`, `initialize`).
 
+### Choices that are loaded
+
+`options` is a list, or a function that loads one. The field shows that it is
+loading (`loadingText`), and the function is called once, also when several
+forms use it:
+
+```ts
+@SelectField({ label: 'City', options: () => api.cities() })
+city = '';
+```
+
+### Lists of rows
+
+`ArrayField` is a list such as the lines of an invoice. Every row is a form
+of the class `row` returns, rendered with the fields of that class:
+
+```ts
+class LineForm {
+  @TextField({ label: 'Product', required: true })
+  product = '';
+
+  @NumberField({ label: 'Quantity', min: 1 })
+  quantity?: number = 1;
+}
+
+@FormKit({ title: 'Invoice' })
+class InvoiceForm {
+  @ArrayField({
+    label: 'Lines',
+    row: () => new LineForm(),
+    minItems: 1,
+    addLabel: 'Add line'
+  })
+  lines: LineForm[] = [];
+}
+```
+
+The row class needs no `@FormKit`; with it, `columns` lays out the fields of
+a row. Typing into a row renders that row only.
+
 ## Validation
 
-Rules are validated by the kit: `required`, `minLength`, `maxLength`,
-`pattern`, `min`, `max`. A field's own `validation` function runs after them,
-for a value that passed. A field is validated when the user leaves it and the
-whole form when it is submitted; `onSubmit` is only called for a valid form.
+Rules are validated by the kit: `required`, `minLength`, `maxLength` and
+`pattern` for text, `min` and `max` for numbers, `minDate` and `maxDate` for
+dates, `minItems` and `maxItems` for several choices, files and rows, and
+`maxFileSize` (bytes) for files. A field's own `validation` function runs
+after them, for a value that passed.
+
+What is typed is validated when the user leaves the field, what is chosen
+(a select, a radio group, a date, a file, a checkbox) when it is chosen, and
+the whole form when it is submitted; `onSubmit` is only called for a valid
+form.
 
 Messages can be replaced for one field with `messages`, or for every form:
 
@@ -102,8 +158,8 @@ setMessages({ required: (label) => `${label} zorunludur` });
 ## `@FormKit`
 
 Sets up the form: its title, description and number of columns, the kit's
-reader and the services `GetValues`, `SetValue`, `Validate`, `Trigger` and
-`Reset`. Add your own with the `services`, `readers` and `starters` options.
+reader and the services `GetValues`, `SetValue`, `Validate`, `Trigger`,
+`Reset`, `Touch`, `Submit` and `FieldArray`. Add your own with the `services`, `readers` and `starters` options.
 
 ## Your own components
 

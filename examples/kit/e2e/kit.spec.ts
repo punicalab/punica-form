@@ -99,3 +99,101 @@ test('what the submit handler throws is shown as an error of the form', async ({
   await expect(page.getByTestId('values')).toBeVisible();
   await expect(page.getByRole('alert')).toHaveCount(0);
 });
+
+test.describe('the other kinds of fields', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/?form=order');
+    await expect(page.getByRole('heading', { name: 'Order' })).toBeVisible();
+  });
+
+  test('choices that are loaded, dates, files and several choices', async ({
+    page
+  }) => {
+    const city = page.locator('punica-select').nth(0);
+    const extras = page.locator('punica-select').nth(1);
+    const day = page.locator('punica-date-picker').locator('input');
+
+    // The cities arrive a moment later
+    await expect(city).toHaveJSProperty('disabled', true);
+    await expect(city.locator('punica-option')).toHaveCount(3);
+    await expect(city).toHaveJSProperty('disabled', false);
+
+    await page.getByRole('button', { name: 'Save' }).click();
+    await expect(page.getByText('Delivery is required')).toBeVisible();
+    await expect(page.getByText('City is required')).toBeVisible();
+    await expect(page.getByText('Lines needs at least 1')).toBeVisible();
+
+    await page.locator('punica-radio', { hasText: 'Pick up' }).click();
+    await city.click();
+    await city.locator('punica-option', { hasText: 'Sfax' }).click();
+
+    // Outside the days the form takes
+    await day.fill('01/25/2026');
+    await day.press('Tab');
+    await expect(
+      page.getByText('Day must be 2026-01-20 or earlier')
+    ).toBeVisible();
+    await day.fill('01/12/2026');
+    await day.press('Tab');
+    await expect(page.getByText('Day must be')).toHaveCount(0);
+
+    await extras.click();
+    for (const extra of ['Wrap', 'Card', 'Bag']) {
+      await extras.locator('punica-option', { hasText: extra }).click();
+    }
+    await page.keyboard.press('Escape');
+    await page.locator('punica-input[type="password"] input').fill('SAVE10');
+    await expect(page.getByText('Extras takes at most 2')).toBeVisible();
+    await extras.click();
+    await extras.locator('punica-option', { hasText: 'Card' }).click();
+    await page.keyboard.press('Escape');
+
+    const receipt = page.locator('punica-file-input input[type="file"]');
+
+    await receipt.setInputFiles({
+      name: 'large.txt',
+      mimeType: 'text/plain',
+      buffer: Buffer.alloc(4096)
+    });
+    await page.getByRole('button', { name: 'Save' }).click();
+    await expect(
+      page.getByText('Receipt must not be larger than 1 KB')
+    ).toBeVisible();
+    await receipt.setInputFiles({
+      name: 'receipt.txt',
+      mimeType: 'text/plain',
+      buffer: Buffer.from('paid')
+    });
+
+    await page.locator('punica-button', { hasText: 'Add line' }).click();
+    await page.locator('[data-kit-row] input').first().fill('Paper');
+    await page.getByRole('button', { name: 'Save' }).click();
+
+    await expect(page.getByTestId('values')).toHaveText(
+      '{"delivery":"pickup","city":"Sfax","day":"2026-01-12","extras":["Wrap","Bag"],"coupon":"SAVE10","receipt":"file:receipt.txt","lines":[{"product":"Paper","quantity":1}]}'
+    );
+  });
+
+  test('a list of rows: each row is validated on its own', async ({ page }) => {
+    const rows = page.locator('[data-kit-row]');
+    const add = page.locator('punica-button', { hasText: 'Add line' });
+
+    await add.click();
+    await add.click();
+    await expect(rows).toHaveCount(2);
+
+    // Leaving the product of the first row validates that row only
+    await rows.nth(0).locator('input').first().focus();
+    await rows.nth(1).locator('input').first().focus();
+    await expect(rows.nth(0).getByText('Product is required')).toBeVisible();
+    await expect(rows.nth(1).getByText('Product is required')).toHaveCount(0);
+
+    await rows.nth(1).locator('input').first().fill('Ink');
+    await rows.nth(0).locator('punica-button', { hasText: 'Remove' }).click();
+    await expect(rows).toHaveCount(1);
+    await expect(rows.nth(0).locator('input').first()).toHaveValue('Ink');
+
+    await page.getByRole('button', { name: 'Reset' }).click();
+    await expect(rows).toHaveCount(0);
+  });
+});

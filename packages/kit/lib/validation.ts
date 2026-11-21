@@ -8,7 +8,22 @@ const messages: Messages = {
   maxLength: (label, length) => `${label} must be at most ${length} characters`,
   pattern: (label) => `${label} is not valid`,
   min: (label, value) => `${label} must be at least ${value}`,
-  max: (label, value) => `${label} must be at most ${value}`
+  max: (label, value) => `${label} must be at most ${value}`,
+  minDate: (label, date) => `${label} must be ${date} or later`,
+  maxDate: (label, date) => `${label} must be ${date} or earlier`,
+  minItems: (label, count) => `${label} needs at least ${count}`,
+  maxItems: (label, count) => `${label} takes at most ${count}`,
+  maxFileSize: (label, bytes) =>
+    `${label} must not be larger than ${Math.round(bytes / 1024)} KB`
+};
+
+/** Whether a value is a file, as far as its size goes. */
+const isFile = (value: unknown): value is { size: number } => {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    typeof (value as { size?: unknown }).size === 'number'
+  );
 };
 
 /**
@@ -32,10 +47,16 @@ const isEmpty = (value: unknown): boolean => {
 /** The first rule the value breaks, as its message. */
 const check = (props: FieldProps, value: unknown): string | undefined => {
   const { label, minLength, maxLength, pattern, min, max } = props;
+  const { minDate, maxDate, minItems, maxItems, maxFileSize } = props;
   const text = { ...messages, ...props.messages };
 
   if (isEmpty(value)) {
-    return props.required ? text.required(label) : undefined;
+    if (props.required) return text.required(label);
+
+    // A list that needs rows needs them, whether it is required or not
+    return Array.isArray(value) && minItems
+      ? text.minItems(label, minItems)
+      : undefined;
   }
 
   if (typeof value === 'string') {
@@ -58,6 +79,31 @@ const check = (props: FieldProps, value: unknown): string | undefined => {
   if (typeof value === 'number') {
     if (min !== undefined && value < min) return text.min(label, min);
     if (max !== undefined && value > max) return text.max(label, max);
+  }
+
+  // Dates are `yyyy-mm-dd`, which sorts like the dates themselves
+  if (typeof value === 'string') {
+    if (minDate && value < minDate) return text.minDate(label, minDate);
+    if (maxDate && value > maxDate) return text.maxDate(label, maxDate);
+  }
+
+  if (Array.isArray(value)) {
+    if (minItems !== undefined && value.length < minItems) {
+      return text.minItems(label, minItems);
+    }
+
+    if (maxItems !== undefined && value.length > maxItems) {
+      return text.maxItems(label, maxItems);
+    }
+  }
+
+  if (
+    maxFileSize !== undefined &&
+    (Array.isArray(value) ? value : [value]).some(
+      (file) => isFile(file) && file.size > maxFileSize
+    )
+  ) {
+    return text.maxFileSize(label, maxFileSize);
   }
 
   return undefined;

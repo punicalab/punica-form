@@ -12,9 +12,12 @@ import { KitItem } from '../types';
 
 /**
  * The types a form definition may use with the kit, and the form item type
- * of the kit each one stands for.
+ * of the kit each one stands for: every type of the kit but the list.
  */
-export const KIT_JSON_TYPES: Record<string, string> = { ...KIT_TYPES };
+export const KIT_JSON_TYPES: Record<string, string> = Object.fromEntries(
+  // The rows of a list are forms of a class, which a definition cannot hold
+  Object.entries(KIT_TYPES).filter(([type]) => type !== 'array')
+);
 
 type Controller = FormController<JsonFormValues, KitItem<JsonFormValues>>;
 

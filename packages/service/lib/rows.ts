@@ -177,6 +177,9 @@ const write = <E, F extends FormItem<E>>(
 
   list.stale.clear();
 
+  // What the validation of the item itself found was about other rows
+  if (all) list.own = undefined;
+
   if (changed) {
     // Like a value that is set: a validation of the old rows does not count
     dropValidations(command, property);

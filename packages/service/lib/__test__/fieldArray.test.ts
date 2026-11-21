@@ -257,7 +257,11 @@ describe('FieldArray', () => {
       errorMessages: ['Add two lines']
     });
 
+    // It was about the rows the list had: with other rows it is gone
     await list().append('lines', { name: 'Glue' });
+
+    expect(item()).toMatchObject({ error: false, errorMessages: [] });
+
     await controller.getService(Trigger).run('lines');
 
     expect(item()).toMatchObject({ error: false, errorMessages: [] });

@@ -39,4 +39,13 @@ describe('deepCopy', () => {
 
     expect(copy.self).toBe(copy);
   });
+
+  test('keeps files by reference', () => {
+    const file = new File(['a'], 'a.txt');
+    const copy = deepCopy({ files: [file], file });
+
+    expect(copy.file).toBe(file);
+    expect(copy.files).toEqual([file]);
+    expect(copy.files[0]).toBe(file);
+  });
 });

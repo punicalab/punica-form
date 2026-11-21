@@ -1,7 +1,14 @@
 import { ErrorDetail, FormItem } from '@punica/form';
 
-/** A choice of a select: its value, or its value and the text to show. */
+/** A choice: its value, or its value and the text to show. */
 export type Option = string | { value: string; label: string };
+
+/**
+ * The choices of a field: a list, or a function that loads one. The field
+ * shows that it is loading and calls the function once, also when several
+ * forms use it.
+ */
+export type Options = Option[] | (() => Promise<Option[]>);
 
 /** How many columns of the form a field takes. */
 export type Span = 1 | 2 | 3 | 4 | 'full';
@@ -22,6 +29,21 @@ export type Rules = {
 
   /** Highest number allowed. */
   max?: number;
+
+  /** Earliest date allowed, as `yyyy-mm-dd`. */
+  minDate?: string;
+
+  /** Latest date allowed, as `yyyy-mm-dd`. */
+  maxDate?: string;
+
+  /** Fewest choices, files or rows allowed. */
+  minItems?: number;
+
+  /** Most choices, files or rows allowed. */
+  maxItems?: number;
+
+  /** The largest file allowed, in bytes. */
+  maxFileSize?: number;
 };
 
 /**
@@ -39,8 +61,29 @@ export type KitItem<E> = FormItem<E> &
     /** The type of a text field, `text` by default. */
     inputType?: 'text' | 'email' | 'password' | 'tel' | 'url' | 'date';
 
-    /** The choices of a select. */
-    options?: Option[];
+    /** The choices of a select, a multi-select or a radio group. */
+    options?: Options;
+
+    /** Shown in place of the choices while they are loaded, `Loading…` by default. */
+    loadingText?: string;
+
+    /** How the choices of a radio group are laid out, `vertical` by default. */
+    orientation?: 'horizontal' | 'vertical';
+
+    /** Whether a file field takes several files; its value is an array then. */
+    multiple?: boolean;
+
+    /** The files a file field takes, as the `accept` of a file input (`image/*,.pdf`). */
+    accept?: string;
+
+    /** The language a date field is typed and shown in, the one of the page by default. */
+    locale?: string;
+
+    /** The text of the button that adds a row to a list, `Add` by default. */
+    addLabel?: string;
+
+    /** The text of the button that removes a row from a list, `Remove` by default. */
+    removeLabel?: string;
 
     /** Visible lines of a text area. */
     rows?: number;
@@ -65,6 +108,11 @@ export type Messages = {
   pattern: (label: string) => string;
   min: (label: string, value: number) => string;
   max: (label: string, value: number) => string;
+  minDate: (label: string, date: string) => string;
+  maxDate: (label: string, date: string) => string;
+  minItems: (label: string, count: number) => string;
+  maxItems: (label: string, count: number) => string;
+  maxFileSize: (label: string, bytes: number) => string;
 };
 
 /** A validation of an item. */
