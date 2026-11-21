@@ -77,6 +77,16 @@ describe('services', () => {
     await controller.start();
   });
 
+  test('a reset is applied at once: what is set after it stays', async () => {
+    const reset = controller.getService(Reset).run();
+    const cleared = controller.getService(ClearErrors).run();
+    const set = controller.getService(SetValue).run('age', 7);
+
+    await Promise.all([reset, cleared, set]);
+
+    expect(values()).toEqual(['a', 7, 'x']);
+  });
+
   test('SetValue sets the value and writes the items its control returns', async () => {
     const listener = jest.fn();
 

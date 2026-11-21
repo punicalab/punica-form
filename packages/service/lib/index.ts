@@ -1,6 +1,7 @@
 import type { FormItem } from '@punica/form';
 import type { ClearError } from './clearError';
 import type { ClearErrors } from './clearErrors';
+import type { FieldArray } from './fieldArray';
 import type { GetValues } from './getValues';
 import type { Reset } from './reset';
 import type { ResetItem } from './resetItem';
@@ -12,6 +13,8 @@ import type { Validate } from './validate';
 
 export * from './clearError';
 export * from './clearErrors';
+export * from './fieldArray';
+export type { FormRow } from './rows';
 export * from './getValues';
 export * from './reset';
 export * from './resetItem';
@@ -28,6 +31,7 @@ declare module '@punica/form' {
   interface ServiceRegistry<E, F extends FormItem<E>> {
     clearError: ClearError<E, F>;
     clearErrors: ClearErrors<E, F>;
+    fieldArray: FieldArray<E, F>;
     getValues: GetValues<E, F>;
     reset: Reset<E, F>;
     resetItem: ResetItem<E, F>;

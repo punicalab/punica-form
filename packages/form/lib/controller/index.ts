@@ -26,6 +26,13 @@ export type FormControllerOptions = {
 
   /** The register whose form item types the form reports. */
   register?: FormItemRegister;
+
+  /**
+   * The services of a form that lists none, with `@Services` or in the form
+   * given to `fromForm`. The rows of a list get the services of the form
+   * they belong to this way.
+   */
+  services?: Array<IService | (new () => IService)>;
 };
 
 /** A class whose instances are services. */
@@ -113,10 +120,13 @@ export class FormController<
     form: Form<E, F>,
     options: FormControllerOptions = {}
   ): Promise<FormController<E, F>> {
-    return new FormController<E, F>(form, {} as E, {
-      name: 'Form',
-      ...options
-    });
+    return new FormController<E, F>(
+      form.services?.length || !options.services
+        ? form
+        : { ...form, services: options.services },
+      {} as E,
+      { name: 'Form', ...options }
+    );
   }
 
   /**
@@ -132,6 +142,10 @@ export class FormController<
     const form: Form<E, F> = { items: [] };
 
     await createInitialReader<E, F>().read(entity, form);
+
+    if (!form.services?.length && options.services) {
+      form.services = options.services;
+    }
 
     // Readers and starters may still add items when the form is started
     if (!form.items.length && !form.readers?.length && !form.starters?.length) {
@@ -285,6 +299,15 @@ export class FormController<
       );
     }
 
+    if (
+      this.#form.items.some((item) => item.row) &&
+      ![...this.#services.values()].some(({ name }) => name === 'fieldArray')
+    ) {
+      console.warn(
+        `[punica-form] ${this.#name} has a list of rows but no FieldArray service: add FieldArray of @punica/form-service to @Services.`
+      );
+    }
+
     this.#initialItems = deepCopy(this.#form.items);
     this.#form = {
       ...this.#form,
@@ -372,6 +395,12 @@ export class FormController<
 
   #commit(form: Form<E, F>): void {
     this.#form = form;
+
+    // A service that writes while the form is started: start() publishes
+    // the form once it is complete
+    if (!this.#started) {
+      return;
+    }
 
     if (this.#batching) {
       this.#pending = true;

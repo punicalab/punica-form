@@ -4,6 +4,7 @@ import {
   IServiceControl,
   IServiceInitialize
 } from '@punica/form';
+import { hasRows, replaceRows } from '../rows';
 import { dropValidations } from '../validateItem';
 
 /**
@@ -26,16 +27,23 @@ export class SetValue<E, F extends FormItem<E> = FormItem<E>>
    * Fires UPDATE_ITEM with the changed item and the items its control returned.
    * When the property is set again, or the form is reset, while the control
    * function is still running, the result of that older run is dropped.
+   * The value of a list replaces its rows.
    * @throws When the form has no item for the property
    */
   public async run(property: keyof E, value: unknown): Promise<void> {
     const { getItem, setItems, supersede, emit, createCommandItem } =
       this.#command;
-    const item = getItem(property);
-
-    if (!item) {
+    if (!getItem(property)) {
       throw new Error(`Item not found: ${String(property)}`);
     }
+
+    // The rows of a list hold its value
+    if (hasRows(this.#command, property)) {
+      await replaceRows(this.#command, property, value);
+      value = getItem(property)?.value;
+    }
+
+    const item = getItem(property) as F;
 
     // A validation of the old value is cancelled
     dropValidations(this.#command, property);

@@ -13,7 +13,8 @@ Punica Form is a headless form engine. `@punica/form` holds the engine,
   exact list.
 - `@punica/form-json`: forms as data; see "Forms as data" below.
 - `@punica/form-service`: `Validate`, `GetValues`, `SetValue`, `Reset`,
-  `ResetItem`, `Trigger`, `ClearError`, `ClearErrors`, `Store`.
+  `ResetItem`, `Trigger`, `ClearError`, `ClearErrors`, `Touch`, `Submit`,
+  `FieldArray`, `Store`.
 - NOT provided: `@Title`, `@Description`, `@Layout`, `@FormItemInputText` or
   any other form item decorator, a `Reader` class, a base form item. These
   belong to the application's own form system. Build them with the `define*`
@@ -143,6 +144,7 @@ entity of the form, so property names and results are type-checked.
 | `ClearErrors` | `run(): Promise<void>` |
 | `Touch` | `run(property): Promise<void>`, marks the item as touched; call it when the user leaves the field (since 2.2) |
 | `Submit` | `run(handler?): Promise<boolean>`, validates, then calls `handler(values)`; sets `state.submitting`, ignores a second submit meanwhile, and turns what the handler throws into `state.errors` instead of rejecting (since 2.2) |
+| `FieldArray` | no `run`: `rows(property)`, `append`, `insert`, `remove`, `move`, `replace`; see "Lists of rows" (since 2.2) |
 | `Store` | no `run`: it adds `readStoreItem`, `writeStoreItem`, `deleteStoreItem` to the command passed to item functions (`CommandItem<E, F, StoreCommand>`) |
 
 ```ts
@@ -171,11 +173,53 @@ if (await controller.getService(Validate).run()) {
 - To submit a form prefer `Submit` (since 2.2) over calling `Validate` and
   `GetValues` by hand. Do not keep your own `submitting` or `dirty` flags.
 
+## Lists of rows
+
+For repeated rows (the lines of an invoice, a list of phone numbers) do not
+keep an array in a single item and do not build property names such as
+`lines.0.price`. Since 2.2 a form item with a `row` function is a list: every
+row is a form of its own, created from the entity `row` returns.
+
+```ts
+class LineForm {
+  @FormItemInputText({ label: 'Product' })
+  product = '';
+}
+
+@Services([FieldArray, GetValues, SetValue, Validate, Trigger, Submit])
+class InvoiceForm {
+  // Any form item decorator of the application; `row` makes it a list
+  @FormItemList({ label: 'Lines', row: () => new LineForm() })
+  lines: LineForm[] = [];
+}
+
+const list = controller.getService(FieldArray);
+
+const row = await list.append('lines', { product: 'Paper' });
+await row.controller.getService(SetValue).run('product', 'Ink');
+await list.remove('lines', row); // or an index
+list.rows('lines'); // [{ key, controller }], a new array only when rows change
+```
+
+- The form has to list `FieldArray`. A row class without `@Services` gets the
+  services of the form around it; one with `@Services` keeps its own.
+- The value of the list item is the array of the values of its rows.
+  `GetValues` and `Submit` return it; never collect the rows by hand.
+- `Validate` and `Submit` validate the rows. The list item is `dirty`,
+  `touched` and in `error` when a row is, and `Reset` brings back the rows the
+  form was started with. `SetValue` on the list replaces its rows.
+- A `validation` of the list item itself counts besides the rows, for
+  example "add at least one line".
+- In React: `const { rows, append, remove, move } = useFieldArray(controller, "lines")`
+  from `@punica/form-react`. Render `rows.map((row) => <Line key={row.key} controller={row.controller} />)`
+  and call `useForm(row.controller)` inside `Line`, so typing into a row
+  renders that row only.
+
 ## Form items
 
 A form item is a plain object: `property`, `label`, `type`, `value`,
 `required`, `disabled`, `hidden`, `error`, `errorMessages`, `dirty`,
-`touched`, `validating`. Add the
+`touched`, `validating`, and `row` for a list of rows. Add the
 properties of your form system with a type of your own:
 `type AppItem<E> = FormItem<E> & { layout?: Layout }`, then use
 `FormController<UserForm, AppItem<UserForm>>`.

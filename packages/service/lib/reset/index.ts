@@ -5,6 +5,7 @@ import {
   IServiceInitialize,
   deepCopy
 } from '@punica/form';
+import { resetRows } from '../rows';
 import { dropValidations } from '../validateItem';
 
 /**
@@ -34,9 +35,16 @@ export class Reset<E, F extends FormItem<E> = FormItem<E>>
     supersede();
     dropValidations(this.#command);
 
+    // The rows of the lists are created anew, which takes a moment; the
+    // items are reset at once, as in a form without lists
+    const rows = resetRows(this.#command);
+
     // A fresh copy, so the initial state stays intact
     setItems(deepCopy(getInitialItems()));
     setState({ errors: [], submitCount: 0 });
+
+    if (rows) await rows;
+
     emit('RESET', getForm());
   }
 }
