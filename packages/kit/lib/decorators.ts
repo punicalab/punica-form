@@ -16,6 +16,7 @@ import {
   FieldArray,
   GetValues,
   Reset,
+  SetErrors,
   SetValue,
   Submit,
   Touch,
@@ -79,7 +80,8 @@ export const FormKit = (options: FormKitOptions = {}): FormClassDecorator => {
       Reset,
       Touch,
       Submit,
-      FieldArray
+      FieldArray,
+      SetErrors
     ];
 
     defineFormProperty<FormKitOptions>(OPTIONS)(options)(target);

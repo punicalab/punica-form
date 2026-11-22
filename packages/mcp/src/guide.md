@@ -16,7 +16,7 @@ Punica Form is a headless form engine. `@punica/form` holds the engine,
   or Yup; see "Validation with a schema" below.
 - `@punica/form-service`: `Validate`, `GetValues`, `SetValue`, `Reset`,
   `ResetItem`, `Trigger`, `ClearError`, `ClearErrors`, `Touch`, `Submit`,
-  `FieldArray`, `Store`.
+  `SetErrors`, `FieldArray`, `Store`.
 - NOT provided: `@Title`, `@Description`, `@Layout`, `@FormItemInputText` or
   any other form item decorator, a `Reader` class, a base form item. These
   belong to the application's own form system. Build them with the `define*`
@@ -150,6 +150,7 @@ entity of the form, so property names and results are type-checked.
 | `ClearErrors` | `run(): Promise<void>` |
 | `Touch` | `run(property): Promise<void>`, marks the item as touched; call it when the user leaves the field (since 2.2) |
 | `Submit` | `run(handler?): Promise<boolean>`, validates, then calls `handler(values)`; sets `state.submitting`, ignores a second submit meanwhile, and turns what the handler throws into `state.errors` instead of rejecting (since 2.2) |
+| `SetErrors` | `run(errors): Promise<string[]>`, shows messages found outside the form (by a server) on the items they name; returns those that name no item (since 2.3) |
 | `FieldArray` | no `run`: `rows(property)`, `append`, `insert`, `remove`, `move`, `replace`; see "Lists of rows" (since 2.2) |
 | `Store` | no `run`: it adds `readStoreItem`, `writeStoreItem`, `deleteStoreItem` to the command passed to item functions (`CommandItem<E, F, StoreCommand>`) |
 
@@ -178,6 +179,26 @@ if (await controller.getService(Validate).run()) {
 - Setting a value does not validate it. Run `Trigger` for that.
 - To submit a form prefer `Submit` (since 2.2) over calling `Validate` and
   `GetValues` by hand. Do not keep your own `submitting` or `dirty` flags.
+- When a server refuses what was submitted with messages by field, show them
+  with `SetErrors` (since 2.3) instead of writing items yourself, and throw
+  the rest so the form shows it:
+
+  ```ts
+  await controller.getService(Submit).run(async (values) => {
+    try {
+      await save(values);
+    } catch (error) {
+      // { email: ["Already registered"], "lines.1.price": ["Too high"], capacity: ["Full"] }
+      const rest = await controller.getService(SetErrors).run(fieldErrorsOf(error));
+
+      throw new Error(rest.join(" ") || "Correct the marked fields.");
+    }
+  });
+  ```
+
+  A name is a property; `lines.1.price` is an item of a row of a list. Such
+  an error stays until its item is validated again, reset or cleared. The
+  kit lists `SetErrors` already.
 
 ## Lists of rows
 
