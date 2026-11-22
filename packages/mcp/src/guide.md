@@ -301,6 +301,29 @@ class UserForm { … }
   `addFormValidation(command, () => messages)` of `@punica/form-service` in
   its `initialize` (since 2.2).
 
+## With the other Punica libraries
+
+Punica Form is one of three libraries made to be used together: Punica
+Request (`@punica/request`, the HTTP client) and Punica Components
+(`@punica/components`, the elements the kit renders with). Each has an MCP
+server; when the project has them, look their APIs up there instead of
+guessing. Where they meet:
+
+- **Choices from a server**: `options: () => listCountries()` of a kit field
+  may return a promise; give it a function that asks the client.
+- **A validation that asks a server**: pass `context.signal` on as the
+  `signal` of the request, and set `validateDebounce`. A request for a value
+  the user typed over is cancelled.
+- **What a server refuses**: a failed request of Punica Request rejects with
+  an `HttpError` whose `response.data` is the body the server sent. Give its
+  messages by field to `SetErrors` and throw the rest, as shown above.
+- **Submitting**: do the request inside the handler of `Submit` (or
+  `onSubmit` of `KitForm`); the form shows that it is submitting and keeps a
+  second submit out.
+
+A whole application on the three, with its tests:
+https://github.com/punicalab/punica-starter (start with its `AGENTS.md`).
+
 ## Events
 
 `controller.on(event, handler)` returns the function that removes the
