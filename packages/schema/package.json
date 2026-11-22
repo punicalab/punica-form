@@ -1,6 +1,6 @@
 {
   "name": "@punica/form-schema",
-  "version": "0.1.0-next.0",
+  "version": "0.1.0",
   "description": "Validate Punica Form forms with Zod, Valibot, ArkType or any other Standard Schema library",
   "keywords": [
     "form",
@@ -44,8 +44,8 @@
     "test": "node --test test/*.test.mjs"
   },
   "peerDependencies": {
-    "@punica/form": "^2.2.0-next.1",
-    "@punica/form-service": "^2.2.0-next.1"
+    "@punica/form": "^2.2.0",
+    "@punica/form-service": "^2.2.0"
   },
   "devDependencies": {
     "@punica/form": "workspace:^",
