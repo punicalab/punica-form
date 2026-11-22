@@ -40,7 +40,7 @@ export type FormKitOptions = {
 
   /**
    * Services in addition to GetValues, SetValue, Validate, Trigger, Reset,
-   * Touch, Submit and FieldArray.
+   * Touch, Submit, FieldArray and SetErrors.
    */
   services?: Array<IService | (new () => IService)>;
 

@@ -23,6 +23,15 @@ type Pending = {
 
   /** Changes when every validation of the form is dropped. */
   epoch: number;
+
+  /**
+   * Errors that were not found by a validation but written from outside
+   * (`SetErrors`): the property, and when its error was set.
+   */
+  external: Map<PropertyKey, number>;
+
+  /** Counts the errors set from outside. */
+  clock: number;
 };
 
 const pending = new WeakMap<object, Pending>();
@@ -31,7 +40,9 @@ const pendingOf = (command: object): Pending => {
   const found = pending.get(command) ?? {
     runs: new Map(),
     delays: new Map(),
-    epoch: 0
+    epoch: 0,
+    external: new Map(),
+    clock: 0
   };
 
   pending.set(command, found);
@@ -62,6 +73,25 @@ export const dropValidations = <E, F extends FormItem<E>>(
   for (const key of property === undefined ? [...delays.keys()] : keys) {
     delays.get(key)?.();
   }
+};
+
+/**
+ * Notes that the error of a property was set from outside, by `SetErrors`.
+ *
+ * A validation of the property that is running, or waiting for its delay,
+ * is cancelled: what it finds was asked before the error was known and must
+ * not erase it. A validation that starts afterwards replaces the error, and
+ * so the error of an item that is not validated at all (no validation,
+ * hidden, disabled) goes when the item is asked to be validated.
+ */
+export const noteExternalError = <E, F extends FormItem<E>>(
+  command: CommandService<E, F>,
+  property: keyof E
+): void => {
+  const state = pendingOf(command);
+
+  dropValidations(command, property);
+  state.external.set(property, ++state.clock);
 };
 
 /**
@@ -156,8 +186,16 @@ export const validateItems = async <E, F extends FormItem<E>>(
   { verdict = true }: { verdict?: boolean } = {}
 ): Promise<boolean> => {
   const state = pendingOf(command);
-  const { epoch } = state;
+  const { epoch, clock } = state;
+  /** An error set from outside after this run started: the run leaves it alone. */
+  const late = (property: PropertyKey): boolean =>
+    (state.external.get(property) ?? 0) > clock;
   const properties = items.filter(isValidated).map((item) => item.property);
+  // Items that are not validated cannot lose an error from outside to a
+  // validation: being asked to be validated is what clears it
+  const unvalidated = items
+    .filter((item) => !isValidated(item) && state.external.has(item.property))
+    .map((item) => item.property);
   const waiting = new Set(properties);
   const finished = new Map<keyof E, { run: Run; result: ErrorDetail }>();
 
@@ -183,7 +221,7 @@ export const validateItems = async <E, F extends FormItem<E>>(
       const done = finished.get(property);
       const running = state.runs.get(property)?.settled === false;
 
-      if (!now) continue;
+      if (!now || late(property)) continue;
 
       const result =
         done &&
@@ -192,12 +230,27 @@ export const validateItems = async <E, F extends FormItem<E>>(
           ? done.result
           : undefined;
 
+      // A validation that started after the error from outside replaces it
+      if (result) state.external.delete(property);
+
       if (result || (now.validating && !running)) {
         written.push({
           ...now,
           ...result,
           ...(now.validating && !running ? { validating: false } : {})
         });
+      }
+    }
+
+    for (const property of unvalidated) {
+      const now = command.getItem(property);
+
+      if (!now || late(property)) continue;
+
+      state.external.delete(property);
+
+      if (now.error || now.errorMessages?.length) {
+        written.push({ ...now, error: false, errorMessages: [] });
       }
     }
 
@@ -214,6 +267,12 @@ export const validateItems = async <E, F extends FormItem<E>>(
 
       while (!result) {
         if (state.epoch !== epoch) return false;
+
+        // Told from outside, meanwhile, that the item is wrong: it is
+        if (late(property)) {
+          valid = false;
+          break;
+        }
 
         const newer = state.runs.get(property);
 

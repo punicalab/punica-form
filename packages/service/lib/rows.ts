@@ -206,6 +206,7 @@ const write = <E, F extends FormItem<E>>(
     same &&
     list.told === list.rows &&
     next.error === Boolean(item.error) &&
+    isEqual(item.errorMessages ?? [], list.own?.errorMessages ?? []) &&
     next.touched === Boolean(item.touched) &&
     next.validating === Boolean(item.validating)
   ) {
@@ -403,6 +404,27 @@ export const createLists = async <E, F extends FormItem<E>>(
       }
     ]);
   }
+};
+
+/**
+ * Shows an error on the item of a list itself, as its own validation would:
+ * it stays while the rows change and goes when the list is validated again,
+ * cleared or reset.
+ * @returns `false` when the item of the property is not a list
+ */
+export const setListError = <E, F extends FormItem<E>>(
+  command: CommandService<E, F>,
+  property: keyof E,
+  errorMessages: string[]
+): boolean => {
+  const list = listOf(command, property);
+
+  if (!list) return false;
+
+  list.own = { error: true, errorMessages };
+  write(command, property);
+
+  return true;
 };
 
 /**

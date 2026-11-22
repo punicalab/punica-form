@@ -163,7 +163,7 @@ setMessages({ required: (label) => `${label} zorunludur` });
 
 Sets up the form: its title, description and number of columns, the kit's
 reader and the services `GetValues`, `SetValue`, `Validate`, `Trigger`,
-`Reset`, `Touch`, `Submit` and `FieldArray`. Add your own with the `services`, `readers` and `starters` options.
+`Reset`, `Touch`, `Submit`, `FieldArray` and `SetErrors`. Add your own with the `services`, `readers` and `starters` options.
 
 ## Your own components
 
