@@ -1,5 +1,28 @@
 # @punica/form-mcp
 
+## 0.5.0
+
+### Minor Changes
+
+- [#104](https://github.com/punicalab/punica-form/pull/104) [`fbd132b`](https://github.com/punicalab/punica-form/commit/fbd132b2d779e210259e470897a5f9c148e5ffba) Thanks [@punicalab](https://github.com/punicalab)! - `SetErrors`, a service that shows errors found outside the form on the items they are about: what a server refused with messages by field.
+  
+  ```ts
+  const rest = await controller.getService(SetErrors).run({
+    email: ['This email is already registered'],
+    'lines.1.price': ['Too high'],
+    capacity: ['Only 10 seats are left']
+  });
+  // rest: ['Only 10 seats are left'], the messages that name no item
+  ```
+  
+  A name is a property of the form; `lines.1.price` (or `lines[1].price`) is an item of a row of a list, and nested objects and arrays say the same. Such an error goes when its item is validated again, also when the item has no validation of its own, and with `ClearError`, `ClearErrors`, `ResetItem` and `Reset`; a validation that was running when it was set does not erase it. `@FormKit`, `fromSchema` and `JsonForm` list the service, and the MCP server's guide shows how to use it in a submit handler.
+
+### Patch Changes
+
+- [#105](https://github.com/punicalab/punica-form/pull/105) [`4da11f1`](https://github.com/punicalab/punica-form/commit/4da11f15a912fba617d46974fff55faa9e2ddb5a) Thanks [@punicalab](https://github.com/punicalab)! - The guide says where Punica Form meets Punica Request and Punica Components (choices and validations that ask a server, what a server refuses, submitting) and points to an application on the three.
+- Updated dependencies [[`fbd132b`](https://github.com/punicalab/punica-form/commit/fbd132b2d779e210259e470897a5f9c148e5ffba)]:
+  - @punica/form-json@0.2.0
+
 ## 0.4.0
 
 ### Minor Changes
