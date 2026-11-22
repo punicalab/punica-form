@@ -16,7 +16,7 @@ Punica Form is a headless form engine. `@punica/form` holds the engine,
   or Yup; see "Validation with a schema" below.
 - `@punica/form-service`: `Validate`, `GetValues`, `SetValue`, `Reset`,
   `ResetItem`, `Trigger`, `ClearError`, `ClearErrors`, `Touch`, `Submit`,
-  `FieldArray`, `Store`.
+  `SetErrors`, `FieldArray`, `Store`.
 - NOT provided: `@Title`, `@Description`, `@Layout`, `@FormItemInputText` or
   any other form item decorator, a `Reader` class, a base form item. These
   belong to the application's own form system. Build them with the `define*`
@@ -33,18 +33,20 @@ Punica Form is a headless form engine. `@punica/form` holds the engine,
   call:
 
   ```ts
-  import { defineForm, field, Services } from "@punica/form";
+  import { defineForm, field, Services } from '@punica/form';
 
   const UserForm = defineForm(
     {
-      name: field("", Text({ label: "Name" })),
-      age: field<number | undefined>(undefined, NumberInput({ label: "Age" })),
+      name: field('', Text({ label: 'Name' })),
+      age: field<number | undefined>(undefined, NumberInput({ label: 'Age' }))
     },
     Services([GetValues, SetValue]) // or FormKit({ title: "User" })
   );
   type User = InstanceType<typeof UserForm>;
 
-  const controller = await FormController.fromEntity(new UserForm({ name: "Jane" }));
+  const controller = await FormController.fromEntity(
+    new UserForm({ name: 'Jane' })
+  );
   ```
 
   The result is a form class like a decorated one; do not mix both styles in
@@ -110,7 +112,7 @@ The form is immutable. Every change produces a new form object; items that
 did not change keep their identity.
 
 ```ts
-controller.getForm();                               // the current form
+controller.getForm(); // the current form
 const unsubscribe = controller.subscribe(() => {}); // after every change
 ```
 
@@ -138,26 +140,27 @@ Never change a form or an item in place; use the services.
 Services are read by class and executed with `run`. They are bound to the
 entity of the form, so property names and results are type-checked.
 
-| Class | Call |
-|---|---|
-| `Validate` | `run(): Promise<boolean>`, validates every item that is not hidden or disabled |
-| `Trigger` | `run(property): Promise<void>`, validates one item |
-| `GetValues` | `run(): Promise<E>`, a copy of the entity filled with the item values |
-| `SetValue` | `run(property, value): Promise<void>`, then runs the `control` function of the item |
-| `Reset` | `run(): Promise<void>` |
-| `ResetItem` | `run(property): Promise<void>` |
-| `ClearError` | `run(property): Promise<void>` |
-| `ClearErrors` | `run(): Promise<void>` |
-| `Touch` | `run(property): Promise<void>`, marks the item as touched; call it when the user leaves the field (since 2.2) |
-| `Submit` | `run(handler?): Promise<boolean>`, validates, then calls `handler(values)`; sets `state.submitting`, ignores a second submit meanwhile, and turns what the handler throws into `state.errors` instead of rejecting (since 2.2) |
-| `FieldArray` | no `run`: `rows(property)`, `append`, `insert`, `remove`, `move`, `replace`; see "Lists of rows" (since 2.2) |
-| `Store` | no `run`: it adds `readStoreItem`, `writeStoreItem`, `deleteStoreItem` to the command passed to item functions (`CommandItem<E, F, StoreCommand>`) |
+| Class         | Call                                                                                                                                                                                                                           |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `Validate`    | `run(): Promise<boolean>`, validates every item that is not hidden or disabled                                                                                                                                                 |
+| `Trigger`     | `run(property): Promise<void>`, validates one item                                                                                                                                                                             |
+| `GetValues`   | `run(): Promise<E>`, a copy of the entity filled with the item values                                                                                                                                                          |
+| `SetValue`    | `run(property, value): Promise<void>`, then runs the `control` function of the item                                                                                                                                            |
+| `Reset`       | `run(): Promise<void>`                                                                                                                                                                                                         |
+| `ResetItem`   | `run(property): Promise<void>`                                                                                                                                                                                                 |
+| `ClearError`  | `run(property): Promise<void>`                                                                                                                                                                                                 |
+| `ClearErrors` | `run(): Promise<void>`                                                                                                                                                                                                         |
+| `Touch`       | `run(property): Promise<void>`, marks the item as touched; call it when the user leaves the field (since 2.2)                                                                                                                  |
+| `Submit`      | `run(handler?): Promise<boolean>`, validates, then calls `handler(values)`; sets `state.submitting`, ignores a second submit meanwhile, and turns what the handler throws into `state.errors` instead of rejecting (since 2.2) |
+| `SetErrors`   | `run(errors): Promise<string[]>`, shows messages found outside the form (by a server) on the items they name; returns those that name no item (since 2.3)                                                                      |
+| `FieldArray`  | no `run`: `rows(property)`, `append`, `insert`, `remove`, `move`, `replace`; see "Lists of rows" (since 2.2)                                                                                                                   |
+| `Store`       | no `run`: it adds `readStoreItem`, `writeStoreItem`, `deleteStoreItem` to the command passed to item functions (`CommandItem<E, F, StoreCommand>`)                                                                             |
 
 ```ts
-import { GetValues, SetValue, Trigger, Validate } from "@punica/form-service";
+import { GetValues, SetValue, Trigger, Validate } from '@punica/form-service';
 
-await controller.getService(SetValue).run("name", "Jane");
-await controller.getService(Trigger).run("name");
+await controller.getService(SetValue).run('name', 'Jane');
+await controller.getService(Trigger).run('name');
 
 if (await controller.getService(Validate).run()) {
   const values = await controller.getService(GetValues).run();
@@ -178,6 +181,31 @@ if (await controller.getService(Validate).run()) {
 - Setting a value does not validate it. Run `Trigger` for that.
 - To submit a form prefer `Submit` (since 2.2) over calling `Validate` and
   `GetValues` by hand. Do not keep your own `submitting` or `dirty` flags.
+- When a server refuses what was submitted with messages by field, show them
+  with `SetErrors` (since 2.3) instead of writing items yourself, and throw
+  the rest so the form shows it:
+
+  ```ts
+  await controller.getService(Submit).run(async (values) => {
+    try {
+      await save(values);
+    } catch (error) {
+      // { email: ["Already registered"], "lines.1.price": ["Too high"], capacity: ["Full"] }
+      const rest = await controller
+        .getService(SetErrors)
+        .run(fieldErrorsOf(error));
+
+      throw new Error(rest.join(' ') || 'Correct the marked fields.');
+    }
+  });
+  ```
+
+  A name is a property; `lines.1.price` is an item of a row of a list, and
+  nested objects (`{ lines: [{}, { price: ["Too high"] }] }`) say the same.
+  Such an error goes when its item is validated again (`Trigger`, `Validate`,
+  `Submit`), cleared or reset; a validation that was running when it was set
+  does not erase it. `@FormKit`, `fromSchema` and `JsonForm` list `SetErrors`
+  already; a form with its own `@Services` has to list it.
 
 ## Lists of rows
 
@@ -273,18 +301,41 @@ class UserForm { … }
   `addFormValidation(command, () => messages)` of `@punica/form-service` in
   its `initialize` (since 2.2).
 
+## With the other Punica libraries
+
+Punica Form is one of three libraries made to be used together: Punica
+Request (`@punica/request`, the HTTP client) and Punica Components
+(`@punica/components`, the elements the kit renders with). Each has an MCP
+server; when the project has them, look their APIs up there instead of
+guessing. Where they meet:
+
+- **Choices from a server**: `options: () => listCountries()` of a kit field
+  may return a promise; give it a function that asks the client.
+- **A validation that asks a server**: pass `context.signal` on as the
+  `signal` of the request, and set `validateDebounce`. A request for a value
+  the user typed over is cancelled.
+- **What a server refuses**: a failed request of Punica Request rejects with
+  an `HttpError` whose `response.data` is the body the server sent. Give its
+  messages by field to `SetErrors` and throw the rest, as shown above.
+- **Submitting**: do the request inside the handler of `Submit` (or
+  `onSubmit` of `KitForm`); the form shows that it is submitting and keeps a
+  second submit out.
+
+A whole application on the three, with its tests:
+https://github.com/punicalab/punica-starter (start with its `AGENTS.md`).
+
 ## Events
 
 `controller.on(event, handler)` returns the function that removes the
 handler. Payloads are typed.
 
-| Event | Payload |
-|---|---|
-| `UPDATE_FORM` | the form; fired after every change |
-| `UPDATE_ITEM` | an array: the changed item, then the items its `control` returned |
-| `RESET` | the form; fired by `Reset`, after `UPDATE_FORM` |
-| `SUBMIT` | the values the submit handler received; fired by `Submit` (since 2.2) |
-| `SUBMIT_ERROR` | what a validation or the submit handler threw (since 2.2) |
+| Event            | Payload                                                                   |
+| ---------------- | ------------------------------------------------------------------------- |
+| `UPDATE_FORM`    | the form; fired after every change                                        |
+| `UPDATE_ITEM`    | an array: the changed item, then the items its `control` returned         |
+| `RESET`          | the form; fired by `Reset`, after `UPDATE_FORM`                           |
+| `SUBMIT`         | the values the submit handler received; fired by `Submit` (since 2.2)     |
+| `SUBMIT_ERROR`   | what a validation or the submit handler threw (since 2.2)                 |
 | `REGISTER_ITEMS` | `string[]` of registered form item types; fired at the start of `start()` |
 
 ## A complete example
@@ -298,44 +349,46 @@ import {
   getFormProperty,
   type Form,
   type FormItem,
-  type IReader,
-} from "@punica/form";
+  type IReader
+} from '@punica/form';
 
-export const Title = defineFormProperty<string>("app:title");
+export const Title = defineFormProperty<string>('app:title');
 
-export class Reader<E extends object, F extends FormItem<E>> implements IReader<E, F> {
+export class Reader<E extends object, F extends FormItem<E>> implements IReader<
+  E,
+  F
+> {
   public read(entity: E, form: Form<E, F>): void {
-    form.title = getFormProperty<string>(entity, "app:title");
+    form.title = getFormProperty<string>(entity, 'app:title');
   }
 }
 
 // The second argument is the renderer; defaultFormItemRegister.getItem(item.type) returns it
-export const FormItemInputText = defineFormItem<Omit<FormItem<any>, "property">>(
-  "app:input-text",
-  InputText
-);
+export const FormItemInputText = defineFormItem<
+  Omit<FormItem<any>, 'property'>
+>('app:input-text', InputText);
 ```
 
 A business form:
 
 ```ts
-import { Readers, Services } from "@punica/form";
-import { GetValues, SetValue, Trigger, Validate } from "@punica/form-service";
-import { FormItemInputText, Reader, Title } from "./formSystem";
+import { Readers, Services } from '@punica/form';
+import { GetValues, SetValue, Trigger, Validate } from '@punica/form-service';
+import { FormItemInputText, Reader, Title } from './formSystem';
 
-@Title("Create User")
+@Title('Create User')
 @Readers([new Reader()])
 @Services([GetValues, SetValue, Validate, Trigger])
 export class UserForm {
   @FormItemInputText({
-    label: "Name",
+    label: 'Name',
     required: true,
     validation: async ({ formItem }) => ({
       error: !formItem.value,
-      errorMessages: formItem.value ? [] : ["Name is required"],
-    }),
+      errorMessages: formItem.value ? [] : ['Name is required']
+    })
   })
-  name = "";
+  name = '';
 }
 ```
 
@@ -347,7 +400,7 @@ const controller = await FormController.fromEntity(new UserForm());
 controller.subscribe(() => render(controller.getForm()));
 await controller.start();
 
-await controller.getService(SetValue).run("name", "Jane");
+await controller.getService(SetValue).run('name', 'Jane');
 
 if (await controller.getService(Validate).run()) {
   const values = await controller.getService(GetValues).run(); // UserForm

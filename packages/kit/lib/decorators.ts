@@ -16,6 +16,7 @@ import {
   FieldArray,
   GetValues,
   Reset,
+  SetErrors,
   SetValue,
   Submit,
   Touch,
@@ -39,7 +40,7 @@ export type FormKitOptions = {
 
   /**
    * Services in addition to GetValues, SetValue, Validate, Trigger, Reset,
-   * Touch, Submit and FieldArray.
+   * Touch, Submit, FieldArray and SetErrors.
    */
   services?: Array<IService | (new () => IService)>;
 
@@ -79,7 +80,8 @@ export const FormKit = (options: FormKitOptions = {}): FormClassDecorator => {
       Reset,
       Touch,
       Submit,
-      FieldArray
+      FieldArray,
+      SetErrors
     ];
 
     defineFormProperty<FormKitOptions>(OPTIONS)(options)(target);
