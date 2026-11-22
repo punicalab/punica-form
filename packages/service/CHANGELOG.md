@@ -1,5 +1,49 @@
 # @punica/form-service
 
+## 2.2.0
+
+### Minor Changes
+
+- [#85](https://github.com/punicalab/punica-form/pull/85) [`4866c54`](https://github.com/punicalab/punica-form/commit/4866c544a2401d9913afc42733326395b42d89a0) Thanks [@punicalab](https://github.com/punicalab)! - Asynchronous validations can be cancelled and delayed.
+  
+  - Validation functions receive a second argument, `{ signal }`. The signal is aborted when the item is validated again, changed or reset, so `fetch(url, { signal: context?.signal })` cancels the request. A validation that rejects after it was aborted no longer rejects the service.
+  - `validateDebounce` on an item makes `Trigger` wait and validate once after the last trigger. `Validate` and `Submit` do not wait and take the place of a waiting validation.
+  - Items whose validation takes a while are `validating`, and so is `state.validating` of the form. Validations that do not wait for anything still notify once.
+  - `Validate` and `Submit` validate every item as it is when its turn comes, validate an item again when it changes meanwhile, and return `false` when the form is reset meanwhile. A result is never written onto a value it was not made for.
+  
+  Validation functions with one parameter keep working.
+
+- [#86](https://github.com/punicalab/punica-form/pull/86) [`b806d2f`](https://github.com/punicalab/punica-form/commit/b806d2f86d39d2ee3c68f32ceac0acee5d7fd550) Thanks [@punicalab](https://github.com/punicalab)! - Forms without decorator syntax.
+  
+  - New `defineForm(fields, ...classDecorators)` and `field(value, ...propertyDecorators)` define a form class in projects whose build does not compile decorators. Every existing decorator (`Services`, the field decorators of the kit, your own) is used as a function call; the class takes initial values in its constructor and its instance type follows from the fields.
+  - `FormController.fromEntity` warns when a class has no form items, the usual sign of a build that does not apply decorators.
+
+- [#92](https://github.com/punicalab/punica-form/pull/92) [`c6aafbd`](https://github.com/punicalab/punica-form/commit/c6aafbdcea7b438f7ecd275e6eb8d403673fb95c) Thanks [@punicalab](https://github.com/punicalab)! - Lists of rows, such as the lines of an invoice. A form item with a `row` function is a list: the new `FieldArray` service creates a form of its own for every row, from the entity `row` returns, and offers `rows`, `append`, `insert`, `remove`, `move` and `replace`. The value of the item is the array of the values of its rows.
+  
+  The list takes part in the form: `Validate` and `Submit` validate its rows, the item is dirty, touched and in error when a row is, `Reset` and `ResetItem` bring back the rows the form was started with, `SetValue` replaces them, and `ClearErrors` clears their errors. A row class without `@Services` gets the services of the form around it, through the new `services` option of `FormController.fromEntity`.
+
+- [#84](https://github.com/punicalab/punica-form/pull/84) [`5eadc29`](https://github.com/punicalab/punica-form/commit/5eadc29df7b37ea45c9f80e248d3c4273c3ad628) Thanks [@punicalab](https://github.com/punicalab)! - The form knows its own state.
+  
+  - Items have `dirty` (the value differs from the one the form was started with, compared deeply) and `touched` (set by the new `Touch` service). `Reset` and `ResetItem` clear both.
+  - A started form has `state`: `{ dirty, touched, valid, submitting, submitCount, errors }`. The first three follow from the items; the object keeps its identity while nothing in it changes.
+  - New `Submit` service: `run(handler)` validates the form, calls the handler with its values, ignores a second submit while one is running and turns what the handler throws into `state.errors`.
+  - New events `SUBMIT` and `SUBMIT_ERROR`.
+  - `CommandService.setState` for services that write `submitting`, `submitCount` or `errors`; `isEqual` is exported.
+  
+  The new fields are optional and the new services are opt-in. One thing to check: `state` on a form and `dirty` / `touched` on an item are now written by the library, so a form system that used these names for data of its own has to rename it.
+
+- [#93](https://github.com/punicalab/punica-form/pull/93) [`dc61d18`](https://github.com/punicalab/punica-form/commit/dc61d1839b0155e883e7b383f9f16dd587e24441) Thanks [@punicalab](https://github.com/punicalab)! - Validations of a form as a whole: a service adds one with `addFormValidation(command, () => messages)`. `Validate` and `Submit` run them after the items; their messages are added to the errors of the form (`state.errors`), and a form that has some is not valid (`state.valid`) and not submitted. `Reset` and `ClearErrors` remove them.
+  
+  `wrapValidation(command, wrap)` lets a service add a validation of its own to the items of a form, lists included. A service class with `static forRows = false` is not given to the rows of a list.
+  
+  `defineForm` accepts class decorators that ask for the entity they are made for, as `Schema` of `@punica/form-schema` does.
+
+### Patch Changes
+
+- [#94](https://github.com/punicalab/punica-form/pull/94) [`a1f2274`](https://github.com/punicalab/punica-form/commit/a1f227425f8f06bdaa37b10a5f1c7363d053d761) Thanks [@punicalab](https://github.com/punicalab)! - `deepCopy` keeps files (`File`, `Blob`) by reference, so a form that holds one can be reset and its rows copied. When rows are added, removed or moved, the validation of the list item itself is asked again, without validating the rows: what it found was about other rows. A list is created once, also when `FieldArray` is listed twice. The MCP server knows the new fields of the form kit.
+- Updated dependencies [[`4866c54`](https://github.com/punicalab/punica-form/commit/4866c544a2401d9913afc42733326395b42d89a0), [`b806d2f`](https://github.com/punicalab/punica-form/commit/b806d2f86d39d2ee3c68f32ceac0acee5d7fd550), [`c6aafbd`](https://github.com/punicalab/punica-form/commit/c6aafbdcea7b438f7ecd275e6eb8d403673fb95c), [`5eadc29`](https://github.com/punicalab/punica-form/commit/5eadc29df7b37ea45c9f80e248d3c4273c3ad628), [`dc61d18`](https://github.com/punicalab/punica-form/commit/dc61d1839b0155e883e7b383f9f16dd587e24441), [`a1f2274`](https://github.com/punicalab/punica-form/commit/a1f227425f8f06bdaa37b10a5f1c7363d053d761)]:
+  - @punica/form@2.2.0
+
 ## 2.2.0-next.1
 
 ### Minor Changes
