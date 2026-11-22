@@ -62,3 +62,7 @@ jobs:
           HUSKY: 0
           # Read by the .npmrc that actions/setup-node writes
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          # A signed statement of where and from which commit the packages were
+          # built. The setting of the packages (publishConfig) is not read by
+          # the publish command the workflow runs; this is.
+          NPM_CONFIG_PROVENANCE: true
