@@ -40,7 +40,23 @@ function declarationAt(source, index) {
 
 function entry(source, index, kind, name) {
   const comment = commentBefore(source, index);
-  const summary = (/^\s*\/?\*+\s*([^@*\n][^\n]*)/m.exec(comment) || [])[1] || '';
+  // The first paragraph of the comment, without its stars, up to the end of
+  // its first sentence
+  const lines = comment
+    .replace(/^\s*\/\*+/, '')
+    .replace(/\*+\/\s*$/, '')
+    .split('\n')
+    .map((line) => line.replace(/^\s*\*+\s?/, '').trim());
+  const start = lines.findIndex((line) => line && !line.startsWith('@'));
+  const paragraph = [];
+
+  for (let i = start; i >= 0 && i < lines.length; i++) {
+    if (!lines[i] || lines[i].startsWith('@') || lines[i].startsWith('```')) break;
+    paragraph.push(lines[i]);
+  }
+
+  const text = paragraph.join(' ');
+  const summary = (/^.*?[.:](?=\s|$)/.exec(text)?.[0] ?? text).replace(/:$/, '.');
 
   return {
     name,
