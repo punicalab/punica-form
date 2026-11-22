@@ -56,6 +56,12 @@ test('search_api lists exactly the public exports', async () => {
     assert.doesNotMatch(all, new RegExp(`^${name} \\(`, 'm'));
   }
 
+  // A summary is the first sentence of the documentation: no star of its
+  // comment before it, no end of the comment after it
+  assert.match(all, /^ClearError \(class, @punica\/form-service\): Clears the validation error of one item\.$/m);
+  assert.match(all, /^FieldArray \(class, @punica\/form-service\): Lists of rows, such as the lines of an invoice\.$/m);
+  assert.doesNotMatch(all, /\): \*|\*\/$/m);
+
   assert.match(await call('search_api', { query: 'reset' }), /^ResetItem \(class, @punica\/form-service\)/m);
   assert.match(await call('search_api', { query: 'no-such-thing' }), /Nothing matches/);
 });
