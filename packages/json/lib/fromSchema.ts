@@ -11,6 +11,7 @@ import {
 import {
   GetValues,
   Reset,
+  SetErrors,
   SetValue,
   Submit,
   Touch,
@@ -172,6 +173,7 @@ export const fromSchema = async (
       Reset,
       Touch,
       Submit,
+      SetErrors,
       ...(options.services ?? [])
     ],
     items: items.map((item) => {
