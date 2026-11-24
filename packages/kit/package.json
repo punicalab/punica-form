@@ -1,6 +1,6 @@
 {
   "name": "@punica/form-kit",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "A ready-made form system for Punica Form: decorators, validation, React components and hand-drawn forms bound to the engine, built on @punica/components",
   "keywords": [
     "form",
@@ -71,7 +71,7 @@
   "peerDependencies": {
     "@punica/components": "^2.1.0",
     "@punica/form": "^2.3.0",
-    "@punica/form-json": "^0.2.0",
+    "@punica/form-json": "^0.2.1",
     "@punica/form-react": "^0.2.0",
     "@punica/form-service": "^2.3.0",
     "react": ">=19"
