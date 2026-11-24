@@ -1,5 +1,11 @@
 # @punica/form-kit
 
+## 0.6.1
+
+### Patch Changes
+
+- [#119](https://github.com/punicalab/punica-form/pull/119) [`bcf4b9c`](https://github.com/punicalab/punica-form/commit/bcf4b9c71ae6d01728be360a15498933747f3e4e) Thanks [@punicalab](https://github.com/punicalab)! - `bindForm` of `@punica/form-kit/dom` no longer checks a field when it is left. The error line that check drew (or took away) moved the submit button between the press and the release of the click that left the field, so the first click on the button was lost. Now a field is checked as it is changed while it shows an error (the error goes as soon as it is put right), and every change checks its field once a submit was tried; before that, a new error waits for the submit. `reset: true` starts that over.
+
 ## 0.6.0
 
 ### Minor Changes
