@@ -2,6 +2,7 @@ import type { FormController } from '@punica/form';
 import {
   fromSchema,
   type JsonFormItem,
+  type Rule,
   type JsonFormValues,
   type RuleDefinition
 } from '@punica/form-json';
@@ -53,10 +54,29 @@ export interface BindFormOptions {
   fields: Record<string, BoundControl>;
   /** Rules of the engine beyond what each control says itself: `{ rule, value?, message? }`. */
   rules?: Record<string, RuleDefinition[]>;
+  /**
+   * Rules of your own, by the names `rules` uses them with, beside the built-in ones (`required`, `min`,
+   * `pattern`, …): `{ vatNumber: (value) => (valid(value) ? undefined : 'Not a VAT number.') }`.
+   */
+  customRules?: Record<string, Rule>;
   /** Called with the values when every rule and every control holds. What it throws is said in `alert` (or `failed`). */
   onSubmit: (values: Record<string, unknown>) => unknown;
-  /** Called when a submit failed, instead of saying it in `alert`. */
-  failed?: (err: unknown) => void;
+  /**
+   * The fields a failed `onSubmit` names, read from what it threw (a server that refused some fields):
+   * `{ email: 'Already registered.' }`. They are shown on their fields, the first one takes the focus, and
+   * `alert` says only what named no field of the form. Nothing named: `undefined` or `{}`.
+   */
+  refusal?: (err: unknown) => Record<string, string | string[]> | undefined;
+  /**
+   * The words for a control that is wrong and has no message of its own (a control without
+   * `validationMessage`): `required` for a missing value, `invalid` for any other.
+   */
+  problemMessage?: (problem: 'required' | 'invalid') => string;
+  /**
+   * Called when a submit failed, instead of saying it in `alert`: with what was thrown and how many fields
+   * of the form `refusal` marked.
+   */
+  failed?: (err: unknown, named: number) => void;
   /** Where a failure is said. */
   alert?: HTMLElement;
   /** After a submit that went through, put every field back to where the form started. */
@@ -121,6 +141,12 @@ export function bindForm(
   const fieldOf = (c: BoundControl) =>
     c.closest('punica-field') as (HTMLElement & { error: string }) | null;
   const said = new WeakMap<BoundControl, string>();
+  const problemMessage =
+    opts.problemMessage ??
+    ((problem: 'required' | 'invalid') =>
+      problem === 'required'
+        ? 'Fill this in.'
+        : 'This value does not fit here.');
   let controller: FormController<JsonFormValues, JsonFormItem> | undefined;
   let stop: (() => void) | undefined;
   // Every listener of the binding goes with dispose()
@@ -170,7 +196,10 @@ export function bindForm(
     })
   };
 
-  const ready = fromSchema(definition, { types: TYPES }).then(async (c) => {
+  const ready = fromSchema(definition, {
+    types: TYPES,
+    ...(opts.customRules ? { rules: opts.customRules } : {})
+  }).then(async (c) => {
     await c.start();
     if (signal.aborted) return c;
     controller = c;
@@ -224,7 +253,12 @@ export function bindForm(
         said.set(control, '');
         control.setCustomValidity?.('');
         if (control.validity && !control.validity.valid)
-          own[n] = [control.validationMessage || 'Fill this in.'];
+          own[n] = [
+            control.validationMessage ||
+              problemMessage(
+                control.validity.valueMissing ? 'required' : 'invalid'
+              )
+          ];
       }
       if (Object.keys(own).length) await c.getService(SetErrors).run(own);
       const named = new Set<Element>(Object.values(opts.fields));
@@ -251,8 +285,20 @@ export function bindForm(
       if (opts.reset) await c.getService(Reset).run();
       return true;
     } catch (err) {
-      if (opts.failed) opts.failed(err);
-      else failure = err instanceof Error ? err.message : String(err);
+      // What a refusal names: on the fields of the form; the rest is said
+      const errors = opts.refusal?.(err) ?? {};
+      const named = Object.keys(errors).filter((n) => names.includes(n)).length;
+      const rest = Object.keys(errors).length
+        ? await c.getService(SetErrors).run(errors)
+        : [];
+      if (opts.failed) opts.failed(err, named);
+      else
+        failure =
+          named || rest.length
+            ? rest.join(' ')
+            : err instanceof Error
+              ? err.message
+              : String(err);
       return false;
     } finally {
       busy = false;

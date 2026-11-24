@@ -14,6 +14,19 @@
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
+  "typesVersions": {
+    "*": {
+      "json": [
+        "./dist/json/index.d.ts"
+      ],
+      "react": [
+        "./dist/react/index.d.ts"
+      ],
+      "dom": [
+        "./dist/dom/index.d.ts"
+      ]
+    }
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
