@@ -118,6 +118,10 @@ const form = bindForm(document.querySelector('form')!, {
   call `form.submit()` from each button.
 - `form.set(name, value)` writes into the engine and the control;
   `form.dispose()` before the form is drawn again.
+- `refusal: (err) => ({ field: 'message' })` reads the fields a failed
+  `onSubmit` names (a server's refusal) and shows them on those fields;
+  `customRules` adds named rules of your own; `problemMessage` gives the
+  words for a control without a message of its own.
 
 ## Lifecycle
 
