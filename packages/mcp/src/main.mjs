@@ -12,6 +12,7 @@ const packages = [
   loadPackage('@punica/form-kit'),
   loadPackage('@punica/form-kit', process.cwd(), 'react'),
   loadPackage('@punica/form-kit', process.cwd(), 'json'),
+  loadPackage('@punica/form-kit', process.cwd(), 'dom'),
   loadPackage('@punica/form-json'),
   loadPackage('@punica/form-schema')
 ].filter(Boolean);

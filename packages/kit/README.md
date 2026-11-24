@@ -60,6 +60,30 @@ not validated.
 It needs React 19 or later: React 18 does not pass properties and custom
 events to custom elements.
 
+## Forms drawn by hand
+
+`@punica/form-kit/dom` binds a form whose markup is your own (no React
+needed) to the engine: give it the controls by name, and the engine holds
+their values, checks its rules and each control's own constraints, shows
+the errors on each control's `punica-field` and focuses the first one.
+
+```ts
+import { bindForm } from '@punica/form-kit/dom';
+
+const form = bindForm(element, {
+  fields: { name: nameInput, amount: amountInput },
+  rules: {
+    amount: [{ rule: 'pattern', value: '^[0-9]+$', message: 'A whole number.' }]
+  },
+  onSubmit: (values) => save(values),
+  alert: errorLine
+});
+```
+
+It needs `@punica/form-json`. `submitOnEnter: false` leaves submitting to
+your buttons (`form.submit()`); `reset: true` empties the form after a
+submit that went through.
+
 ## Forms from JSON
 
 `@punica/form-kit/json` renders a form that is described as data, such as one

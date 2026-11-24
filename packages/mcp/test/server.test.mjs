@@ -16,6 +16,7 @@ const packages = [
   { name: '@punica/form-kit', version: '0.1.0', files: types('../../kit/dist/') },
   { name: '@punica/form-kit/react', version: '0.1.0', files: types('../../kit/dist/react/') },
   { name: '@punica/form-kit/json', version: '0.1.0', files: types('../../kit/dist/json/') },
+  { name: '@punica/form-kit/dom', version: '0.1.0', files: types('../../kit/dist/dom/') },
   { name: '@punica/form-json', version: '0.1.0', files: types('../../json/dist/') },
   { name: '@punica/form-schema', version: '0.1.0', files: types('../../schema/dist/') }
 ];

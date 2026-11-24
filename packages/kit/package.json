@@ -1,7 +1,7 @@
 {
   "name": "@punica/form-kit",
   "version": "0.4.0",
-  "description": "A ready-made form system for Punica Form: decorators, validation and React components built on @punica/components",
+  "description": "A ready-made form system for Punica Form: decorators, validation, React components and hand-drawn forms bound to the engine, built on @punica/components",
   "keywords": [
     "form",
     "react",
@@ -25,6 +25,11 @@
       "import": "./dist/json/index.mjs",
       "require": "./dist/json/index.js"
     },
+    "./dom": {
+      "types": "./dist/dom/index.d.ts",
+      "import": "./dist/dom/index.mjs",
+      "require": "./dist/dom/index.js"
+    },
     "./react": {
       "types": "./dist/react/index.d.ts",
       "import": "./dist/react/index.mjs",
@@ -46,7 +51,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsup lib/index.ts lib/react/index.tsx lib/json/index.tsx --format esm,cjs --target es2020 --clean && tsc -p tsconfig.build.json --emitDeclarationOnly",
+    "build": "tsup lib/index.ts lib/react/index.tsx lib/json/index.tsx lib/dom/index.ts --format esm,cjs --target es2020 --clean && tsc -p tsconfig.build.json --emitDeclarationOnly",
     "clean": "rimraf dist",
     "lint": "eslint lib"
   },
@@ -60,6 +65,12 @@
   },
   "peerDependenciesMeta": {
     "@punica/form-json": {
+      "optional": true
+    },
+    "@punica/form-react": {
+      "optional": true
+    },
+    "react": {
       "optional": true
     }
   },
