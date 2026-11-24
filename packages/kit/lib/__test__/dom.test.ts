@@ -349,3 +349,52 @@ describe('bindForm: rules of your own, refusals and words', () => {
     expect(fieldOf(silent).error).toBe('Bitte ausfüllen.');
   });
 });
+
+describe('bindForm: when errors come and go', () => {
+  it('says nothing new when a field is left: a new error waits for the submit', async () => {
+    const f = drawn();
+    const form = bindForm(f.form, {
+      fields: { name: f.name, amount: f.amount },
+      rules: {
+        amount: [{ rule: 'pattern', value: '^[0-9]+$', message: 'Digits.' }]
+      },
+      onSubmit: () => undefined
+    });
+
+    await form.ready;
+    f.amount.focus();
+    type(f.amount, 'x');
+    f.amount.blur();
+    f.amount.dispatchEvent(new FocusEvent('focusout', { bubbles: true }));
+    await settle();
+    await settle();
+    expect(fieldOf(f.amount).error ?? '').toBe('');
+    expect(await form.submit()).toBe(false);
+    expect(fieldOf(f.amount).error).toBe('Digits.');
+  });
+
+  it('takes an error away as soon as the field is put right, while it is typed in', async () => {
+    const f = drawn();
+    const form = bindForm(f.form, {
+      fields: { name: f.name, amount: f.amount },
+      rules: {
+        amount: [{ rule: 'pattern', value: '^[0-9]+$', message: 'Digits.' }]
+      },
+      onSubmit: () => undefined
+    });
+
+    await form.ready;
+    type(f.name, 'Acme');
+    type(f.amount, 'x');
+    expect(await form.submit()).toBe(false);
+    expect(fieldOf(f.amount).error).toBe('Digits.');
+    type(f.amount, '12');
+    await settle();
+    await settle();
+    expect(fieldOf(f.amount).error).toBe('');
+    type(f.amount, '12y');
+    await settle();
+    await settle();
+    expect(fieldOf(f.amount).error).toBe('Digits.');
+  });
+});
