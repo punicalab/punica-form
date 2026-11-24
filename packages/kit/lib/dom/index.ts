@@ -153,6 +153,8 @@ export function bindForm(
   const listening = new AbortController();
   const { signal } = listening;
   let busy = false;
+  // A submit was tried: from then on a change checks its field
+  let tried = false;
   let failure = '';
   const buttons = () =>
     [
@@ -207,10 +209,23 @@ export function bindForm(
     for (const n of names) {
       const control = opts.fields[n]!;
       const type = types.get(n)!;
+      const showing = () =>
+        Boolean(
+          (c.getForm().items as Item[]).find((i) => String(i.property) === n)
+            ?.error
+        );
+      // Once a submit was tried, or while the field shows an error, a change
+      // checks the field again: an error goes as soon as it is put right and
+      // comes back if it is undone. Before that, a new error waits for the submit.
       const changed = () =>
         void c
           .getService(SetValue)
-          .run(n as never, read(type, control) as never);
+          .run(n as never, read(type, control) as never)
+          .then(() =>
+            tried || showing()
+              ? c.getService(Trigger).run(n as never)
+              : undefined
+          );
       // A punica control says it in its own events; a native one in the browser's.
       const own = control.localName.startsWith('punica-');
       control.addEventListener(own ? 'punica-input' : 'input', changed, {
@@ -219,13 +234,12 @@ export function bindForm(
       control.addEventListener(own ? 'punica-change' : 'change', changed, {
         signal
       });
+      // Leaving a field checks nothing: a message that came or went there
+      // would move what is below it (the submit button) between the press and
+      // the release of the click that left it, and the click would be lost.
       control.addEventListener(
         'focusout',
-        () =>
-          void c
-            .getService(Trigger)
-            .run(n as never)
-            .then(() => c.getService(Touch).run(n as never)),
+        () => void c.getService(Touch).run(n as never),
         { signal }
       );
     }
@@ -237,6 +251,7 @@ export function bindForm(
     const c = await ready.catch(() => undefined);
     if (!c || busy) return false;
     busy = true;
+    tried = true;
     failure = '';
     draw();
     try {
@@ -282,7 +297,11 @@ export function bindForm(
         unknown
       >;
       await opts.onSubmit(Object.fromEntries(names.map((n) => [n, values[n]])));
-      if (opts.reset) await c.getService(Reset).run();
+      if (opts.reset) {
+        await c.getService(Reset).run();
+        // The form starts again: a new error waits for the next submit
+        tried = false;
+      }
       return true;
     } catch (err) {
       // What a refusal names: on the fields of the form; the rest is said
