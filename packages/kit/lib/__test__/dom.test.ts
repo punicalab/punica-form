@@ -255,3 +255,97 @@ describe('bindForm', () => {
     expect(sent).toBe(1);
   });
 });
+
+describe('bindForm: rules of your own, refusals and words', () => {
+  it('runs a rule of your own by the name `rules` uses it with', async () => {
+    const f = drawn();
+    const form = bindForm(f.form, {
+      fields: { name: f.name, amount: f.amount },
+      rules: { amount: [{ rule: 'even' }] },
+      customRules: {
+        even: (value) =>
+          Number(value) % 2 === 0 ? undefined : 'An even number.'
+      },
+      onSubmit: () => undefined
+    });
+
+    await form.ready;
+    type(f.name, 'Acme');
+    type(f.amount, '3');
+    expect(await form.submit()).toBe(false);
+    expect(fieldOf(f.amount).error).toBe('An even number.');
+    type(f.amount, '4');
+    expect(await form.submit()).toBe(true);
+  });
+
+  it('shows the fields a refusal names on them, focuses the first, and says the rest', async () => {
+    const f = drawn();
+    const failures: [unknown, number][] = [];
+    const form = bindForm(f.form, {
+      fields: { name: f.name, amount: f.amount },
+      alert: f.alert,
+      refusal: (err) => (err as { fields?: Record<string, string> }).fields,
+      onSubmit: () => {
+        throw Object.assign(new Error('Refused'), {
+          fields: { amount: 'Too high.', capacity: 'Only 10 seats are left.' }
+        });
+      }
+    });
+
+    await form.ready;
+    type(f.name, 'Acme');
+    type(f.amount, '99');
+    expect(await form.submit()).toBe(false);
+    await settle();
+    expect(fieldOf(f.amount).error).toBe('Too high.');
+    expect(document.activeElement).toBe(f.amount);
+    expect(f.alert.textContent).toBe('Only 10 seats are left.');
+
+    const counted = bindForm(f.form, {
+      fields: { name: f.name, amount: f.amount },
+      refusal: () => ({ amount: ['Too high.'] }),
+      failed: (err, named) => void failures.push([err, named]),
+      onSubmit: () => {
+        throw new Error('Refused');
+      }
+    });
+
+    form.dispose();
+    await counted.ready;
+    expect(await counted.submit()).toBe(false);
+    expect(failures.map(([, named]) => named)).toEqual([1]);
+  });
+
+  it('says the error itself when a refusal names nothing', async () => {
+    const f = drawn();
+    const form = bindForm(f.form, {
+      fields: { name: f.name },
+      alert: f.alert,
+      refusal: () => undefined,
+      onSubmit: () => {
+        throw new Error('The firm is archived.');
+      }
+    });
+
+    await form.ready;
+    type(f.name, 'Acme');
+    expect(await form.submit()).toBe(false);
+    expect(f.alert.textContent).toBe('The firm is archived.');
+  });
+
+  it("gives a control that has no message of its own the form's words", async () => {
+    const f = drawn();
+    const silent = f.name;
+    Object.defineProperty(silent, 'validationMessage', { get: () => '' });
+    const form = bindForm(f.form, {
+      fields: { name: silent },
+      problemMessage: (problem) =>
+        problem === 'required' ? 'Bitte ausfüllen.' : 'Ungültig.',
+      onSubmit: () => undefined
+    });
+
+    await form.ready;
+    expect(await form.submit()).toBe(false);
+    expect(fieldOf(silent).error).toBe('Bitte ausfüllen.');
+  });
+});

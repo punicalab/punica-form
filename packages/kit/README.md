@@ -84,6 +84,24 @@ It needs `@punica/form-json`. `submitOnEnter: false` leaves submitting to
 your buttons (`form.submit()`); `reset: true` empties the form after a
 submit that went through.
 
+When a server refuses some fields, `refusal` reads them from what
+`onSubmit` threw; they are shown on their fields and `alert` says only the
+rest. `customRules` adds rules of your own beside the built-in ones, and
+`problemMessage` gives the words for a control that has none:
+
+```ts
+bindForm(element, {
+  fields: { email: emailInput, vat: vatInput },
+  rules: { vat: [{ rule: 'vatNumber' }] },
+  customRules: {
+    vatNumber: (v) => (isVat(v) ? undefined : 'Not a VAT number.')
+  },
+  refusal: (err) => (isHttpError(err) ? err.response.data.fields : undefined),
+  onSubmit: (values) => api.post('signup', { json: values }),
+  alert: errorLine
+});
+```
+
 ## Forms from JSON
 
 `@punica/form-kit/json` renders a form that is described as data, such as one
