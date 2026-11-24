@@ -53,6 +53,11 @@ candidate has been tried in a real application, leave the mode with
 `pnpm changeset pre exit` and merge the next Version Packages pull request to
 publish the stable version.
 
+A minor version comes at most once a month. A change of behaviour first goes
+out as a release candidate (`next`) and is tried in an application,
+[punica-starter](https://github.com/punicalab/punica-starter) at least,
+before it becomes the stable version.
+
 ## Commit hooks
 
 `pnpm install` sets up the hooks: commit messages are checked for the

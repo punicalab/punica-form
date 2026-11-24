@@ -175,6 +175,16 @@ claude mcp add punica-form -- npx -y @punica/form-mcp
 
 See [packages/mcp](./packages/mcp) for other clients and the list of tools.
 
+## 🧩 An application
+
+[punica-starter](https://github.com/punicalab/punica-starter) is a small
+application on this library together with Punica Request and Punica Components: sign in, a list, and a form
+that is created and edited, with its tests. Start one of your own from it:
+
+```bash
+npm create punica@latest my-app
+```
+
 ## 🛠️ Development
 
 ```bash

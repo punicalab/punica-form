@@ -91,6 +91,34 @@ and runs it.
 - `fromJsonSchema(schema)` turns a flat JSON Schema (string, number, integer,
   boolean and enum properties) into a definition.
 
+## A form drawn by hand, without React
+
+When the markup is your own (a page drawn with the DOM, a framework other
+than React, server-rendered HTML), bind the form to the engine with
+`bindForm` from `@punica/form-kit/dom` instead of rewriting it as a class.
+It takes the controls by name (@punica/components elements or native ones);
+the engine holds their values, checks its rules and each control's own
+constraints on submit, shows errors on each control's `punica-field`,
+focuses the first wrong control and holds the submit buttons while it works.
+
+```ts
+import { bindForm } from '@punica/form-kit/dom';
+
+const form = bindForm(document.querySelector('form')!, {
+  fields: { email: emailInput, seats: seatsInput },
+  rules: { seats: [{ rule: 'min', value: 1, message: 'At least one seat.' }] },
+  onSubmit: (values) => api.post('orders', { json: values }),
+  alert: document.querySelector<HTMLElement>('.form-error')!
+});
+```
+
+- `onSubmit` runs only when everything holds; what it throws is shown in
+  `alert` (or given to `failed`).
+- `submitOnEnter: false` for a form whose buttons decide (several actions):
+  call `form.submit()` from each button.
+- `form.set(name, value)` writes into the engine and the control;
+  `form.dispose()` before the form is drawn again.
+
 ## Lifecycle
 
 ```ts
