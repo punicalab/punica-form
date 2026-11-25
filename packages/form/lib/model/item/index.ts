@@ -24,6 +24,10 @@ export type FormItem<E> = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   value?: any;
 
+  /**
+   * The item needs a value. What counts as empty is up to its validation;
+   * `@punica/form-kit` takes `undefined`, `null`, `''`, `false` and `[]`.
+   */
   required?: boolean;
   disabled?: boolean;
   hidden?: boolean;

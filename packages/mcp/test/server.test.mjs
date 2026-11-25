@@ -174,6 +174,27 @@ test('get_api brings the types a declaration is made of that are not exported', 
   assert.doesNotMatch(local, /Exports: /);
 });
 
+test('get_api brings what a type made of other types holds', async () => {
+  const { call } = await connect();
+  const api = await call('get_api', { names: ['FieldProps', 'ArrayField'] });
+
+  // FieldProps = Omit<KitItem, …>: KitItem and the Rules it is made of come along
+  assert.match(api, /export type KitItem<E> =/);
+  assert.match(api, /addLabel\?: string;/);
+  assert.match(api, /export type Rules = \{/);
+  assert.match(api, /An empty value/);
+  // The list's buttons are named where an array field is declared
+  assert.match(
+    api,
+    /@ArrayField\(\{ label: 'Tickets'[^\n]*addLabel: 'Add ticket'/
+  );
+
+  // A type with a body of its own stays as it is
+  const kit = await call('get_api', { names: ['Rules'] });
+
+  assert.doesNotMatch(kit, /export type KitItem/);
+});
+
 test('get_api points a name that is no export to the one it is about', async () => {
   const { call } = await connect();
 

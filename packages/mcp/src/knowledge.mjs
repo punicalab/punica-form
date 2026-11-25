@@ -64,12 +64,13 @@ function declarationAt(source, index) {
  * such as the interface a configuration type is made of: without them the
  * options of a middleware could not be looked up.
  */
-function localsOf(source, text, seen = new Set()) {
+function localsOf(source, text, seen = new Set(), exported = false) {
   const found = [];
+  const pattern = exported
+    ? /^(?:export )?(?:declare )?(?:interface|type) (\w+)/gm
+    : /^(?:declare )?(?:interface|type) (\w+)/gm;
 
-  for (const match of source.matchAll(
-    /^(?:declare )?(?:interface|type) (\w+)/gm
-  )) {
+  for (const match of source.matchAll(pattern)) {
     const name = match[1];
 
     if (seen.has(name) || !new RegExp(`\\b${name}\\b`).test(text)) continue;
@@ -82,7 +83,7 @@ function localsOf(source, text, seen = new Set()) {
       .filter(Boolean)
       .join('\n');
 
-    found.push(declaration, ...localsOf(source, declaration, seen));
+    found.push(declaration, ...localsOf(source, declaration, seen, exported));
   }
 
   return found;
@@ -113,17 +114,33 @@ function entry(source, index, kind, name) {
     '.'
   );
 
+  // A type made of other types (`Omit<KitItem, …>`, `A & B`) says nothing by
+  // itself: the types of its module it names come along, exported or not
+  const derived = kind === 'type' && !/=\s*\{/.test(declaration);
+
+  const own = [
+    comment,
+    declaration,
+    ...localsOf(source, declaration, new Set([name]))
+  ]
+    .filter(Boolean)
+    .join('\n');
+
   return {
     name,
     kind,
     summary: summary.trim(),
-    declaration: [
-      comment,
-      declaration,
-      ...localsOf(source, declaration, new Set([name]))
-    ]
-      .filter(Boolean)
-      .join('\n')
+    // What a search reads: the types that only come along are not its words
+    text: own,
+    declaration: derived
+      ? [
+          comment,
+          declaration,
+          ...localsOf(source, declaration, new Set([name]), true)
+        ]
+          .filter(Boolean)
+          .join('\n')
+      : own
   };
 }
 
@@ -203,7 +220,7 @@ export function createKnowledge(packages) {
     return names
       .map((name) => api.get(name))
       .filter((item) => {
-        const text = `${item.name} ${item.declaration}`.toLowerCase();
+        const text = `${item.name} ${item.text}`.toLowerCase();
 
         return words.every((word) => text.includes(word));
       });
