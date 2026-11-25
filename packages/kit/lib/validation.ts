@@ -16,7 +16,21 @@ const messages: Messages = {
   maxFileSize: (label, bytes) =>
     `${label} must not be larger than ${sizeOf(bytes)}`,
   date: (label) => `${label} is not a date`,
-  accept: (label) => `${label} does not take this kind of file`
+  accept: (label) => `${label} does not take this kind of file`,
+  email: (label) => `${label} must be an email address`,
+  url: (label) => `${label} must be a URL`
+};
+
+/** What `@punica/form-json`'s `email` rule takes: something@something.something. */
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/** An absolute URL, as an `<input type="url">` takes it. */
+const isUrl = (value: string): boolean => {
+  try {
+    return Boolean(new URL(value).protocol);
+  } catch {
+    return false;
+  }
 };
 
 /** A size as a text that never says more than the size is. */
@@ -103,6 +117,16 @@ export const check = (
 
     if (maxLength !== undefined && value.length > maxLength) {
       return text.maxLength(label, maxLength);
+    }
+
+    // As the browser checks an email or URL input; a pattern of the field's
+    // own decides instead, with its own message
+    if (!pattern && props.inputType === 'email' && !EMAIL.test(value)) {
+      return text.email(label);
+    }
+
+    if (!pattern && props.inputType === 'url' && !isUrl(value)) {
+      return text.url(label);
     }
 
     if (pattern) {
