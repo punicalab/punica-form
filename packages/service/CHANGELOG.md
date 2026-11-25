@@ -1,5 +1,13 @@
 # @punica/form-service
 
+## 2.3.2
+
+### Patch Changes
+
+- [#134](https://github.com/punicalab/punica-form/pull/134) [`8458a7e`](https://github.com/punicalab/punica-form/commit/8458a7e997a550f098641c431d62f5ea684085c3) Thanks [@punicalab](https://github.com/punicalab)! - `get_api` answers a name that is no export with what it is about: `TextFieldOptions` returns the declaration of `TextField`, and other names list the closest exports first. `ArrayField` and `FieldArray` say how the rows start from the value of the property (an element names only what differs from the row class; `minItems` adds no rows).
+- Updated dependencies []:
+  - @punica/form@2.3.2
+
 ## 2.3.1
 
 ### Patch Changes
