@@ -1,5 +1,14 @@
 # @punica/form-kit
 
+## 0.7.1
+
+### Patch Changes
+
+- [#130](https://github.com/punicalab/punica-form/pull/130) [`3ab1058`](https://github.com/punicalab/punica-form/commit/3ab105891b0dad4996f057e556ff4019cb4d567e) Thanks [@punicalab](https://github.com/punicalab)! - `get_api` brings the types a declaration is made of that are not exported (`FormViewProps` comes with `ViewProps`), and a name asked for that is such a type returns its declaration and the exports that hold it, in place of the list of every export. `FormView` says what it draws and where the errors of the form go; `Submit` says it clears them first.
+- Updated dependencies [[`3ab1058`](https://github.com/punicalab/punica-form/commit/3ab105891b0dad4996f057e556ff4019cb4d567e)]:
+  - @punica/form-service@2.3.1
+  - @punica/form@2.3.1
+
 ## 0.7.0
 
 ### Minor Changes
