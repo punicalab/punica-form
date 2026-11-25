@@ -170,6 +170,13 @@ export const FileField = field(KIT_TYPES.file);
  * @ArrayField({ label: 'Lines', row: () => new LineForm(), minItems: 1 })
  * lines: LineForm[] = [];
  *
+ * The rows start from the value of the property: a row for every element,
+ * whose values replace those of a new `row()`. `lines: LineForm[] =
+ * [new LineForm()]` starts with one row as the class has it; an element may
+ * name only what differs (`{ quantity: 1 } as LineForm`), the other fields
+ * then come from the class. `[]` starts with none: `minItems` only checks
+ * how many there are, it adds no rows.
+ *
  * The row class needs no `@FormKit`; with it, `columns` lays out its fields.
  */
 export const ArrayField = field(KIT_TYPES.array) as (

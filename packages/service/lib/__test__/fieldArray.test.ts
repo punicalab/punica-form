@@ -673,4 +673,12 @@ describe('FieldArray', () => {
     expect(names()).toEqual(['']);
     expect(item().dirty).toBe(true);
   });
+
+  test('a value of the list names only what differs from the row class', async () => {
+    await start({ value: [{ price: 1 }] as LineValues[] });
+
+    expect(rows()).toHaveLength(1);
+    expect(item().value).toEqual([{ name: '', price: 1 }]);
+    expect(item().dirty).toBeFalsy();
+  });
 });
