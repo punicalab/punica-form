@@ -28,6 +28,10 @@ export type RowOf<E, K extends keyof E> =
  * await lines.append('lines', { name: 'Paper' });
  * lines.rows('lines')[0].controller.getService(SetValue).run('price', 5);
  *
+ * The rows start from the value of the item: a row for every element, whose
+ * values replace those of a new `row()`, so an element names only what
+ * differs (`[{ quantity: 1 }]`); an empty or missing value starts with none.
+ *
  * The value of the item is the array of the values of its rows. The item is
  * dirty, touched and in error when a row is, and validating the form
  * validates the rows. A row class without `@Services` gets the services of
