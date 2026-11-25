@@ -58,7 +58,10 @@ export type KitItem<E> = FormItem<E> &
     /** Shown while the field is empty. */
     placeholder?: string;
 
-    /** The type of a text field, `text` by default. */
+    /**
+     * The type of a text field, `text` by default. `email` and `url` are
+     * checked as the browser checks them, unless the field has a `pattern`.
+     */
     inputType?: 'text' | 'email' | 'password' | 'tel' | 'url' | 'date';
 
     /**
@@ -121,6 +124,10 @@ export type Messages = {
   maxFileSize: (label: string, bytes: number) => string;
   date: (label: string) => string;
   accept: (label: string) => string;
+  /** A text field with `inputType: 'email'` and no `pattern` (since 0.7). */
+  email: (label: string) => string;
+  /** A text field with `inputType: 'url'` and no `pattern` (since 0.7). */
+  url: (label: string) => string;
 };
 
 /** A validation of an item. */

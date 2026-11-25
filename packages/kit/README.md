@@ -29,7 +29,7 @@ export class UserForm {
   @TextField({ label: 'Name', required: true, minLength: 2 })
   name = '';
 
-  @TextField({ label: 'Email', inputType: 'email', pattern: /^\S+@\S+\.\S+$/ })
+  @TextField({ label: 'Email', inputType: 'email' })
   email = '';
 
   @SelectField({ label: 'Country', options: ['Tunisia', 'Türkiye'] })
@@ -185,7 +185,9 @@ Rules are validated by the kit: `required`, `minLength`, `maxLength` and
 dates, `minItems` and `maxItems` for several choices, files and rows, and
 `maxFileSize` (bytes) for files. A file field also checks `accept`, since the
 dialog of the browser lets any file through, and a date field reports a
-text that is no date. A field's own `validation` function runs
+text that is no date. A text field with `inputType: 'email'` or `'url'` takes
+only an email address or an absolute URL, as the browser's inputs do; a
+`pattern` of its own decides instead (since 0.7). A field's own `validation` function runs
 after them, for a value that passed.
 
 What is typed is validated when the user leaves the field, what is chosen
