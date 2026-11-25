@@ -46,6 +46,19 @@ const logError = (error: unknown): void => console.error(error);
 
 /**
  * Renders the form of a started controller with `@punica/components`.
+ *
+ * What it draws, in order, in a `<form noValidate>`:
+ * - the `title` and `description` of the form, when it has them;
+ * - the errors of the form (`state.errors`: what `onSubmit` threw, such as
+ *   the messages about no item that `SetErrors` returned) in one
+ *   `<p role="alert">`; a new submit clears them;
+ * - a field per item, each showing its own messages under it (`punica-field`),
+ *   rows of a list with their add and remove buttons;
+ * - a `type="submit"` `punica-button` with `submitLabel`, in its `loading`
+ *   state while the submit runs, and a reset button when `resetLabel` is set.
+ *
+ * A submit validates every item first: an invalid form shows its messages
+ * and `onSubmit` is not called.
  */
 export function FormView<E extends object>({
   controller,

@@ -16,7 +16,9 @@ function resolve(files, from, specifier) {
 
 /** The JSDoc comment that ends right before `index`, if there is one. */
 function commentBefore(source, index) {
-  const match = /\/\*\*(?:(?!\*\/)[\s\S])*\*\/\s*$/.exec(source.slice(0, index));
+  const match = /\/\*\*(?:(?!\*\/)[\s\S])*\*\/\s*$/.exec(
+    source.slice(0, index)
+  );
 
   return match ? match[0].trimEnd() : '';
 }
@@ -28,6 +30,25 @@ function declarationAt(source, index) {
   for (let i = index; i < source.length; i++) {
     const char = source[i];
 
+    // Comments and texts hold brackets and semicolons of their own
+    if (source.startsWith('/*', i)) {
+      i = source.indexOf('*/', i + 2) + 1 || source.length;
+      continue;
+    }
+
+    if (source.startsWith('//', i)) {
+      i = source.indexOf('\n', i);
+      if (i === -1) break;
+      continue;
+    }
+
+    if (char === "'" || char === '"' || char === '`') {
+      for (i++; i < source.length && source[i] !== char; i++) {
+        if (source[i] === '\\') i++;
+      }
+      continue;
+    }
+
     if ('({['.includes(char)) depth++;
     if (')}]'.includes(char)) depth--;
     if (depth === 0 && (char === ';' || char === '}')) {
@@ -38,8 +59,38 @@ function declarationAt(source, index) {
   return source.slice(index);
 }
 
+/**
+ * The declarations of a module that are not exported but that `text` names,
+ * such as the interface a configuration type is made of: without them the
+ * options of a middleware could not be looked up.
+ */
+function localsOf(source, text, seen = new Set()) {
+  const found = [];
+
+  for (const match of source.matchAll(
+    /^(?:declare )?(?:interface|type) (\w+)/gm
+  )) {
+    const name = match[1];
+
+    if (seen.has(name) || !new RegExp(`\\b${name}\\b`).test(text)) continue;
+    seen.add(name);
+
+    const declaration = [
+      commentBefore(source, match.index),
+      declarationAt(source, match.index)
+    ]
+      .filter(Boolean)
+      .join('\n');
+
+    found.push(declaration, ...localsOf(source, declaration, seen));
+  }
+
+  return found;
+}
+
 function entry(source, index, kind, name) {
   const comment = commentBefore(source, index);
+  const declaration = declarationAt(source, index);
   // The first paragraph of the comment, without its stars, up to the end of
   // its first sentence
   const lines = comment
@@ -51,18 +102,28 @@ function entry(source, index, kind, name) {
   const paragraph = [];
 
   for (let i = start; i >= 0 && i < lines.length; i++) {
-    if (!lines[i] || lines[i].startsWith('@') || lines[i].startsWith('```')) break;
+    if (!lines[i] || lines[i].startsWith('@') || lines[i].startsWith('```'))
+      break;
     paragraph.push(lines[i]);
   }
 
   const text = paragraph.join(' ');
-  const summary = (/^.*?[.:](?=\s|$)/.exec(text)?.[0] ?? text).replace(/:$/, '.');
+  const summary = (/^.*?[.:](?=\s|$)/.exec(text)?.[0] ?? text).replace(
+    /:$/,
+    '.'
+  );
 
   return {
     name,
     kind,
     summary: summary.trim(),
-    declaration: [comment, declarationAt(source, index)].filter(Boolean).join('\n')
+    declaration: [
+      comment,
+      declaration,
+      ...localsOf(source, declaration, new Set([name]))
+    ]
+      .filter(Boolean)
+      .join('\n')
   };
 }
 
@@ -79,14 +140,18 @@ function exportsOf(files, path, seen = new Set()) {
   }
 
   // export * from './x';  export type * from './x';
-  for (const match of source.matchAll(/^export (?:type )?\* from ['"](.+?)['"];/gm)) {
+  for (const match of source.matchAll(
+    /^export (?:type )?\* from ['"](.+?)['"];/gm
+  )) {
     const target = exportsOf(files, resolve(files, path, match[1]), seen);
 
     for (const [name, value] of target) found.set(name, value);
   }
 
   // export { a, default as b } from './x';  export type { a } from './x';
-  for (const match of source.matchAll(/^export (?:type )?\{([^}]+)\} from ['"](.+?)['"];/gm)) {
+  for (const match of source.matchAll(
+    /^export (?:type )?\{([^}]+)\} from ['"](.+?)['"];/gm
+  )) {
     const targetPath = resolve(files, path, match[2]);
     const target = exportsOf(files, targetPath, new Set(seen));
     const targetSource = files.get(targetPath) || '';
@@ -103,7 +168,8 @@ function exportsOf(files, path, seen = new Set()) {
           'm'
         ).exec(targetSource);
 
-        value = declared && entry(targetSource, declared.index, declared[1], alias);
+        value =
+          declared && entry(targetSource, declared.index, declared[1], alias);
       }
 
       if (value) found.set(alias, { ...value, name: alias });
@@ -143,8 +209,38 @@ export function createKnowledge(packages) {
       });
   }
 
+  /**
+   * A type the packages declare without exporting it, as the exports that
+   * are made of it bring it along: an import of it would fail, but what it
+   * holds is part of the API.
+   */
+  function local(name) {
+    const pattern = new RegExp(
+      `^(?:declare )?(?:interface|type) ${name}\\b`,
+      'm'
+    );
+    const users = names.filter((other) =>
+      pattern.test(api.get(other).declaration)
+    );
+
+    if (!users.length) return undefined;
+
+    const source = api.get(users[0]).declaration;
+    const index = pattern.exec(source).index;
+    const declaration = [
+      commentBefore(source, index),
+      declarationAt(source, index)
+    ]
+      .filter(Boolean)
+      .join('\n');
+
+    return `## ${name} (not exported, ${api.get(users[0]).package})\n\nIt cannot be imported; it is part of ${users.join(', ')}, which can.\n\n\`\`\`ts\n${declaration}\n\`\`\``;
+  }
+
   function formatMarkdown(name) {
     const item = get(name);
+
+    if (!item && /^\w+$/.test(name) && local(name)) return local(name);
 
     if (!item) {
       return `${name} is not exported by ${packages.map((p) => p.name).join(' or ')}. Exports: ${names.join(', ')}`;
