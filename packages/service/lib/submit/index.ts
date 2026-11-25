@@ -30,6 +30,9 @@ export class Submit<E, F extends FormItem<E> = FormItem<E>>
    * its values and fires SUBMIT. While it runs the state of the form is
    * `submitting`; a submit that is started meanwhile is ignored.
    *
+   * It starts by clearing the errors of the form (`state.errors`), so the
+   * message of an earlier submit goes away by itself.
+   *
    * What the handler or a validation throws does not reject: the message of
    * the error, or a general one when it has none, becomes an error of the
    * form (`state.errors`) and SUBMIT_ERROR is fired.
