@@ -177,6 +177,16 @@ export const FileField = field(KIT_TYPES.file);
  * then come from the class. `[]` starts with none: `minItems` only checks
  * how many there are, it adds no rows.
  *
+ * Each row has a remove button and the list an add button below the rows,
+ * with the texts `removeLabel` and `addLabel` (`Remove` and `Add` by
+ * default). The add button is disabled once the list has `maxItems` rows.
+ *
+ * @ArrayField({ label: 'Tickets', row: () => new TicketForm(), addLabel: 'Add ticket', removeLabel: 'Remove ticket' })
+ * tickets: TicketForm[] = [{ quantity: 1 } as TicketForm];
+ *
+ * A row's messages are its fields' own: an error for `tickets.0.quantity`
+ * that `SetErrors` returns shows under that row's Quantity.
+ *
  * The row class needs no `@FormKit`; with it, `columns` lays out its fields.
  */
 export const ArrayField = field(KIT_TYPES.array) as (

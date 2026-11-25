@@ -13,7 +13,25 @@ export type Options = Option[] | (() => Promise<Option[]>);
 /** How many columns of the form a field takes. */
 export type Span = 1 | 2 | 3 | 4 | 'full';
 
-/** The rules the kit validates by itself. */
+/**
+ * The rules the kit validates by itself, on submit, on `Trigger` and when a
+ * field that shows an error changes.
+ *
+ * - An empty value (`undefined`, `null`, `''`, `false`, `[]`) is checked only
+ *   by `required` (and a list by `minItems`): an empty optional field passes,
+ *   whatever its other rules say. A `NumberField` is `undefined` while empty.
+ * - `minLength`, `maxLength` and `pattern` check strings; `min` and `max`
+ *   check numbers; `minDate` and `maxDate` check `yyyy-mm-dd` strings;
+ *   `minItems` and `maxItems` check arrays (choices, files, rows).
+ * - The first rule a value breaks is its only message; the field's own
+ *   `validation` runs after the rules, for a value that passed them.
+ * - Messages come from `setMessages` (every form) or `messages` (one field).
+ *
+ * ```ts
+ * @NumberField({ label: 'Quantity', required: true, min: 1 })
+ * quantity?: number;
+ * ```
+ */
 export type Rules = {
   /** Fewest characters allowed. */
   minLength?: number;
@@ -88,10 +106,16 @@ export type KitItem<E> = FormItem<E> &
     /** The language a date field is typed and shown in, the one of the page by default. */
     locale?: string;
 
-    /** The text of the button that adds a row to a list, `Add` by default. */
+    /**
+     * The text of the button that adds a row to a list (`ArrayField`), `Add`
+     * by default. It is the button's accessible name as well.
+     */
     addLabel?: string;
 
-    /** The text of the button that removes a row from a list, `Remove` by default. */
+    /**
+     * The text of the button that removes a row from a list (`ArrayField`),
+     * `Remove` by default; every row has one.
+     */
     removeLabel?: string;
 
     /** Visible lines of a text area. */
@@ -104,7 +128,16 @@ export type KitItem<E> = FormItem<E> &
     messages?: Partial<Messages>;
   };
 
-/** What a field decorator takes: everything of an item but its property and type. */
+/**
+ * What a field decorator takes: everything of a `KitItem` but its property
+ * and type. That is `label`, `required`, `disabled`, `hidden` and
+ * `validation` of a form item, the `Rules` the kit checks, and what the
+ * components show (`help`, `placeholder`, `options`, `addLabel`, …).
+ *
+ * `required: true` means the value must not be empty: a text that is not
+ * `''`, a number that is not `undefined`, a ticked checkbox, a list with an
+ * element.
+ */
 // The entity is not known where a form class is decorated
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type FieldProps = Omit<KitItem<any>, 'property' | 'type'>;
