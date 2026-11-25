@@ -1,5 +1,11 @@
 # @punica/form-mcp
 
+## 0.6.2
+
+### Patch Changes
+
+- [#123](https://github.com/punicalab/punica-form/pull/123) [`653c63f`](https://github.com/punicalab/punica-form/commit/653c63f1ec6ec4cd8b2a61a17b2218aaed789507) Thanks [@punicalab](https://github.com/punicalab)! - The server's copy of the packages, for a project that has not installed them, is that of form-kit 0.6.1 (it was 0.6.0).
+
 ## 0.6.1
 
 ### Patch Changes
