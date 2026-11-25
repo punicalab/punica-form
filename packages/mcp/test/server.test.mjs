@@ -174,6 +174,24 @@ test('get_api brings the types a declaration is made of that are not exported', 
   assert.doesNotMatch(local, /Exports: /);
 });
 
+test('get_api points a name that is no export to the one it is about', async () => {
+  const { call } = await connect();
+
+  // The options of a decorator are the parameter of the decorator
+  const options = await call('get_api', { names: ['TextFieldOptions'] });
+
+  assert.match(options, /TextFieldOptions is not exported/);
+  assert.match(options, /What TextField takes is in its declaration/);
+  assert.match(options, /## TextField \(const, @punica\/form-kit\)/);
+  assert.doesNotMatch(options, /Exports: /);
+
+  // Otherwise the exports that share most words come first
+  const other = await call('get_api', { names: ['KitFieldProps'] });
+
+  assert.match(other, /Closest: [^.]*FieldProps/);
+  assert.match(other, /Exports: /);
+});
+
 test('validate_code finds the common mistakes', async () => {
   const { call } = await connect();
   const report = await call('validate_code', {

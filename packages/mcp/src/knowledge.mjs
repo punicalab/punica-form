@@ -237,13 +237,46 @@ export function createKnowledge(packages) {
     return `## ${name} (not exported, ${api.get(users[0]).package})\n\nIt cannot be imported; it is part of ${users.join(', ')}, which can.\n\n\`\`\`ts\n${declaration}\n\`\`\``;
   }
 
+  /** The words of a name, with the ones that mean the same made one. */
+  const wordsOf = (name) =>
+    name
+      .split(/(?=[A-Z][a-z])|_/)
+      .map((word) => word.toLowerCase())
+      .map((word) => (/^(options|config|params)$/.test(word) ? 'props' : word))
+      .filter(Boolean);
+
+  /** The exports that share most words with a name that is not one. */
+  function closest(name) {
+    const wanted = new Set(wordsOf(name));
+
+    return names
+      .map((other) => ({
+        other,
+        shared: wordsOf(other).filter((word) => wanted.has(word)).length
+      }))
+      .filter(({ shared }) => shared > 0)
+      .sort((a, b) => b.shared - a.shared || a.other.length - b.other.length)
+      .slice(0, 6)
+      .map(({ other }) => other);
+  }
+
   function formatMarkdown(name) {
     const item = get(name);
 
     if (!item && /^\w+$/.test(name) && local(name)) return local(name);
 
     if (!item) {
-      return `${name} is not exported by ${packages.map((p) => p.name).join(' or ')}. Exports: ${names.join(', ')}`;
+      const missing = `${name} is not exported by ${packages.map((p) => p.name).join(' or ')}.`;
+      // TextFieldOptions: what TextField takes is in its own declaration
+      const owner = /^(\w+?)(?:Options|Props|Config|Params)$/.exec(name)?.[1];
+
+      if (owner && get(owner)) {
+        return `${missing} What ${owner} takes is in its declaration:\n\n${formatMarkdown(owner)}`;
+      }
+
+      const near = /^\w+$/.test(name) ? closest(name) : [];
+
+      return `${missing}${near.length ? ` Closest: ${near.join(', ')}.` : ''} Exports: ${names.join(', ')}`;
     }
 
     return `## ${item.name} (${item.kind}, ${item.package})\n\n\`\`\`ts\n${item.declaration}\n\`\`\``;
