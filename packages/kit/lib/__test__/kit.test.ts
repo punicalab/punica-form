@@ -189,3 +189,68 @@ describe('validation of a field', () => {
     expect(await errorOf('code')).toEqual(['Code is not valid']);
   });
 });
+
+describe('email and URL fields', () => {
+  @FormKit()
+  class ContactForm {
+    @TextField({ label: 'Email', inputType: 'email' })
+    public email = '';
+
+    @TextField({ label: 'Site', inputType: 'url' })
+    public site = '';
+
+    @TextField({
+      label: 'Work email',
+      inputType: 'email',
+      pattern: /@example\.com$/,
+      messages: { pattern: () => 'Use your work address' }
+    })
+    public work = '';
+  }
+
+  const errorOf = async (property: keyof ContactForm, value: string) => {
+    const controller = await FormController.fromEntity<
+      ContactForm,
+      KitItem<ContactForm>
+    >(new ContactForm());
+
+    await controller.start();
+    await controller.getService(SetValue).run(property, value);
+    await controller.getService(Trigger).run(property);
+
+    const item = controller
+      .getForm()
+      .items.find((i) => i.property === property);
+
+    return item?.error ? item.errorMessages?.[0] : undefined;
+  };
+
+  test('an email field takes only an email address', async () => {
+    expect(await errorOf('email', 'jane')).toEqual(
+      'Email must be an email address'
+    );
+    expect(await errorOf('email', 'jane@example')).toEqual(
+      'Email must be an email address'
+    );
+    expect(await errorOf('email', 'jane@example.com')).toBeUndefined();
+    expect(await errorOf('email', '')).toBeUndefined();
+  });
+
+  test('a URL field takes only an absolute URL', async () => {
+    expect(await errorOf('site', 'example.com')).toEqual('Site must be a URL');
+    expect(await errorOf('site', 'https://example.com')).toBeUndefined();
+  });
+
+  test('a pattern of the field decides instead, with its message', async () => {
+    expect(await errorOf('work', 'jane')).toEqual('Use your work address');
+    expect(await errorOf('work', 'jane@example.com')).toBeUndefined();
+  });
+
+  test('setMessages replaces the email message', async () => {
+    setMessages({ email: (label) => `${label}: bir e-posta adresi girin` });
+    expect(await errorOf('email', 'jane')).toEqual(
+      'Email: bir e-posta adresi girin'
+    );
+    setMessages({ email: (label) => `${label} must be an email address` });
+  });
+});

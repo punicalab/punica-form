@@ -62,7 +62,9 @@ is `yyyy-mm-dd`), `PasswordField`, `FileField` and `ArrayField` (a list of
 rows: `@ArrayField({ label, row: () => new LineForm() })`, the kit renders a
 form for every row) with the rules `required`, `minLength`, `maxLength`,
 `pattern`, `min`, `max`, `minDate`, `maxDate`, `minItems`, `maxItems` and
-`maxFileSize`; `options` may be a function that loads the choices. And from `@punica/form-kit/react` the component
+`maxFileSize`; `inputType: 'email'` or `'url'` on a `TextField` checks the
+address too (since form-kit 0.7; a `pattern` of the field decides instead);
+`options` may be a function that loads the choices. And from `@punica/form-kit/react` the component
 `<KitForm entity={() => new UserForm()} onSubmit={…} />`, which renders the
 form with `@punica/components`, shows what `onSubmit` throws above the
 fields and reports it to `onError`. Use it when the project has it installed;
