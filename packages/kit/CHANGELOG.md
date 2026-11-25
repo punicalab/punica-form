@@ -1,5 +1,11 @@
 # @punica/form-kit
 
+## 0.7.0
+
+### Minor Changes
+
+- [#126](https://github.com/punicalab/punica-form/pull/126) [`9131367`](https://github.com/punicalab/punica-form/commit/91313677ed29a63ca68455ee5f2c769513cc2c0b) Thanks [@punicalab](https://github.com/punicalab)! - A `TextField` with `inputType: 'email'` or `'url'` takes only an email address or an absolute URL, as the browser's inputs do. The kit's form does not let the browser validate (`noValidate`), so until now such a field took any text unless it had a `pattern`. A field with a `pattern` of its own keeps it: the pattern decides, with its message. The messages are `email` and `url`, replaceable with `setMessages` or a field's `messages`.
+
 ## 0.6.1
 
 ### Patch Changes
