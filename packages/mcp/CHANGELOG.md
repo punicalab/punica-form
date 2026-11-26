@@ -1,5 +1,11 @@
 # @punica/form-mcp
 
+## 0.10.0
+
+### Minor Changes
+
+- [#138](https://github.com/punicalab/punica-form/pull/138) [`e62fdc6`](https://github.com/punicalab/punica-form/commit/e62fdc68e057f3114730ed805cf10519219f0c4b) Thanks [@punicalab](https://github.com/punicalab)! - Documents what assistants had to read the built code for. form-kit: `Rules` says when the rules run and that an empty value is only checked by `required` (and a list by `minItems`); `FieldProps` lists what a field takes and what `required` means; `ArrayField` names its buttons' `addLabel` and `removeLabel` with an example; `FormView` says what `onSubmit` receives and how to read the values outside a submit. form: `required` of a form item is documented. form-mcp: `get_api` of a type made of other types (`FieldProps = Omit<KitItem, …>`) brings the types of its module it names, exported or not, so the options of a field are in one answer; search still reads only an export's own text.
+
 ## 0.9.0
 
 ### Minor Changes
