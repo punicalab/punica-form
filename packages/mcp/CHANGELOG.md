@@ -1,5 +1,11 @@
 # @punica/form-mcp
 
+## 0.10.1
+
+### Patch Changes
+
+- [#142](https://github.com/punicalab/punica-form/pull/142) [`99341db`](https://github.com/punicalab/punica-form/commit/99341dbf7c1d16dc248a76c736fd7aea56da03a9) Thanks [@punicalab](https://github.com/punicalab)! - The guide opens with where exact declarations come from: `get_api` (with the types a declaration refers to) and `search_api`, instead of the `.d.ts` files in `node_modules`.
+
 ## 0.10.0
 
 ### Minor Changes
