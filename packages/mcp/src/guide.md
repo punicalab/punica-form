@@ -3,6 +3,11 @@
 Punica Form is a headless form engine. `@punica/form` holds the engine,
 `@punica/form-service` the built-in services. There are no UI components.
 
+Exact declarations are one call away: `get_api` with the names
+(`KitFormProps`, `FieldProps`, `SetErrors`) returns each one with the types
+it refers to, and `search_api` lists the exports. Ask them instead of reading
+the `.d.ts` files in `node_modules`; `validate_code` checks the result.
+
 ## What the packages provide, and what they do not
 
 - `@punica/form`: `FormController`, the class decorators `@Services`,
