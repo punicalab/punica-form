@@ -58,7 +58,16 @@ const logError = (error: unknown): void => console.error(error);
  *   state while the submit runs, and a reset button when `resetLabel` is set.
  *
  * A submit validates every item first: an invalid form shows its messages
- * and `onSubmit` is not called.
+ * and `onSubmit` is not called. A valid one calls `onSubmit(values,
+ * controller)`: `values` is a copy of the form's class instance holding the
+ * current values (what `GetValues` returns), a list as an array of its rows'
+ * values. Outside a submit, read them with
+ * `controller.getService(GetValues).run()`.
+ *
+ * ```tsx
+ * <FormView controller={controller} submitLabel="Create"
+ *   onSubmit={(values) => api.create(values)} />
+ * ```
  */
 export function FormView<E extends object>({
   controller,
