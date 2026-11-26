@@ -41,7 +41,7 @@ export function createPunicaFormServer({ packages, guide }) {
   const server = new McpServer(
     { name: 'punica-form', version },
     {
-      instructions: `${legacyNote}${versions}. Punica Form is a headless form engine and is rarely in training data: never write an import, a service name or a method from memory. Read get_guide first, look names up with search_api and get_api, and check the code with validate_code before handing it over. To produce a form at run time as data instead of code, read get_form_schema and check the definition with validate_form.`
+      instructions: `${legacyNote}${versions}. Punica Form is a headless form engine and is rarely in training data: never write an import, a service name or a method from memory. Read get_guide first, look names up with search_api and get_api, and check the code with validate_code before handing it over. Imports: the kit's decorators (FormKit, TextField, …) and setMessages come from \`@punica/form-kit\`, KitForm from \`@punica/form-kit/react\`, bindForm from \`@punica/form-kit/dom\`, JsonForm from \`@punica/form-kit/json\`; the kit loads the punica-* elements it draws, and no CSS import is needed. To produce a form at run time as data instead of code, read get_form_schema and check the definition with validate_form.`
     }
   );
 
