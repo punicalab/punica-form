@@ -1,5 +1,12 @@
 # @punica/form-service
 
+## 2.3.3
+
+### Patch Changes
+
+- Updated dependencies [[`e62fdc6`](https://github.com/punicalab/punica-form/commit/e62fdc68e057f3114730ed805cf10519219f0c4b)]:
+  - @punica/form@2.3.3
+
 ## 2.3.2
 
 ### Patch Changes
