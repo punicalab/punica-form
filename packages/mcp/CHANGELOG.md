@@ -1,5 +1,11 @@
 # @punica/form-mcp
 
+## 0.10.2
+
+### Patch Changes
+
+- [#146](https://github.com/punicalab/punica-form/pull/146) [`d8febc7`](https://github.com/punicalab/punica-form/commit/d8febc73e4074c505fe98ed846efe678595c66a0) Thanks [@punicalab](https://github.com/punicalab)! - The server instructions name where each import comes from, so an assistant does not read package.json exports or READMEs in node_modules to find out.
+
 ## 0.10.1
 
 ### Patch Changes
