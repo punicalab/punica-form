@@ -483,3 +483,11 @@ test('an entry point the installed version does not have is left out', () => {
     loadPackage('@punica/form-kit', process.cwd(), 'json').files.size > 0
   );
 });
+
+test('the instructions name where each import comes from', async () => {
+  const { client } = await connect();
+  const text = client.getInstructions();
+  assert.match(text, /KitForm from `@punica\/form-kit\/react`/);
+  assert.match(text, /bindForm from `@punica\/form-kit\/dom`/);
+  assert.match(text, /no CSS import is needed/);
+});
